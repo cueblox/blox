@@ -1,33 +1,52 @@
 {
-    // No "version", we expect people to use the path
-    // of the schema to version
-    _schema: {
-        name: "profile"
-        namespace: "schemas.devrel-blox.com"
-    }
+	_schema: {
+		name: "Profile"
+		namespace: "schemas.cueblox.com/people"
+	}
+	
+	globalValue: "https://google.com"
+	defaultValue: *"Hello" | string
 
-    #Profile: {
-        _model: {
-            // Lets assume lowercase Profile is ID
-            // Lets assume lowercase Profile with _id is the foreign key
-            // Plural for directory name
-            plural: "profiles"
-        }
+	#Website: {
+		_model: {
+			plural: "websites"
+			supportedExtensions: ["yaml", "yml"]
+		}
 
-        name: #Name
-        address: #Address
-    }
+		url: string
+		profile_id?: string
+		body?: string
+	}
 
-    #Name: {
-        forename: string
-        surname: string
-    }
+	#Profile: {
+		_model: {
+			plural: "profiles"
+			supportedExtensions: ["yaml", "yml", "md", "mdx"]
+		}
 
-    #Address: {
-        number: string
-        street: string
-        city: string
-        country: string
-        postcode: string
-    }
+		first_name: string
+		last_name:  string
+		age?:       int
+		company?:   string
+		title?:     string
+		body?:      string
+		social_accounts?: [...#TwitterAccount | #GitHubAccount | #MiscellaneousAccount]
+	}
+
+	#TwitterAccount: {
+		network:  "twitter"
+		username: string
+		url:      *"https://twitter.com/\(username)" | string
+	}
+
+	#GitHubAccount: {
+		network:  "github"
+		username: string
+		url:      *"https://github.com/\(username)" | string
+	}
+
+	#MiscellaneousAccount: {
+		network: string
+		url:     string
+	}
 }

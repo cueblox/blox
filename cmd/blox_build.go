@@ -29,17 +29,16 @@ var buildCmd = &cobra.Command{
 		cobra.CheckErr(err)
 
 		// Load Schemas!
-		//cobra.CheckErr(database.RegisterTables(blox.ProfileCue))
 		schemaDir, err := database.GetConfigString("schema_dir")
 		cobra.CheckErr(err)
+
 		err = filepath.WalkDir(schemaDir, func(path string, d fs.DirEntry, err error) error {
 			if !d.IsDir() {
-				fmt.Println(path)
-				fmt.Println(d.Name())
 				bb, err := os.ReadFile(path)
 				if err != nil {
 					return err
 				}
+
 				err = database.RegisterTables(string(bb))
 				if err != nil {
 					return err
@@ -49,7 +48,6 @@ var buildCmd = &cobra.Command{
 		})
 		cobra.CheckErr(err)
 
-		// cobra.CheckErr(convertModels(&database))
 		cobra.CheckErr(buildModels(&database))
 
 		if referentialIntegrity {
@@ -152,6 +150,8 @@ func buildModels(db *cuedb.Database) error {
 			errors = multierror.Append(err)
 		}
 	}
+
+	db.DumpAll()
 
 	if errors != nil {
 		pterm.Error.Println("Validations failed")

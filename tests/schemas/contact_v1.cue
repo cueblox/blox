@@ -14,18 +14,18 @@
             plural: "contacts"
         }
 
-        name: #Name
-        address: #Address
+        name: #ContactName
+        address: #ContactAddress
         phone: string
         email: string
     }
 
-    #Name: {
+    #ContactName: {
         forename: string
         surname: string
     }
 
-    #Address: {
+    #ContactAddress: {
         number: string
         street: string
         city: string
