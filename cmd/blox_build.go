@@ -151,8 +151,6 @@ func buildModels(db *cuedb.Database) error {
 		}
 	}
 
-	db.DumpAll()
-
 	if errors != nil {
 		pterm.Error.Println("Validations failed")
 	} else {
