@@ -1,0 +1,15 @@
+{
+    "name": "api",
+    "version": "0.0.1",
+    "description": "DevRel Blox GraphQL API",
+    "main": "index.mjs",
+    "scripts": {},
+    "author": "David McKay <david@rawkode.com>",
+    "license": "MIT",
+    "dependencies": {
+        "glob": "^7.1.6",
+        "json-graphql-server": "^2.2.0",
+        "serverless-http": "2.7.0",
+        "sync-fetch": "0.3.0"
+    }
+}
