@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package main
 
-import "github.com/devrel-blox/blox/cmd"
+import "github.com/cueblox/blox/cmd"
 
 func main() {
 	cmd.Execute()

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"cuelang.org/go/cuego"
-	"github.com/devrel-blox/blox/cueutils"
+	"github.com/cueblox/blox/cueutils"
 	"github.com/goccy/go-yaml"
 )
 

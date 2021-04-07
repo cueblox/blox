@@ -3,7 +3,7 @@
     // of the schema to version
     _schema: {
         name: "blox"
-        namespace: "schemas.devrel-blox.com"
+        namespace: "schemas.cueblox.com"
     }
 
     #Profile: {

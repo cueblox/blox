@@ -2,7 +2,7 @@
 	_schema: {
 		version: "v1"
 		name: "Profile"
-		namespace: "DevRelBlox"
+		namespace: "schemas.cueblox.com/people"
 	}
 	
 	globalValue: "https://google.com"

@@ -1,4 +1,4 @@
-module github.com/devrel-blox/blox
+module github.com/cueblox/blox
 
 go 1.16
 

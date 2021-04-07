@@ -1,9 +1,9 @@
-project_name: drb
+project_name: blox
 
 builds:
-  - id: drb
+  - id: blox
     main: ./main.go
-    binary: drb
+    binary: blox
     goos:
       - linux
       - darwin
@@ -17,43 +17,43 @@ builds:
 
 dockers:
   - image_templates:
-      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-amd64"
+      - "ghcr.io/cueblox/blox:{{ .Tag }}-amd64"
     ids:
-      - drb
+      - blox
     use_buildx: true
     build_flag_templates:
       - --platform=linux/amd64
   - image_templates:
-      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-arm64"
+      - "ghcr.io/cueblox/blox:{{ .Tag }}-arm64"
     ids:
-      - drb
+      - blox
     use_buildx: true
     build_flag_templates:
       - --platform=linux/arm64
 
 docker_manifests:
-  - name_template: "ghcr.io/devrel-blox/drb:latest"
+  - name_template: "ghcr.io/cueblox/blox:latest"
     image_templates:
-      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-amd64"
-      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-arm64"
+      - "ghcr.io/cueblox/blox:{{ .Tag }}-amd64"
+      - "ghcr.io/cueblox/blox:{{ .Tag }}-arm64"
 
-  - name_template: "ghcr.io/devrel-blox/drb:{{ .Tag }}"
+  - name_template: "ghcr.io/cueblox/blox:{{ .Tag }}"
     image_templates:
-      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-amd64"
-      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-arm64"
+      - "ghcr.io/cueblox/blox:{{ .Tag }}-amd64"
+      - "ghcr.io/cueblox/blox:{{ .Tag }}-arm64"
 
 brews:
-  - name: drb
+  - name: blox
     tap:
-      owner: devrel-blox
+      owner: cueblox
       name: homebrew-tap
       token: "{{ .Env.TAP_WRITE_KEY }}"
     folder: formula
 
     commit_author:
-      name: DevRel Blox
-      email: support@devrel-blox.com
+      name: CueBlox
+      email: support@cueblox.com
 
-    homepage: "https://github.com/devrel-blox/"
-    description: "DevRel Blox"
+    homepage: "https://github.com/cueblox/"
+    description: "CueBlox"
     license: "MIT"

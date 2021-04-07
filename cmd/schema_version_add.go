@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/devrel-blox/blox/schema"
+	"github.com/cueblox/blox/schema"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )

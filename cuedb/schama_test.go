@@ -45,7 +45,7 @@ func TestGetSchemaV1Metadata(t *testing.T) {
 	// Can we get the version from the schema's metadata?
 	schemaV1Metadata := `{
 		_schema: {
-			namespace: "devrel-blox.com"
+			namespace: "cueblox.com"
 			name: "profile"
 		}
 }`
@@ -58,7 +58,7 @@ func TestGetSchemaV1Metadata(t *testing.T) {
 		t.FailNow()
 	}
 
-	if "devrel-blox.com" != metadata.Namespace {
+	if "cueblox.com" != metadata.Namespace {
 		t.FailNow()
 	}
 

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/devrel-blox/blox/config"
+	"github.com/cueblox/blox/config"
 	"github.com/spf13/cobra"
 )
 

@@ -1,7 +1,7 @@
 {
     "name": "api",
     "version": "0.0.1",
-    "description": "DevRel Blox GraphQL API",
+    "description": "CueBlox GraphQL API",
     "main": "index.mjs",
     "scripts": {},
     "author": "David McKay <david@rawkode.com>",
