@@ -1,12 +1,11 @@
 ---
 first_name: David
 last_name: McKay
-company: Company
-title: Title
+company: Equinix Metal
+title: Senior Developer Advocate
 social_accounts:
 - network: twitter
-  username: username
-  url: ""
+  username: rawkode
 ---
 
 Body

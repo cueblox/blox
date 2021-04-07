@@ -3,7 +3,6 @@
 /test/tests.*
 /test/coverage.*
 repository/
-blox.yaml
-repository.yaml
-blox
-!/internal/blox/
+/repository.yaml
+/blox
+/_build/

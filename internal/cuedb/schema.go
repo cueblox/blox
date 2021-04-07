@@ -7,55 +7,6 @@ import (
 	"cuelang.org/go/cue"
 )
 
-// GET_VERSION_CUE is a constant?
-// that is added to cue models
-var GET_VERSION_CUE = `
-{
-	_schema: {
-		version: string
-	}
-}
-`
-
-// GetSchemaVersion will attempt to pull a "version" out of the
-// schema's metadata, returning an error if it can't
-func GetSchemaVersion(schema cue.Value) (string, error) {
-	var cueRuntime cue.Runtime
-	cueInstance, err := cueRuntime.Compile("validateVersionCue", GET_VERSION_CUE)
-	if err != nil {
-		return "", err
-	}
-	versionedSchema := schema.Unify(cueInstance.Value())
-	if err = versionedSchema.Validate(); err != nil {
-		return "", err
-	}
-
-	fields, err := versionedSchema.Fields(cue.All())
-	if err != nil {
-		return "", err
-	}
-
-	for fields.Next() {
-		if fields.Label() == "_schema" {
-			schemaValue := fields.Value()
-
-			versionField, err := schemaValue.LookupField("version")
-			if err != nil {
-				return "", err
-			}
-
-			stringVersion, err := versionField.Value.String()
-			if err != nil {
-				return "", err
-			}
-
-			return stringVersion, nil
-		}
-	}
-
-	return "", nil
-}
-
 // SchemaV1Metadata stores information about the schema
 // that is shared
 type SchemaV1Metadata struct {

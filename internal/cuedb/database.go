@@ -105,22 +105,17 @@ func (d *Database) RegisterTables(cueString string) error {
 
 	cueValue := cueInstance.Value()
 
-	// First, Unify whatever schemas the users want. We'll
-	// do our best to extract whatever information from
-	// it we require
-	d.db = d.db.FillPath(cue.Path{}, cueValue)
-
-	// Is the Schema valid?
-	_, err = GetSchemaVersion(cueValue)
-	if err != nil {
-		return err
-	}
-
 	// We only have a V1 :)
 	metadata, err := GetSchemaV1Metadata(cueValue)
 	if err != nil {
 		return err
 	}
+
+	// First, Unify whatever schemas the users want. We'll
+	// do our best to extract whatever information from
+	// it we require
+	schemaPath := cue.ParsePath(fmt.Sprintf(`schemas."%s"."%s"`, metadata.Namespace, metadata.Name))
+	d.db = d.db.FillPath(schemaPath, cueValue)
 
 	// Find Models and register as a table
 	fields, err := cueValue.Fields(cue.Definitions(true))
@@ -145,6 +140,7 @@ func (d *Database) RegisterTables(cueString string) error {
 			schemaName:      metadata.Name,
 			name:            fields.Label(),
 			metadata:        modelV1Metadata,
+			cuePath:         schemaPath,
 		}
 
 		if _, ok := d.tables[table.ID()]; ok {
@@ -156,12 +152,13 @@ func (d *Database) RegisterTables(cueString string) error {
 			return err
 		}
 
-		inst, err := d.runtime.Compile("", fmt.Sprintf("{%s: _\n%s: [ID=string]: %s}", fields.Label(), modelV1Metadata.Plural, fields.Label()))
+		abc := fmt.Sprintf("{%s: _\n%s: [ID=string]: %s}", fields.Label(), modelV1Metadata.Plural, fields.Label())
+		inst, err := d.runtime.Compile("", abc)
 		if err != nil {
 			return err
 		}
 
-		d.db = d.db.FillPath(cue.Path{}, inst.Value())
+		d.db = d.db.FillPath(schemaPath, inst.Value())
 
 		if err := d.db.Validate(); nil != err {
 			return err
@@ -211,6 +208,7 @@ func (d *Database) DumpAll() {
 // Table represents a schema record
 type Table struct {
 	name     string
+	cuePath  cue.Path
 	metadata ModelV1Metadata
 
 	// Which schema registered this table?
@@ -243,15 +241,23 @@ func (t *Table) GetSupportedExtensions() []string {
 	return t.metadata.SupportedExtensions
 }
 
+func (t *Table) GetDefPath() cue.Path {
+	return cue.ParsePath(t.cuePath.String() + "." + t.name)
+}
+
 // CuePath returns the plural form
 // of the table's name
 func (t *Table) CuePath() cue.Path {
-	return cue.ParsePath(t.metadata.Plural)
+	return t.cuePath
+}
+
+func (t *Table) CueDataPath() cue.Path {
+	return cue.ParsePath(t.cuePath.String() + "." + t.metadata.Plural)
 }
 
 // Insert adds a record
 func (d *Database) Insert(table Table, record map[string]interface{}) error {
-	filledValued := d.db.FillPath(table.CuePath(), record)
+	filledValued := d.db.FillPath(table.CueDataPath(), record)
 
 	err := filledValued.Validate()
 	if nil != err {
@@ -268,7 +274,7 @@ func (d *Database) Insert(table Table, record map[string]interface{}) error {
 func (d *Database) ReferentialIntegrity() error {
 	for _, table := range d.GetTables() {
 		// Walk each field and look for _id labels
-		val := d.db.LookupDef(table.name)
+		val := d.db.LookupPath(table.CuePath())
 
 		fields, err := val.Fields(cue.Optional(true))
 		if err != nil {
@@ -282,7 +288,8 @@ func (d *Database) ReferentialIntegrity() error {
 					return err
 				}
 
-				inst, err := d.runtime.Compile("", fmt.Sprintf("{%s: _\n%s: %s: or([ for k, _ in %s {k}])}", foreignTable.metadata.Plural, table.name, fields.Label(), foreignTable.metadata.Plural))
+				abc := fmt.Sprintf("{%s: _\n%s: %s: or([ for k, _ in %s {k}])}", foreignTable.CueDataPath().String(), table.name, fields.Label(), foreignTable.metadata.Plural)
+				inst, err := d.runtime.Compile("", abc)
 				if err != nil {
 					return err
 				}

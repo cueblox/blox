@@ -1,33 +1,48 @@
 {
-    // No "version", we expect people to use the path
-    // of the schema to version
-    _schema: {
-        name: "blox"
-        namespace: "schemas.devrel-blox.com"
-    }
+	_schema: {
+		name:      "Profile"
+		namespace: "schemas.cueblox.com"
+	}
 
-    #Profile: {
-        _model: {
-            // Lets assume lowercase Profile is ID
-            // Lets assume lowercase Profile with _id is the foreign key
-            // Plural for directory name
-            plural: "profiles"
-        }
+	#Profile: {
+		_model: {
+			plural: "profiles"
+			supportedExtensions: ["yaml", "yml", "md", "mdx"]
+		}
 
-        name: #Name
-        address: #Address
-    }
+		first_name: string
+		last_name:  string
+		age?:       int
+		company?:   string
+		title?:     string
+		body?:      string
+		social_accounts?: [...#TwitterAccount | #GitHubAccount | #MiscellaneousAccount]
+	}
 
-    #Name: {
-        forename: string
-        surname: string
-    }
+	#TwitterAccount: {
+		network:  "twitter"
+		username: string
+		url:      *"https://twitter.com/\(username)" | string
+	}
 
-    #Address: {
-        number: string
-        street: string
-        city: string
-        country: string
-        postcode: string
-    }
+	#GitHubAccount: {
+		network:  "github"
+		username: string
+		url:      *"https://github.com/\(username)" | string
+	}
+
+	#MiscellaneousAccount: {
+		network: string
+		url:     string
+	}
+
+	#Website: {
+		_model: {
+			plural: "websites"
+		}
+
+		url:         string
+		profile_id?: string
+		body?:       string
+	}
 }
