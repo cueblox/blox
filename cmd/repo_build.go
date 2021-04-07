@@ -5,8 +5,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// buildCmd represents the build command
-var buildCmd = &cobra.Command{
+// repoBuildCmd represents the build command
+var repoBuildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
@@ -23,7 +23,7 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	repoCmd.AddCommand(buildCmd)
+	repoCmd.AddCommand(repoBuildCmd)
 
 	// Here you will define your flags and configuration settings.
 

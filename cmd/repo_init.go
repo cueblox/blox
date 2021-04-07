@@ -11,7 +11,7 @@ var namespace string
 var output string
 
 // initCmd represents the init command
-var initCmd = &cobra.Command{
+var repoInitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a new schema repository",
 	Long: `A longer description that spans multiple lines and likely contains examples
@@ -28,7 +28,7 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	repoCmd.AddCommand(initCmd)
+	repoCmd.AddCommand(repoInitCmd)
 	repoCmd.PersistentFlags().StringVarP(&root, "root", "r", "repository", "directory to store the repository")
 
 	repoCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "schemas.you.com", "repository namespace")

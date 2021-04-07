@@ -17,6 +17,8 @@ Thank you to the following **GIANTS**:
 
 * [cloud.google.com/go/storage](https://godoc.org/cloud.google.com/go/storage)
 
+* [cuelang.org/go](https://godoc.org/cuelang.org/go)
+
 * [dmitri.shuralyov.com/gpu/mtl](https://godoc.org/dmitri.shuralyov.com/gpu/mtl)
 
 * [github.com/BurntSushi/toml](https://godoc.org/github.com/BurntSushi/toml)
@@ -31,6 +33,8 @@ Thank you to the following **GIANTS**:
 
 * [github.com/armon/circbuf](https://godoc.org/github.com/armon/circbuf)
 
+* [github.com/armon/consul-api](https://godoc.org/github.com/armon/consul-api)
+
 * [github.com/armon/go-metrics](https://godoc.org/github.com/armon/go-metrics)
 
 * [github.com/armon/go-radix](https://godoc.org/github.com/armon/go-radix)
@@ -44,6 +48,10 @@ Thank you to the following **GIANTS**:
 * [github.com/cespare/xxhash](https://godoc.org/github.com/cespare/xxhash)
 
 * [github.com/client9/misspell](https://godoc.org/github.com/client9/misspell)
+
+* [github.com/cockroachdb/apd](https://godoc.org/github.com/cockroachdb/apd)
+
+* [github.com/cockroachdb/apd/v2](https://godoc.org/github.com/cockroachdb/apd/v2)
 
 * [github.com/coreos/bbolt](https://godoc.org/github.com/coreos/bbolt)
 
@@ -63,6 +71,8 @@ Thank you to the following **GIANTS**:
 
 * [github.com/dgryski/go-sip13](https://godoc.org/github.com/dgryski/go-sip13)
 
+* [github.com/emicklei/proto](https://godoc.org/github.com/emicklei/proto)
+
 * [github.com/fatih/color](https://godoc.org/github.com/fatih/color)
 
 * [github.com/fsnotify/fsnotify](https://godoc.org/github.com/fsnotify/fsnotify)
@@ -70,6 +80,8 @@ Thank you to the following **GIANTS**:
 * [github.com/ghodss/yaml](https://godoc.org/github.com/ghodss/yaml)
 
 * [github.com/go-gl/glfw](https://godoc.org/github.com/go-gl/glfw)
+
+* [github.com/go-gl/glfw/v3.3/glfw](https://godoc.org/github.com/go-gl/glfw/v3.3/glfw)
 
 * [github.com/go-kit/kit](https://godoc.org/github.com/go-kit/kit)
 
@@ -183,7 +195,11 @@ Thank you to the following **GIANTS**:
 
 * [github.com/kr/text](https://godoc.org/github.com/kr/text)
 
+* [github.com/kylelemons/godebug](https://godoc.org/github.com/kylelemons/godebug)
+
 * [github.com/leodido/go-urn](https://godoc.org/github.com/leodido/go-urn)
+
+* [github.com/lib/pq](https://godoc.org/github.com/lib/pq)
 
 * [github.com/magiconair/properties](https://godoc.org/github.com/magiconair/properties)
 
@@ -213,6 +229,8 @@ Thank you to the following **GIANTS**:
 
 * [github.com/modern-go/reflect2](https://godoc.org/github.com/modern-go/reflect2)
 
+* [github.com/mpvl/unique](https://godoc.org/github.com/mpvl/unique)
+
 * [github.com/mwitkow/go-conntrack](https://godoc.org/github.com/mwitkow/go-conntrack)
 
 * [github.com/oklog/ulid](https://godoc.org/github.com/oklog/ulid)
@@ -226,6 +244,8 @@ Thank you to the following **GIANTS**:
 * [github.com/pascaldekloe/goe](https://godoc.org/github.com/pascaldekloe/goe)
 
 * [github.com/pelletier/go-toml](https://godoc.org/github.com/pelletier/go-toml)
+
+* [github.com/pkg/diff](https://godoc.org/github.com/pkg/diff)
 
 * [github.com/pkg/errors](https://godoc.org/github.com/pkg/errors)
 
@@ -289,7 +309,13 @@ Thank you to the following **GIANTS**:
 
 * [github.com/tmc/grpc-websocket-proxy](https://godoc.org/github.com/tmc/grpc-websocket-proxy)
 
+* [github.com/ugorji/go](https://godoc.org/github.com/ugorji/go)
+
 * [github.com/xiang90/probing](https://godoc.org/github.com/xiang90/probing)
+
+* [github.com/xordataexchange/crypt](https://godoc.org/github.com/xordataexchange/crypt)
+
+* [github.com/yuin/goldmark](https://godoc.org/github.com/yuin/goldmark)
 
 * [go.etcd.io/bbolt](https://godoc.org/go.etcd.io/bbolt)
 

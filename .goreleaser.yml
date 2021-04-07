@@ -1,0 +1,59 @@
+project_name: drb
+
+builds:
+  - id: drb
+    main: ./main.go
+    binary: drb
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - GO111MODULE=on
+      - MACOSX_DEPLOYMENT_TARGET=10.11
+
+dockers:
+  - image_templates:
+      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-amd64"
+    ids:
+      - drb
+    use_buildx: true
+    build_flag_templates:
+      - --platform=linux/amd64
+  - image_templates:
+      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-arm64"
+    ids:
+      - drb
+    use_buildx: true
+    build_flag_templates:
+      - --platform=linux/arm64
+
+docker_manifests:
+  - name_template: "ghcr.io/devrel-blox/drb:latest"
+    image_templates:
+      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-amd64"
+      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-arm64"
+
+  - name_template: "ghcr.io/devrel-blox/drb:{{ .Tag }}"
+    image_templates:
+      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-amd64"
+      - "ghcr.io/devrel-blox/drb:{{ .Tag }}-arm64"
+
+brews:
+  - name: drb
+    tap:
+      owner: devrel-blox
+      name: homebrew-tap
+      token: "{{ .Env.TAP_WRITE_KEY }}"
+    folder: formula
+
+    commit_author:
+      name: DevRel Blox
+      email: support@devrel-blox.com
+
+    homepage: "https://github.com/devrel-blox/"
+    description: "DevRel Blox"
+    license: "MIT"

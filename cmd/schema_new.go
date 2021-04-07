@@ -8,8 +8,8 @@ import (
 
 var name string
 
-// newCmd represents the new command
-var newCmd = &cobra.Command{
+// schemaNewCmd represents the new command
+var schemaNewCmd = &cobra.Command{
 	Use:   "new [schema name]",
 	Short: "Add a new schema to a repository",
 	Long: `A longer description that spans multiple lines and likely contains examples
@@ -32,7 +32,7 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	schemaCmd.AddCommand(newCmd)
+	schemaCmd.AddCommand(schemaNewCmd)
 
 	// Here you will define your flags and configuration settings.
 
