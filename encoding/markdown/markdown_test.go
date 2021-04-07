@@ -14,7 +14,7 @@ My Body
 Body Line 2`
 	expected := `key1: value
 key2: value2
-body_raw: |
+body: |
   My Body
   Body Line 2
 `

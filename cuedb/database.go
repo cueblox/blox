@@ -2,9 +2,11 @@ package cuedb
 
 import (
 	"fmt"
+	"path"
 	"strings"
 
 	"cuelang.org/go/cue"
+	"github.com/cueblox/blox/config"
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -12,13 +14,14 @@ import (
 // into it and know immediately if they're valid or not.
 type Database struct {
 	runtime *cue.Runtime
+	config  *config.BloxConfig
 	db      cue.Value
 	tables  map[string]Table
 }
 
 // NewDatabase creates a "world" struct to store
 // records
-func NewDatabase() (Database, error) {
+func NewDatabase(cfg *config.BloxConfig) (Database, error) {
 	var cueRuntime cue.Runtime
 	cueInstance, err := cueRuntime.Compile("", "")
 
@@ -28,6 +31,7 @@ func NewDatabase() (Database, error) {
 
 	return Database{
 		runtime: &cueRuntime,
+		config:  cfg,
 		db:      cueInstance.Value(),
 		tables:  make(map[string]Table),
 	}, nil
@@ -156,6 +160,18 @@ func (t *Table) Directory() string {
 // of the table's name
 func (t *Table) CuePath() cue.Path {
 	return cue.ParsePath(t.plural)
+}
+
+func (d *Database) SourcePath(t Table) string {
+	return path.Join(d.config.SourceDir, t.Directory())
+}
+
+func (d *Database) DestinationPath(t Table) string {
+	return path.Join(d.config.BuildDir, t.Directory())
+}
+
+func (d *Database) StaticPath(t Table) string {
+	return path.Join(d.config.StaticDir, t.Directory())
 }
 
 // Insert adds a record
