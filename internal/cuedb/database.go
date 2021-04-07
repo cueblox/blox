@@ -114,7 +114,7 @@ func (d *Database) RegisterTables(cueString string) error {
 	// First, Unify whatever schemas the users want. We'll
 	// do our best to extract whatever information from
 	// it we require
-	schemaPath := cue.ParsePath(fmt.Sprintf(`schemas."%s"."%s"`, metadata.Namespace, metadata.Name))
+	schemaPath := cue.ParsePath(fmt.Sprintf(`schema."%s"."%s"`, metadata.Namespace, metadata.Name))
 	d.db = d.db.FillPath(schemaPath, cueValue)
 
 	// Find Models and register as a table
@@ -152,8 +152,7 @@ func (d *Database) RegisterTables(cueString string) error {
 			return err
 		}
 
-		abc := fmt.Sprintf("{\n%s: %s: _\n%s: [string]: %s.%s\n}", table.InlinePath(), fields.Label(), modelV1Metadata.Plural, table.cuePath.String(), fields.Label())
-		inst, err := d.runtime.Compile("", abc)
+		inst, err := d.runtime.Compile("", fmt.Sprintf("{\n%s: %s: _\ndata: %s: [string]: %s.%s\n}", table.InlinePath(), fields.Label(), modelV1Metadata.Plural, table.cuePath.String(), fields.Label()))
 		if err != nil {
 			return err
 		}
@@ -193,11 +192,6 @@ func (d *Database) GetTableDataDir(table Table) string {
 	}
 
 	return path.Join(dataDir, table.Directory())
-}
-
-// MarshalJSON returns the database encoded in JSON format
-func (d *Database) MarshalJSON() ([]byte, error) {
-	return d.db.MarshalJSON()
 }
 
 func (d *Database) DumpAll() {
@@ -262,7 +256,7 @@ func (t *Table) InlinePath() string {
 }
 
 func (t *Table) CueDataPath() cue.Path {
-	return cue.ParsePath(t.metadata.Plural)
+	return cue.ParsePath(fmt.Sprintf("data.%s", t.metadata.Plural))
 }
 
 // Insert adds a record
@@ -277,6 +271,12 @@ func (d *Database) Insert(table Table, record map[string]interface{}) error {
 	d.db = d.db.Unify(filledValued)
 
 	return nil
+}
+
+// MarshalJSON returns the database encoded in JSON format
+func (d *Database) MarshalJSON() ([]byte, error) {
+	data := d.db.LookupPath(cue.ParsePath("data"))
+	return data.MarshalJSON()
 }
 
 // ReferentialIntegrity checks the relationships between
@@ -298,7 +298,7 @@ func (d *Database) ReferentialIntegrity() error {
 					return err
 				}
 
-				inst, err := d.runtime.Compile("", fmt.Sprintf("{%s: _\n%s: %s: %s: or([ for k, _ in %s {k}])}", foreignTable.metadata.Plural, table.InlinePath(), table.name, fields.Label(), foreignTable.metadata.Plural))
+				inst, err := d.runtime.Compile("", fmt.Sprintf("{data: %s: _\n%s: %s: %s: or([ for k, _ in data.%s {k}])}", foreignTable.metadata.Plural, table.InlinePath(), table.name, fields.Label(), foreignTable.metadata.Plural))
 				if err != nil {
 					return err
 				}

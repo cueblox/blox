@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -62,9 +61,6 @@ var buildCmd = &cobra.Command{
 
 		jso, err := database.MarshalJSON()
 		cobra.CheckErr(err)
-
-		fmt.Println("I should write this to a file")
-		fmt.Println(string(jso))
 
 		buildDir, err := database.GetConfigString("build_dir")
 		cobra.CheckErr(err)
