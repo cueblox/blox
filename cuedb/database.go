@@ -1,27 +1,36 @@
 package cuedb
 
 import (
+	_ "embed"
 	"fmt"
+	"io/ioutil"
 	"path"
 	"strings"
 
 	"cuelang.org/go/cue"
-	"github.com/cueblox/blox/config"
 	"github.com/hashicorp/go-multierror"
 )
+
+//go:embed config.cue
+var BaseConfig string
+
+type Model struct {
+	plural              string
+	supportedExtensions []string
+}
 
 // Database is the "world" struct. We can "insert" records
 // into it and know immediately if they're valid or not.
 type Database struct {
 	runtime *cue.Runtime
-	config  *config.BloxConfig
+	config  *cue.Value
 	db      cue.Value
 	tables  map[string]Table
 }
 
 // NewDatabase creates a "world" struct to store
 // records
-func NewDatabase(cfg *config.BloxConfig) (Database, error) {
+func NewDatabase() (Database, error) {
 	var cueRuntime cue.Runtime
 	cueInstance, err := cueRuntime.Compile("", "")
 
@@ -29,12 +38,60 @@ func NewDatabase(cfg *config.BloxConfig) (Database, error) {
 		return Database{}, err
 	}
 
-	return Database{
+	database := Database{
 		runtime: &cueRuntime,
-		config:  cfg,
 		db:      cueInstance.Value(),
 		tables:  make(map[string]Table),
-	}, nil
+	}
+
+	err = database.LoadConfig()
+	if nil != err {
+		return Database{}, err
+	}
+
+	return database, nil
+}
+
+func (d *Database) LoadConfig() error {
+	configInstance, err := d.runtime.Compile("", BaseConfig)
+	if err != nil {
+		return err
+	}
+
+	configValue := configInstance.Value()
+
+	localConfig, err := ioutil.ReadFile("blox.cue")
+	if err != nil {
+		return err
+	}
+
+	localConfigInstance, err := d.runtime.Compile("", localConfig)
+	if err != nil {
+		return err
+	}
+
+	mergedConfig := configValue.Unify(localConfigInstance.Value())
+	if err = mergedConfig.Validate(cue.Concrete(true)); err != nil {
+		return err
+	}
+
+	d.config = &mergedConfig
+
+	return nil
+}
+
+func (d *Database) GetConfigString(key string) (string, error) {
+	value, err := d.config.LookupField(key)
+	if err != nil {
+		return "", err
+	}
+
+	str, err := value.Value.String()
+	if err != nil {
+		return "", err
+	}
+
+	return str, nil
 }
 
 // RegisterTables ensures that the cueString schema is a valid schema
@@ -78,7 +135,7 @@ func (d *Database) RegisterTables(cueString string) error {
 		}
 
 		// We have a Definition, does it define a model?
-		plural, err := GetV1Model(fields.Value())
+		modelV1Metadata, err := GetV1Model(fields.Value())
 		if nil != err {
 			continue
 		}
@@ -87,7 +144,7 @@ func (d *Database) RegisterTables(cueString string) error {
 			schemaNamespace: metadata.Namespace,
 			schemaName:      metadata.Name,
 			name:            fields.Label(),
-			plural:          plural,
+			metadata:        modelV1Metadata,
 		}
 
 		if _, ok := d.tables[table.ID()]; ok {
@@ -99,7 +156,7 @@ func (d *Database) RegisterTables(cueString string) error {
 			return err
 		}
 
-		inst, err := d.runtime.Compile("", fmt.Sprintf("{%s: _\n%s: [ID=string]: %s}", fields.Label(), plural, fields.Label()))
+		inst, err := d.runtime.Compile("", fmt.Sprintf("{%s: _\n%s: [ID=string]: %s}", fields.Label(), modelV1Metadata.Plural, fields.Label()))
 		if err != nil {
 			return err
 		}
@@ -130,15 +187,31 @@ func (d *Database) GetTable(name string) (Table, error) {
 	return Table{}, fmt.Errorf("Table '%s' doesn't exist in database", name)
 }
 
+func (d *Database) GetTableDataDir(table Table) string {
+	dataDir, err := d.GetConfigString("data_dir")
+	if err != nil {
+		// Config is already validated at this stage, should
+		// never happen
+		panic("Unexpected error fetching data_dir")
+	}
+
+	return path.Join(dataDir, table.Directory())
+}
+
 // MarshalJSON returns the database encoded in JSON format
 func (d *Database) MarshalJSON() ([]byte, error) {
 	return d.db.MarshalJSON()
 }
 
+func (d *Database) DumpAll() {
+	fmt.Println(d.config)
+	fmt.Println(d.db)
+}
+
 // Table represents a schema record
 type Table struct {
-	name   string
-	plural string // The directory where we find the records
+	name     string
+	metadata ModelV1Metadata
 
 	// Which schema registered this table?
 	schemaNamespace string
@@ -153,25 +226,27 @@ func (t *Table) ID() string {
 // Directory returns the plural form
 // of the table name
 func (t *Table) Directory() string {
-	return t.plural
+	return t.metadata.Plural
+}
+
+func (t *Table) IsSupportedExtension(ext string) bool {
+	for _, val := range t.metadata.SupportedExtensions {
+		if val == ext {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (t *Table) GetSupportedExtensions() []string {
+	return t.metadata.SupportedExtensions
 }
 
 // CuePath returns the plural form
 // of the table's name
 func (t *Table) CuePath() cue.Path {
-	return cue.ParsePath(t.plural)
-}
-
-func (d *Database) SourcePath(t Table) string {
-	return path.Join(d.config.SourceDir, t.Directory())
-}
-
-func (d *Database) DestinationPath(t Table) string {
-	return path.Join(d.config.BuildDir, t.Directory())
-}
-
-func (d *Database) StaticPath(t Table) string {
-	return path.Join(d.config.StaticDir, t.Directory())
+	return cue.ParsePath(t.metadata.Plural)
 }
 
 // Insert adds a record
@@ -193,7 +268,6 @@ func (d *Database) Insert(table Table, record map[string]interface{}) error {
 func (d *Database) ReferentialIntegrity() error {
 	for _, table := range d.GetTables() {
 		// Walk each field and look for _id labels
-		// fmt.Println("Finding Def: ", table.name)
 		val := d.db.LookupDef(table.name)
 
 		fields, err := val.Fields(cue.Optional(true))
@@ -208,7 +282,7 @@ func (d *Database) ReferentialIntegrity() error {
 					return err
 				}
 
-				inst, err := d.runtime.Compile("", fmt.Sprintf("{%s: _\n%s: %s: or([ for k, _ in %s {k}])}", foreignTable.plural, table.name, fields.Label(), foreignTable.plural))
+				inst, err := d.runtime.Compile("", fmt.Sprintf("{%s: _\n%s: %s: or([ for k, _ in %s {k}])}", foreignTable.metadata.Plural, table.name, fields.Label(), foreignTable.metadata.Plural))
 				if err != nil {
 					return err
 				}

@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/cueblox/blox/blox"
-	"github.com/cueblox/blox/config"
 	"github.com/cueblox/blox/cuedb"
+	"github.com/cueblox/blox/encoding/markdown"
 	"github.com/goccy/go-yaml"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pterm/pterm"
@@ -24,16 +24,13 @@ var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Convert, Validate, & Build Your JSON Blox",
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg, err := config.Load()
-		cobra.CheckErr(err)
-
-		database, err := cuedb.NewDatabase(cfg)
+		database, err := cuedb.NewDatabase()
 		cobra.CheckErr(err)
 
 		// Load Schemas!
 		cobra.CheckErr(database.RegisterTables(blox.ProfileCue))
 
-		cobra.CheckErr(convertModels(&database))
+		// cobra.CheckErr(convertModels(&database))
 		cobra.CheckErr(buildModels(&database))
 
 		if referentialIntegrity {
@@ -61,7 +58,13 @@ func buildModels(db *cuedb.Database) error {
 	pterm.Info.Println("Validating ...")
 
 	for _, table := range db.GetTables() {
-		err := filepath.Walk(db.DestinationPath(table),
+		err := os.MkdirAll(db.GetTableDataDir(table), 0755)
+		if err != nil {
+			errors = multierror.Append(err)
+			continue
+		}
+
+		err = filepath.Walk(db.GetTableDataDir(table),
 			func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
@@ -71,12 +74,10 @@ func buildModels(db *cuedb.Database) error {
 					return err
 				}
 
-				ext := filepath.Ext(path)
+				ext := strings.TrimPrefix(filepath.Ext(path), ".")
 
-				// if ext != cfg.DefaultExtension {
-				// Should be SupportedExtensions?
-				if ext != ".yaml" && ext != ".yml" {
-					return err
+				if !table.IsSupportedExtension(ext) {
+					return nil
 				}
 
 				slug := strings.Replace(filepath.Base(path), ext, "", -1)
@@ -84,6 +85,18 @@ func buildModels(db *cuedb.Database) error {
 				bytes, err := ioutil.ReadFile(path)
 				if err != nil {
 					return multierror.Append(err)
+				}
+
+				// Loaders to get to YAML
+				// We should offer various, simple for now with markdown
+				mdStr := ""
+				if ext == "md" || ext == "mdx" {
+					mdStr, err = markdown.ToYAML(string(bytes))
+					if err != nil {
+						return err
+					}
+
+					bytes = []byte(mdStr)
 				}
 
 				var istruct = make(map[string]interface{})

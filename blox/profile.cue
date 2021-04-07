@@ -11,6 +11,7 @@
 	#Website: {
 		_model: {
 			plural: "websites"
+			supportedExtensions: ["yaml", "yml"]
 		}
 
 		url: string
@@ -21,6 +22,7 @@
 	#Profile: {
 		_model: {
 			plural: "profiles"
+			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}
 
 		first_name: string

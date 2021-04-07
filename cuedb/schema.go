@@ -2,6 +2,7 @@ package cuedb
 
 import (
 	"errors"
+	"fmt"
 
 	"cuelang.org/go/cue"
 )
@@ -62,9 +63,9 @@ type SchemaV1Metadata struct {
 	Name      string
 }
 
-// SCHEMA_V1_METADATA is the cue representation of
+// SchemaV1MetadataCue is the cue representation of
 // SchemaV1Metadata
-const SCHEMA_V1_METADATA = `
+const SchemaV1MetadataCue = `
 {
 	_schema: {
 		namespace: string
@@ -76,7 +77,7 @@ const SCHEMA_V1_METADATA = `
 // GetSchemaV1Metadata returns the metadata for a cue.Value
 func GetSchemaV1Metadata(schema cue.Value) (SchemaV1Metadata, error) {
 	var cueRuntime cue.Runtime
-	cueInstance, err := cueRuntime.Compile("schemav1", SCHEMA_V1_METADATA)
+	cueInstance, err := cueRuntime.Compile("schemav1", SchemaV1MetadataCue)
 	if err != nil {
 		return SchemaV1Metadata{}, err
 	}
@@ -110,48 +111,48 @@ func GetSchemaV1Metadata(schema cue.Value) (SchemaV1Metadata, error) {
 
 // V1_MODEL is the cue representation of
 // Model metadata
-const V1_MODEL = `
+type ModelV1Metadata struct {
+	Plural              string
+	SupportedExtensions []string
+}
+
+const ModelV1MetadataCue = `
 {
 	_model: {
 		plural: string
+		supportedExtensions: [...string]
 	}
 }
 `
 
 // GetV1Model returns the V1_MODEL information from a cue.Value
-func GetV1Model(schema cue.Value) (string, error) {
+func GetV1Model(schema cue.Value) (ModelV1Metadata, error) {
 	var cueRuntime cue.Runtime
-	cueInstance, err := cueRuntime.Compile("", V1_MODEL)
+	modelV1Metadata := ModelV1Metadata{}
+
+	cueInstance, err := cueRuntime.Compile("", ModelV1MetadataCue)
 	if err != nil {
-		return "", err
-	}
-	modelSchema := schema.Unify(cueInstance.Value())
-	if err = modelSchema.Validate(); err != nil {
-		return "", err
+		return modelV1Metadata, err
 	}
 
-	fields, err := modelSchema.Fields(cue.All())
-	if err != nil {
-		return "", err
-	}
-
+	fields, err := schema.Fields(cue.Hidden(true))
 	for fields.Next() {
 		if fields.Label() == "_model" {
-			schemaValue := fields.Value()
+			modelSchema := fields.Value()
+			modelSchema.Unify(cueInstance.Value())
 
-			pluralField, err := schemaValue.LookupField("plural")
-			if err != nil {
-				return "", err
+			if err = modelSchema.Validate(); err != nil {
+				return modelV1Metadata, err
 			}
 
-			plural, err := pluralField.Value.String()
+			err = modelSchema.Decode(&modelV1Metadata)
 			if err != nil {
-				return "", err
+				return modelV1Metadata, nil
 			}
 
-			return plural, nil
+			return modelV1Metadata, nil
 		}
 	}
 
-	return "", nil
+	return modelV1Metadata, fmt.Errorf("Couldn't find _schema")
 }
