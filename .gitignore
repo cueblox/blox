@@ -4,4 +4,5 @@
 /test/coverage.*
 repository/
 blox.yaml
+repository.yaml
 blox
