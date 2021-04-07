@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/cueblox/blox/internal/blox"
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/encoding/markdown"
 	"github.com/goccy/go-yaml"
@@ -28,7 +29,25 @@ var buildCmd = &cobra.Command{
 		cobra.CheckErr(err)
 
 		// Load Schemas!
-		cobra.CheckErr(database.RegisterTables(blox.ProfileCue))
+		//cobra.CheckErr(database.RegisterTables(blox.ProfileCue))
+		schemaDir, err := database.GetConfigString("schema_dir")
+		cobra.CheckErr(err)
+		err = filepath.WalkDir(schemaDir, func(path string, d fs.DirEntry, err error) error {
+			if !d.IsDir() {
+				fmt.Println(path)
+				fmt.Println(d.Name())
+				bb, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				err = database.RegisterTables(string(bb))
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		cobra.CheckErr(err)
 
 		// cobra.CheckErr(convertModels(&database))
 		cobra.CheckErr(buildModels(&database))
@@ -48,6 +67,15 @@ var buildCmd = &cobra.Command{
 
 		fmt.Println("I should write this to a file")
 		fmt.Println(string(jso))
+
+		buildDir, err := database.GetConfigString("build_dir")
+		cobra.CheckErr(err)
+		err = os.MkdirAll(buildDir, 0755)
+		cobra.CheckErr(err)
+		filename := "data.json"
+		filePath := path.Join(buildDir, filename)
+		err = os.WriteFile(filePath, jso, 0755)
+		cobra.CheckErr(err)
 
 	},
 }

@@ -7,3 +7,4 @@ blox.yaml
 repository.yaml
 blox
 !/internal/blox/
+_build/
