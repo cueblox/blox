@@ -152,13 +152,13 @@ func (d *Database) RegisterTables(cueString string) error {
 			return err
 		}
 
-		abc := fmt.Sprintf("{%s: _\n%s: [ID=string]: %s}", fields.Label(), modelV1Metadata.Plural, fields.Label())
+		abc := fmt.Sprintf("{\n%s: %s: _\n%s: [string]: %s.%s\n}", table.InlinePath(), fields.Label(), modelV1Metadata.Plural, table.cuePath.String(), fields.Label())
 		inst, err := d.runtime.Compile("", abc)
 		if err != nil {
 			return err
 		}
 
-		d.db = d.db.FillPath(schemaPath, inst.Value())
+		d.db = d.db.FillPath(cue.Path{}, inst.Value())
 
 		if err := d.db.Validate(); nil != err {
 			return err
@@ -251,8 +251,18 @@ func (t *Table) CuePath() cue.Path {
 	return t.cuePath
 }
 
+func (t *Table) InlinePath() string {
+	inlinePath := ""
+
+	for _, seg := range t.cuePath.Selectors() {
+		inlinePath = fmt.Sprintf("%s: %s", inlinePath, seg)
+	}
+
+	return strings.TrimPrefix(inlinePath, ": ")
+}
+
 func (t *Table) CueDataPath() cue.Path {
-	return cue.ParsePath(t.cuePath.String() + "." + t.metadata.Plural)
+	return cue.ParsePath(t.metadata.Plural)
 }
 
 // Insert adds a record
@@ -274,9 +284,9 @@ func (d *Database) Insert(table Table, record map[string]interface{}) error {
 func (d *Database) ReferentialIntegrity() error {
 	for _, table := range d.GetTables() {
 		// Walk each field and look for _id labels
-		val := d.db.LookupPath(table.CuePath())
+		val := d.db.LookupPath(table.GetDefPath())
 
-		fields, err := val.Fields(cue.Optional(true))
+		fields, err := val.Fields(cue.All())
 		if err != nil {
 			return err
 		}
@@ -288,8 +298,7 @@ func (d *Database) ReferentialIntegrity() error {
 					return err
 				}
 
-				abc := fmt.Sprintf("{%s: _\n%s: %s: or([ for k, _ in %s {k}])}", foreignTable.CueDataPath().String(), table.name, fields.Label(), foreignTable.metadata.Plural)
-				inst, err := d.runtime.Compile("", abc)
+				inst, err := d.runtime.Compile("", fmt.Sprintf("{%s: _\n%s: %s: %s: or([ for k, _ in %s {k}])}", foreignTable.metadata.Plural, table.InlinePath(), table.name, fields.Label(), foreignTable.metadata.Plural))
 				if err != nil {
 					return err
 				}
