@@ -1,4 +1,4 @@
-package blox
+package schema
 
 // Schema is a definition of a set of
 // related models

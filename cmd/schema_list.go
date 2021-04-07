@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/devrel-blox/blox/blox"
+	"github.com/devrel-blox/blox/schema"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -17,7 +17,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		repo, err := blox.GetRepository()
+		repo, err := schema.GetRepository()
 		cobra.CheckErr(err)
 		var td pterm.TableData
 		header := []string{"Namespace", "Schema", "Version"}
