@@ -24,14 +24,14 @@ type Repository struct {
 }
 
 // GetRepository returns the Repository
-// described by the blox.yaml file in the
+// described by the repository.yaml file in the
 // current directory
 func GetRepository() (*Repository, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
-	configPath := path.Join(wd, "blox.yaml")
+	configPath := path.Join(wd, "repository.yaml")
 	bb, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
@@ -165,7 +165,7 @@ func (r *Repository) writeConfig() error {
 	if err != nil {
 		return err
 	}
-	configPath := path.Join(wd, "blox.yaml")
+	configPath := path.Join(wd, "repository.yaml")
 	return os.WriteFile(configPath, bb, 0755)
 }
 
