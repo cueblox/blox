@@ -3,22 +3,18 @@ package cmd
 import (
 	"errors"
 	"os"
-	"path"
 
-	"github.com/cueblox/blox/blox"
 	"github.com/cueblox/blox/config"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 var (
-	base        string
-	source      string
-	destination string
-	static      string
-	templates   string
-	skipConfig  bool
-	extension   string
+	sourceDir  string
+	buildDir   string
+	staticDir  string
+	skipConfig bool
+	extension  string
 )
 
 // initCmd represents the init command
@@ -41,25 +37,14 @@ The "template" directory is where you can store templates for
 each content type with pre-filled values.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		root, err := os.Getwd()
-		if err != nil {
-			cmd.PrintErr("unable to get current directory")
-			return
-		}
-		err = createDirectories(root)
+		err := createDirectories()
 		cobra.CheckErr(err)
+
 		if !skipConfig {
 			err = writeConfigFile()
 			cobra.CheckErr(err)
 		}
-		for _, model := range blox.Models {
 
-			model, err := blox.GetModel(model.ID)
-			cobra.CheckErr(err)
-			cfg, err := config.Load()
-			cobra.CheckErr(err)
-			cobra.CheckErr(model.New(model.ID+cfg.DefaultExtension, model.TemplatePath()))
-		}
 		pterm.Info.Println("Initialized folder structures.")
 
 	},
@@ -67,11 +52,9 @@ each content type with pre-filled values.
 
 func writeConfigFile() error {
 	cfg := config.BloxConfig{
-		Base:             base,
-		Source:           source,
-		Templates:        templates,
-		Destination:      destination,
-		Static:           static,
+		SourceDir:        sourceDir,
+		BuildDir:         buildDir,
+		StaticDir:        staticDir,
 		DefaultExtension: extension,
 	}
 	f, err := os.Create("blox.yaml")
@@ -83,49 +66,31 @@ func writeConfigFile() error {
 	return err
 }
 
-func createDirectories(root string) error {
-	err := os.MkdirAll(sourceDir(root), 0755)
+func createDirectories() error {
+	err := os.MkdirAll(sourceDir, 0755)
 	if err != nil {
 		return errors.New("creating source directory")
 	}
-	err = os.MkdirAll(destinationDir(root), 0755)
+
+	err = os.MkdirAll(buildDir, 0755)
 	if err != nil {
 		return errors.New("creating destination directory")
 	}
-	err = os.MkdirAll(templateDir(root), 0755)
-	if err != nil {
-		return errors.New("creating template directory")
-	}
 
-	err = os.MkdirAll(staticDir(root), 0755)
+	err = os.MkdirAll(staticDir, 0755)
 	if err != nil {
 		return errors.New("creating dir directory")
 	}
+
 	return nil
-}
-
-func sourceDir(root string) string {
-	return path.Join(root, base, source)
-}
-func destinationDir(root string) string {
-	return path.Join(root, base, destination)
-}
-func templateDir(root string) string {
-	return path.Join(root, base, templates)
-}
-
-func staticDir(root string) string {
-	return path.Join(root, base, static)
 }
 
 func init() {
 	rootCmd.AddCommand(initCmd)
 
-	initCmd.Flags().StringVarP(&base, "base", "b", "content", "base directory for pre- and post- processed content")
-	initCmd.Flags().StringVarP(&source, "source", "s", "source", "where pre-processed content will be stored (source markdown)")
-	initCmd.Flags().StringVarP(&destination, "destination", "d", "out", "where post-processed content will be stored (output json)")
-	initCmd.Flags().StringVarP(&static, "static", "k", "static", "where static files will be stored")
-	initCmd.Flags().StringVarP(&templates, "template", "t", "templates", "where content templates will be stored")
+	initCmd.Flags().StringVarP(&sourceDir, "source", "s", "source", "where pre-processed content will be stored (source markdown)")
+	initCmd.Flags().StringVarP(&buildDir, "destination", "d", "out", "where post-processed content will be stored (output json)")
+	initCmd.Flags().StringVarP(&staticDir, "static", "k", "static", "where static files will be stored")
 	initCmd.Flags().StringVarP(&extension, "extension", "e", ".md", "default file extension for new content")
 	initCmd.Flags().BoolVarP(&skipConfig, "skip", "c", false, "don't write a configuration file")
 

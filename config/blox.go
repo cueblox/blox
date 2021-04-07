@@ -12,11 +12,9 @@ import (
 // BloxConfig stores metadata about a content
 // repository
 type BloxConfig struct {
-	Base             string `json:"base"`
-	Source           string `json:"source"`
-	Destination      string `json:"destination"`
-	Templates        string `json:"templates"`
-	Static           string `json:"static"`
+	SourceDir        string `json:"source_dir"`
+	BuildDir         string `json:"build_dir"`
+	StaticDir        string `json:"static_dir"`
 	DefaultExtension string `json:"default_extension"`
 }
 

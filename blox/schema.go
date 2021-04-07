@@ -1,15 +1,7 @@
 package blox
 
 import (
-	// import go:embed
 	_ "embed"
-	"io/ioutil"
-	"path/filepath"
-	"strings"
-
-	"cuelang.org/go/cuego"
-	"github.com/cueblox/blox/cueutils"
-	"github.com/goccy/go-yaml"
 )
 
 // ArticleCue is the cue for an Article
@@ -43,37 +35,3 @@ var PageCue string
 // PageTemplate is the page template
 //go:embed page.md
 var PageTemplate string
-
-// FromYAML converts converted YAML content into output-ready map
-func FromYAML(path string, modelName string, cue string) (map[string]interface{}, error) {
-	var model = make(map[string]interface{})
-
-	cuego.DefaultContext = &cuego.Context{}
-
-	err := cuego.Constrain(&model, cue)
-	if err != nil {
-		return nil, cueutils.UsefulError(err)
-	}
-
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, cueutils.UsefulError(err)
-	}
-
-	err = yaml.Unmarshal(bytes, &model)
-	if err != nil {
-		return nil, cueutils.UsefulError(err)
-	}
-
-	err = cuego.Complete(&model)
-	if err != nil {
-		return nil, cueutils.UsefulError(err)
-	}
-
-	ext := filepath.Ext(path)
-	slug := strings.Replace(filepath.Base(path), ext, "", -1)
-
-	model["id"] = slug
-
-	return model, nil
-}

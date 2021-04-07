@@ -6,7 +6,7 @@ import (
 
 // ToYAML converts markdown to a YAML file
 // storing the implicit 'body' of the markdown
-// in 'body_raw'
+// in 'body'
 func ToYAML(raw string) (string, error) {
 	var content strings.Builder
 	var err error
@@ -20,7 +20,7 @@ func ToYAML(raw string) (string, error) {
 				// replace with 'body: |' and
 				// indent the rest of the body by 2 spaces
 				if line == "---" {
-					content.WriteString("body_raw: |")
+					content.WriteString("body: |")
 					content.WriteString("\n")
 					inBody = true
 				} else {

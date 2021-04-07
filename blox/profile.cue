@@ -15,6 +15,7 @@
 
 		url: string
 		profile_id?: string
+		body?: string
 	}
 
 	#Profile: {
