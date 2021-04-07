@@ -241,6 +241,10 @@ func (t *Table) GetSupportedExtensions() []string {
 	return t.metadata.SupportedExtensions
 }
 
+func (t *Table) GetDefPath() cue.Path {
+	return cue.ParsePath(t.cuePath.String() + "." + t.name)
+}
+
 // CuePath returns the plural form
 // of the table's name
 func (t *Table) CuePath() cue.Path {
@@ -248,11 +252,7 @@ func (t *Table) CuePath() cue.Path {
 }
 
 func (t *Table) CueDataPath() cue.Path {
-	abc := cue.ParsePath(t.cuePath.String() + "." + t.metadata.Plural)
-
-	fmt.Println("Path", abc)
-
-	return abc
+	return cue.ParsePath(t.cuePath.String() + "." + t.metadata.Plural)
 }
 
 // Insert adds a record
@@ -274,7 +274,7 @@ func (d *Database) Insert(table Table, record map[string]interface{}) error {
 func (d *Database) ReferentialIntegrity() error {
 	for _, table := range d.GetTables() {
 		// Walk each field and look for _id labels
-		val := d.db.LookupDef(table.name)
+		val := d.db.LookupPath(table.CuePath())
 
 		fields, err := val.Fields(cue.Optional(true))
 		if err != nil {
@@ -288,7 +288,8 @@ func (d *Database) ReferentialIntegrity() error {
 					return err
 				}
 
-				inst, err := d.runtime.Compile("", fmt.Sprintf("{%s: _\n%s: %s: or([ for k, _ in %s {k}])}", foreignTable.metadata.Plural, table.name, fields.Label(), foreignTable.metadata.Plural))
+				abc := fmt.Sprintf("{%s: _\n%s: %s: or([ for k, _ in %s {k}])}", foreignTable.CueDataPath().String(), table.name, fields.Label(), foreignTable.metadata.Plural)
+				inst, err := d.runtime.Compile("", abc)
 				if err != nil {
 					return err
 				}

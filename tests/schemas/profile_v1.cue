@@ -1,21 +1,7 @@
 {
 	_schema: {
-		name: "Profile"
-		namespace: "schemas.cueblox.com/people"
-	}
-	
-	globalValue: "https://google.com"
-	defaultValue: *"Hello" | string
-
-	#Website: {
-		_model: {
-			plural: "websites"
-			supportedExtensions: ["yaml", "yml"]
-		}
-
-		url: string
-		profile_id?: string
-		body?: string
+		name:      "Profile"
+		namespace: "schemas.cueblox.com"
 	}
 
 	#Profile: {
@@ -48,5 +34,15 @@
 	#MiscellaneousAccount: {
 		network: string
 		url:     string
+	}
+
+	#Website: {
+		_model: {
+			plural: "websites"
+		}
+
+		url:         string
+		profile_id?: string
+		body?:       string
 	}
 }

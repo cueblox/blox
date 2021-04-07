@@ -106,7 +106,7 @@ func buildModels(db *cuedb.Database) error {
 					return nil
 				}
 
-				slug := strings.Replace(filepath.Base(path), ext, "", -1)
+				slug := strings.TrimSuffix(filepath.Base(path), "."+ext)
 
 				bytes, err := ioutil.ReadFile(path)
 				if err != nil {
