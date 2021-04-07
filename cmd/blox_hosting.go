@@ -3,13 +3,13 @@ package cmd
 import (
 	"errors"
 
-	"github.com/cueblox/blox/hosting"
+	"github.com/cueblox/blox/internal/hosting"
 	// register hosting providers
-	_ "github.com/cueblox/blox/hosting/azure"
+	_ "github.com/cueblox/blox/internal/hosting/azure"
 	// register hosting providers
-	_ "github.com/cueblox/blox/hosting/netlify"
+	_ "github.com/cueblox/blox/internal/hosting/netlify"
 	// register hosting providers
-	_ "github.com/cueblox/blox/hosting/vercel"
+	_ "github.com/cueblox/blox/internal/hosting/vercel"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )

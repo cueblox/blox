@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cueblox/blox/blox"
-	"github.com/cueblox/blox/cuedb"
-	"github.com/cueblox/blox/encoding/markdown"
+	"github.com/cueblox/blox/internal/blox"
+	"github.com/cueblox/blox/internal/cuedb"
+	"github.com/cueblox/blox/internal/encoding/markdown"
 	"github.com/goccy/go-yaml"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pterm/pterm"

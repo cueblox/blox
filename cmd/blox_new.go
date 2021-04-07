@@ -3,8 +3,8 @@ package cmd
 // import (
 // 	"path"
 
-// 	"github.com/cueblox/blox/blox"
-// 	"github.com/cueblox/blox/config"
+// 	"github.com/cueblox/blox/internal/blox"
+// 	"github.com/cueblox/blox/internal/config"
 // 	"github.com/pterm/pterm"
 // 	"github.com/spf13/cobra"
 // )
