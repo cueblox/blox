@@ -39,6 +39,7 @@
 	#Website: {
 		_model: {
 			plural: "websites"
+			supportedExtensions: ["yaml", "yml"]
 		}
 
 		url:         string
