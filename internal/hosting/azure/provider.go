@@ -1,6 +1,6 @@
 package azure
 
-import "github.com/cueblox/blox/hosting"
+import "github.com/cueblox/blox/internal/hosting"
 
 func init() {
 	vp := &Provider{

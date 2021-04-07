@@ -1,4 +1,4 @@
-package netlify
+package vercel
 
 import (
 	// import go:embed
@@ -6,35 +6,35 @@ import (
 	"os"
 	"path"
 
-	"github.com/cueblox/blox/hosting"
+	"github.com/cueblox/blox/internal/hosting"
 	"github.com/pterm/pterm"
 )
 
 func init() {
 	vp := &Provider{
-		internalName:        "netlify",
-		internalDescription: "Netlify express api-only provider",
+		internalName:        "vercel",
+		internalDescription: "Vercel express api-only provider",
 	}
 	hosting.Register(vp.Name(), vp)
 }
 
-// Provider represents the Netlify provider
+// Provider represents vercel
 type Provider struct {
 	internalName        string
 	internalDescription string
 }
 
-// Name is the name
+// Name returns name
 func (p *Provider) Name() string {
 	return p.internalName
 }
 
-// Description is the description
+// Description returns description
 func (p *Provider) Description() string {
 	return p.internalDescription
 }
 
-// Install installs netlify files
+// Install installs vercel hosting
 func (p *Provider) Install() error {
 	// make api directory
 	root, err := os.Getwd()
@@ -48,7 +48,7 @@ func (p *Provider) Install() error {
 	}
 	// create index.js in api directory
 
-	index := path.Join(api, "index.mjs")
+	index := path.Join(api, "index.js")
 	err = hosting.CreateFileWithContents(index, indexjs)
 	if err != nil {
 		return err
@@ -60,23 +60,23 @@ func (p *Provider) Install() error {
 	if err != nil {
 		return err
 	}
-	// create netlify.toml
-	vc := path.Join(root, "netlify.toml")
-	err = hosting.CreateFileWithContents(vc, netlifyToml)
+	// create vercel.json
+	vc := path.Join(root, "vercel.json")
+	err = hosting.CreateFileWithContents(vc, verceljson)
 	if err != nil {
 		return err
 	}
-	pterm.Info.Println("Netlify provider installed.")
+	pterm.Info.Println("Vercel provider installed.")
 	pterm.Info.Println("Run `npm install` to install dependencies.")
 
 	return nil
 }
 
-//go:embed index.mjs
+//go:embed index.js
 var indexjs string
 
-//go:embed netlify.toml
-var netlifyToml string
+//go:embed vercel.json
+var verceljson string
 
 //go:embed package.json
 var packagejson string

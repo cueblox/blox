@@ -7,8 +7,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/cueblox/blox/cuedb"
-	"github.com/cueblox/blox/schema"
+	"github.com/cueblox/blox/internal/cuedb"
+	"github.com/cueblox/blox/internal/schema"
 	"github.com/spf13/cobra"
 )
 

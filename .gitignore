@@ -6,4 +6,4 @@ repository/
 blox.yaml
 repository.yaml
 blox
-!/blox/
+!/internal/blox/

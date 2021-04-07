@@ -1,4 +1,4 @@
-package vercel
+package netlify
 
 import (
 	// import go:embed
@@ -6,35 +6,35 @@ import (
 	"os"
 	"path"
 
-	"github.com/cueblox/blox/hosting"
+	"github.com/cueblox/blox/internal/hosting"
 	"github.com/pterm/pterm"
 )
 
 func init() {
 	vp := &Provider{
-		internalName:        "vercel",
-		internalDescription: "Vercel express api-only provider",
+		internalName:        "netlify",
+		internalDescription: "Netlify express api-only provider",
 	}
 	hosting.Register(vp.Name(), vp)
 }
 
-// Provider represents vercel
+// Provider represents the Netlify provider
 type Provider struct {
 	internalName        string
 	internalDescription string
 }
 
-// Name returns name
+// Name is the name
 func (p *Provider) Name() string {
 	return p.internalName
 }
 
-// Description returns description
+// Description is the description
 func (p *Provider) Description() string {
 	return p.internalDescription
 }
 
-// Install installs vercel hosting
+// Install installs netlify files
 func (p *Provider) Install() error {
 	// make api directory
 	root, err := os.Getwd()
@@ -48,7 +48,7 @@ func (p *Provider) Install() error {
 	}
 	// create index.js in api directory
 
-	index := path.Join(api, "index.js")
+	index := path.Join(api, "index.mjs")
 	err = hosting.CreateFileWithContents(index, indexjs)
 	if err != nil {
 		return err
@@ -60,23 +60,23 @@ func (p *Provider) Install() error {
 	if err != nil {
 		return err
 	}
-	// create vercel.json
-	vc := path.Join(root, "vercel.json")
-	err = hosting.CreateFileWithContents(vc, verceljson)
+	// create netlify.toml
+	vc := path.Join(root, "netlify.toml")
+	err = hosting.CreateFileWithContents(vc, netlifyToml)
 	if err != nil {
 		return err
 	}
-	pterm.Info.Println("Vercel provider installed.")
+	pterm.Info.Println("Netlify provider installed.")
 	pterm.Info.Println("Run `npm install` to install dependencies.")
 
 	return nil
 }
 
-//go:embed index.js
+//go:embed index.mjs
 var indexjs string
 
-//go:embed vercel.json
-var verceljson string
+//go:embed netlify.toml
+var netlifyToml string
 
 //go:embed package.json
 var packagejson string

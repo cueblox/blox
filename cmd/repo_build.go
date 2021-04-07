@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/cueblox/blox/schema"
+	"github.com/cueblox/blox/internal/schema"
 	"github.com/spf13/cobra"
 )
 

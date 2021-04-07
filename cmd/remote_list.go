@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cueblox/blox/schema"
+	"github.com/cueblox/blox/internal/schema"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
