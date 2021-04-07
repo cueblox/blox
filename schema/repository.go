@@ -1,4 +1,4 @@
-package blox
+package schema
 
 import (
 	"bytes"

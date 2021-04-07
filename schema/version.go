@@ -1,4 +1,4 @@
-package blox
+package schema
 
 // Version represents a version of a schema
 type Version struct {
