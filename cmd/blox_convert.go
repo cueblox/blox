@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/devrel-blox/blox/blox"
-	"github.com/devrel-blox/blox/config"
-	"github.com/devrel-blox/blox/encoding/markdown"
+	"github.com/cueblox/blox/blox"
+	"github.com/cueblox/blox/config"
+	"github.com/cueblox/blox/encoding/markdown"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"

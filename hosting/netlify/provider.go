@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/devrel-blox/blox/hosting"
+	"github.com/cueblox/blox/hosting"
 	"github.com/pterm/pterm"
 )
 

@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/devrel-blox/blox/blox"
-	"github.com/devrel-blox/blox/config"
-	"github.com/devrel-blox/blox/cuedb"
+	"github.com/cueblox/blox/blox"
+	"github.com/cueblox/blox/config"
+	"github.com/cueblox/blox/cuedb"
 	"github.com/goccy/go-yaml"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pterm/pterm"

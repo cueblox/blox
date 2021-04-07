@@ -1,5 +1,5 @@
 FROM ubuntu:20.04
 
-COPY drb /
+COPY blox /
 
-ENTRYPOINT ["/drb"]
+ENTRYPOINT ["/blox"]
