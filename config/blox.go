@@ -1,6 +1,7 @@
 package config
 
 import (
+	_ "embed"
 	"errors"
 	"io"
 	"os"
@@ -12,10 +13,8 @@ import (
 // BloxConfig stores metadata about a content
 // repository
 type BloxConfig struct {
-	SourceDir        string `json:"source_dir"`
-	BuildDir         string `json:"build_dir"`
-	StaticDir        string `json:"static_dir"`
-	DefaultExtension string `json:"default_extension"`
+	DataDir             string `json:"data_dir"`
+	SupportedExtensions string `json:"supported_extensions"`
 }
 
 // Write saves the BloxConfig as YAML to the

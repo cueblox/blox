@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 
-	"github.com/cueblox/blox/config"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -39,31 +38,9 @@ each content type with pre-filled values.
 	Run: func(cmd *cobra.Command, args []string) {
 		err := createDirectories()
 		cobra.CheckErr(err)
-
-		if !skipConfig {
-			err = writeConfigFile()
-			cobra.CheckErr(err)
-		}
-
 		pterm.Info.Println("Initialized folder structures.")
 
 	},
-}
-
-func writeConfigFile() error {
-	cfg := config.BloxConfig{
-		SourceDir:        sourceDir,
-		BuildDir:         buildDir,
-		StaticDir:        staticDir,
-		DefaultExtension: extension,
-	}
-	f, err := os.Create("blox.yaml")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	err = cfg.Write(f)
-	return err
 }
 
 func createDirectories() error {

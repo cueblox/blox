@@ -1,6 +1,7 @@
 ---
-name: David
-organization: Company
+first_name: David
+last_name: McKay
+company: Company
 title: Title
 social_accounts:
 - network: twitter
