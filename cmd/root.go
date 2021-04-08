@@ -14,7 +14,6 @@ import (
 var cfgFile string
 var quiet bool
 var Version string
-var BuildDate string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
