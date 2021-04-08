@@ -7,6 +7,8 @@
 	#Contact: {
 		_model: {
 			plural: "contacts"
+			supportedExtensions: ["yaml", "yml", "md", "mdx"]
+
 		}
 
 		name:    #Name
