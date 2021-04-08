@@ -59,7 +59,8 @@ var buildCmd = &cobra.Command{
 			}
 		}
 
-		jso, err := database.MarshalJSON()
+		output := database.GetOutput()
+		jso, err := output.MarshalJSON()
 		cobra.CheckErr(err)
 
 		buildDir, err := database.GetConfigString("build_dir")

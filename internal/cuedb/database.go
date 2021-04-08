@@ -14,11 +14,6 @@ import (
 //go:embed config.cue
 var BaseConfig string
 
-type Model struct {
-	plural              string
-	supportedExtensions []string
-}
-
 // Database is the "world" struct. We can "insert" records
 // into it and know immediately if they're valid or not.
 type Database struct {
@@ -98,7 +93,7 @@ func (d *Database) GetConfigString(key string) (string, error) {
 // and parses the Cue to find Models within. Each Model is registered
 // as a Table, provided the name is available.
 func (d *Database) RegisterTables(cueString string) error {
-	cueInstance, err := d.runtime.Compile(cueString, cueString)
+	cueInstance, err := d.runtime.Compile("", cueString)
 	if nil != err {
 		return err
 	}
@@ -147,12 +142,13 @@ func (d *Database) RegisterTables(cueString string) error {
 			return fmt.Errorf("Table with name '%s' already registered", fields.Label())
 		}
 
-		err = d.db.Validate()
-		if nil != err {
+		if err = d.db.Validate(); err != nil {
 			return err
 		}
 
-		inst, err := d.runtime.Compile("", fmt.Sprintf("{\n%s: %s: _\ndata: %s: [string]: %s.%s\n}", table.InlinePath(), fields.Label(), modelV1Metadata.Plural, table.cuePath.String(), fields.Label()))
+		d.tables[table.ID()] = table
+
+		inst, err := d.runtime.Compile("", table.DataKey())
 		if err != nil {
 			return err
 		}
@@ -163,10 +159,20 @@ func (d *Database) RegisterTables(cueString string) error {
 			return err
 		}
 
-		d.tables[table.ID()] = table
 	}
 
 	return nil
+}
+
+func (t *Table) DataKey() string {
+	return fmt.Sprintf(`{
+		%s: %s: _
+		data: %s: [ID=string]: %s.%s
+
+}`,
+		t.InlinePath(), t.name,
+		t.metadata.Plural, t.cuePath.String(), t.name,
+	)
 }
 
 // GetTables returns the tables in the Database
@@ -261,14 +267,13 @@ func (t *Table) CueDataPath() cue.Path {
 
 // Insert adds a record
 func (d *Database) Insert(table Table, record map[string]interface{}) error {
-	filledValued := d.db.FillPath(table.CueDataPath(), record)
-
-	err := filledValued.Validate()
+	dataFill := d.db.FillPath(table.CueDataPath(), record)
+	err := dataFill.Validate()
 	if nil != err {
 		return err
 	}
 
-	d.db = d.db.Unify(filledValued)
+	d.db = d.db.Unify(dataFill)
 
 	return nil
 }
@@ -313,4 +318,16 @@ func (d *Database) ReferentialIntegrity() error {
 	}
 
 	return nil
+}
+
+func (d *Database) GetOutput() cue.Value {
+	for _, table := range d.GetTables() {
+		inst, err := d.runtime.Compile("", fmt.Sprintf("{data: %s: _\noutput: %s: [ for _, val in data.%s {val}]}", table.metadata.Plural, table.metadata.Plural, table.metadata.Plural))
+		if err != nil {
+			return d.db
+		}
+		d.db = d.db.FillPath(cue.Path{}, inst.Value())
+	}
+
+	return d.db.LookupPath(cue.ParsePath("output"))
 }
