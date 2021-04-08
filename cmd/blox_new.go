@@ -43,5 +43,5 @@ package cmd
 
 // 	newCmd.Flags().StringVarP(&model, "type", "t", "article", "type of content to create")
 // 	cobra.CheckErr(newCmd.MarkFlagRequired("type"))
-// 	newCmd.SetUsageTemplate("drb new --type [type name] [slug]")
+// 	newCmd.SetUsageTemplate("blox new --type [type name] [slug]")
 // }
