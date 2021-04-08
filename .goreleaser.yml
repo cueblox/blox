@@ -4,6 +4,9 @@ builds:
   - id: blox
     main: ./main.go
     binary: blox
+    # Default is `-s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser`.
+    ldflags:
+      - -s -w -X github.com/cueblox/blox/cmd.version={{.Version}}
     goos:
       - linux
       - darwin
