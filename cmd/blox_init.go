@@ -19,7 +19,7 @@ var (
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Create folders and configuration to maintain content with the drb toolset",
+	Short: "Create folders and configuration to maintain content with the blox toolset",
 	Long: `Create a group of folders to store your content. 
 
 If provided, the folders will be created under the "base" directory. 
@@ -29,7 +29,7 @@ folders will be created in the root of the current directory.
 The "source" directory will store your un-processed content, 
 typically Markdown files.
 
-The "destination" directory is where the drb tools will put 
+The "destination" directory is where the blox tools will put 
 content after it has been validated and processed.
 
 The "template" directory is where you can store templates for
