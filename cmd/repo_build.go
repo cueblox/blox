@@ -8,7 +8,7 @@ import (
 // repoBuildCmd represents the build command
 var repoBuildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "A brief description of your command",
+	Short: "Build the schema repository",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 

@@ -93,7 +93,7 @@ fmt: ; $(info $(M) running gofmt…) @ ## Run gofmt on all source files
 	$Q $(GO) fmt $(PKGS)
 
 .PHONY: shoulders
-shoulders: | $(SHOULDERS) ; $(info $(M) running shoulders...) @ ## Run shoulders
+shoulders: | $(SHOULDERS) ; $(info $(M) running shoulders…) @ ## Run shoulders
 	$Q $(SHOULDERS) -w -n Blox
 # Misc
 

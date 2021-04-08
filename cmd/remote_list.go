@@ -13,7 +13,7 @@ import (
 // listCmd represents the list command
 var remoteListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "A brief description of your command",
+	Short: "List schemas and versions available in a remote repository",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 

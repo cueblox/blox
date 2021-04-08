@@ -22,7 +22,7 @@ var (
 
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Convert, Validate, & Build Your JSON Blox",
+	Short: "Validate and build your data",
 	Run: func(cmd *cobra.Command, args []string) {
 		database, err := cuedb.NewDatabase()
 		cobra.CheckErr(err)
