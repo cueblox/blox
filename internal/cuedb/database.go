@@ -267,13 +267,11 @@ func (t *Table) CueDataPath() cue.Path {
 
 // Insert adds a record
 func (d *Database) Insert(table Table, record map[string]interface{}) error {
-	dataFill := d.db.FillPath(table.CueDataPath(), record)
-	err := dataFill.Validate()
+	d.db = d.db.FillPath(table.CueDataPath(), record)
+	err := d.db.Validate()
 	if nil != err {
 		return err
 	}
-
-	d.db = d.db.Unify(dataFill)
 
 	return nil
 }
