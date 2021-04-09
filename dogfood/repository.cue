@@ -1,0 +1,1 @@
+{"repository_root":"repository","namespace":"schemas.cueblox.com","output_dir":"_build"}
