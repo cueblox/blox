@@ -16,7 +16,7 @@ jobs:
         id: build
         uses: cueblox/github-action@v0.0.9
         with:
-          directory: dogfood/data
+          directory: dogfood
 
       - uses: marvinpinto/action-automatic-releases@latest
         with:
