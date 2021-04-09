@@ -18,6 +18,7 @@
 	body?:      string
 	tags?: [...string]
 	section_id?: string
+	weight?: int
 	}
 
 }

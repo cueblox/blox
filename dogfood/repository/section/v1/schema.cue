@@ -13,6 +13,7 @@
 	name:  string
 	description: string
     body?: string
+	weight?: int
 	}
 
 
