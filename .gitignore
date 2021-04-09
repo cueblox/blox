@@ -3,6 +3,7 @@
 /test/tests.*
 /test/coverage.*
 repository/
+!/dogfood/repository/
 /repository.yaml
 /blox
 /_build/
