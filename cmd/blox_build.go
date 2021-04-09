@@ -32,6 +32,9 @@ var buildCmd = &cobra.Command{
 		cobra.CheckErr(err)
 
 		err = filepath.WalkDir(schemaDir, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
 			if !d.IsDir() {
 				bb, err := os.ReadFile(path)
 				if err != nil {
