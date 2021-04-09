@@ -89,6 +89,10 @@ func (d *Database) GetConfigString(key string) (string, error) {
 	return str, nil
 }
 
+const BaseModelCue = `{
+	id: string
+}`
+
 // RegisterTables ensures that the cueString schema is a valid schema
 // and parses the Cue to find Models within. Each Model is registered
 // as a Table, provided the name is available.
@@ -110,6 +114,7 @@ func (d *Database) RegisterTables(cueString string) error {
 	// do our best to extract whatever information from
 	// it we require
 	schemaPath := cue.ParsePath(fmt.Sprintf(`schema."%s"."%s"`, metadata.Namespace, metadata.Name))
+
 	d.db = d.db.FillPath(schemaPath, cueValue)
 
 	// Find Models and register as a table
@@ -117,6 +122,12 @@ func (d *Database) RegisterTables(cueString string) error {
 	if err != nil {
 		return err
 	}
+
+	baseModelInstance, err := d.runtime.Compile("", BaseModelCue)
+	if nil != err {
+		return err
+	}
+	baseModelValue := baseModelInstance.Value()
 
 	for fields.Next() {
 		if !fields.IsDefinition() {
@@ -141,6 +152,10 @@ func (d *Database) RegisterTables(cueString string) error {
 		if _, ok := d.tables[table.ID()]; ok {
 			return fmt.Errorf("Table with name '%s' already registered", fields.Label())
 		}
+
+		// Compile our BaseModel
+		mergedModel := fields.Value().Unify(baseModelValue)
+		d.db = d.db.FillPath(table.GetDefPath(), mergedModel)
 
 		if err = d.db.Validate(); err != nil {
 			return err
@@ -305,6 +320,7 @@ func (d *Database) ReferentialIntegrity() error {
 				if err != nil {
 					return err
 				}
+
 				d.db = d.db.FillPath(cue.Path{}, inst.Value())
 			}
 		}
@@ -320,7 +336,7 @@ func (d *Database) ReferentialIntegrity() error {
 
 func (d *Database) GetOutput() cue.Value {
 	for _, table := range d.GetTables() {
-		inst, err := d.runtime.Compile("", fmt.Sprintf("{data: %s: _\noutput: %s: [ for _, val in data.%s {val}]}", table.metadata.Plural, table.metadata.Plural, table.metadata.Plural))
+		inst, err := d.runtime.Compile("", fmt.Sprintf("{data: %s: _\noutput: %s: [ for key, val in data.%s {val & {id: key} }]}", table.metadata.Plural, table.metadata.Plural, table.metadata.Plural))
 		if err != nil {
 			return d.db
 		}
