@@ -74,6 +74,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// hostingCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	cmdInstall.Flags().StringVarP(&provider, "provider", "p", "vercel", "hosting provider to target")
+	cmdInstall.Flags().StringVarP(&provider, "provider", "p", "azure", "hosting provider to target")
 	cobra.CheckErr(cmdInstall.MarkFlagRequired("provider"))
 }

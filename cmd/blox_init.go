@@ -12,6 +12,7 @@ var (
 	sourceDir  string
 	buildDir   string
 	staticDir  string
+	schemaDir  string
 	skipConfig bool
 	extension  string
 )
@@ -56,9 +57,12 @@ func createDirectories() error {
 
 	err = os.MkdirAll(staticDir, 0755)
 	if err != nil {
-		return errors.New("creating dir directory")
+		return errors.New("creating static directory")
 	}
-
+	err = os.MkdirAll(schemaDir, 0755)
+	if err != nil {
+		return errors.New("creating schema directory")
+	}
 	return nil
 }
 
@@ -66,8 +70,9 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 
 	initCmd.Flags().StringVarP(&sourceDir, "source", "s", "source", "where pre-processed content will be stored (source markdown)")
-	initCmd.Flags().StringVarP(&buildDir, "destination", "d", "out", "where post-processed content will be stored (output json)")
+	initCmd.Flags().StringVarP(&buildDir, "destination", "d", "_build", "where post-processed content will be stored (output json)")
 	initCmd.Flags().StringVarP(&staticDir, "static", "k", "static", "where static files will be stored")
+	initCmd.Flags().StringVarP(&schemaDir, "schema", "a", "schema", "where schema definitions will be stored")
 	initCmd.Flags().StringVarP(&extension, "extension", "e", ".md", "default file extension for new content")
 	initCmd.Flags().BoolVarP(&skipConfig, "skip", "c", false, "don't write a configuration file")
 
