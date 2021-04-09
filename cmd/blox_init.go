@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	// import go:embed
+	_ "embed"
 	"errors"
 	"os"
 
+	"github.com/cueblox/blox/internal/hosting"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -63,6 +66,7 @@ func createDirectories() error {
 	if err != nil {
 		return errors.New("creating schema directory")
 	}
+	hosting.CreateFileWithContents("blox.cue", bloxcue)
 	return nil
 }
 
@@ -77,3 +81,6 @@ func init() {
 	initCmd.Flags().BoolVarP(&skipConfig, "skip", "c", false, "don't write a configuration file")
 
 }
+
+//go:embed blox.cue
+var bloxcue string
