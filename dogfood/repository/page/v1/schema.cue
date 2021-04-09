@@ -17,6 +17,7 @@
     image?: string
 	body?:      string
 	tags?: [...string]
+	section_id?: string
 	}
 
 }
