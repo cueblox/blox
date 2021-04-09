@@ -33,7 +33,7 @@ func init() {
 
 	repoCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "schemas.you.com", "repository namespace")
 
-	repoCmd.PersistentFlags().StringVarP(&output, "output", "o", "build", "directory where build output will be written")
+	repoCmd.PersistentFlags().StringVarP(&output, "output", "o", "_build", "directory where build output will be written")
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
