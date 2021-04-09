@@ -1,0 +1,28 @@
+on:
+  push:
+    paths:
+      - .github/**
+      - dogfood/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Publish CueBlox
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build & Validate Blox Data
+        id: build
+        uses: cueblox/github-action@v0.0.8
+        with:
+          directory: data
+
+      - uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "blox"
+          prerelease: true
+          title: "CueBlox"
+          files: |
+            dogfood/data/_build/data.json
