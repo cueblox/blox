@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/cueblox/blox/internal/schema"
+	"github.com/cueblox/blox/internal/repository"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +20,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		repo, err := schema.GetRepository()
+		repo, err := repository.GetRepository()
 		cobra.CheckErr(err)
 		pterm.Info.Printf("Using repository: %s\n", repo.Namespace)
 		schema := args[0]
