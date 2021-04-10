@@ -37,19 +37,3 @@ func ToYAML(raw string) (string, error) {
 	}
 	return content.String(), err
 }
-
-/*
---- first delimiter
-key: value
-key2: value
----
-body text
-
-===========
-
-key: value
-key2: value
-body: |
-  body text
-  next line of body text
-*/

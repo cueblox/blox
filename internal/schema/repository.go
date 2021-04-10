@@ -102,7 +102,7 @@ type Repository struct {
 }
 
 // GetRepository returns the Repository
-// described by the repository.yaml file in the
+// described by the repository.cue file in the
 // current directory
 func GetRepository() (*Repository, error) {
 	sdb, err := NewDatabase()
