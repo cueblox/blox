@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cueblox/blox/internal/schema"
+	"github.com/cueblox/blox/internal/repository"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +26,7 @@ to quickly create a Cobra application.`,
 		manifest := fmt.Sprintf("https://%s/manifest.json", args[0])
 		res, err := http.Get(manifest)
 		cobra.CheckErr(err)
-		var repos schema.Repository
+		var repos repository.Repository
 		json.NewDecoder(res.Body).Decode(&repos)
 
 		// TODO extract and reuse with schema_list.go

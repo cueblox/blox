@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"github.com/cueblox/blox/internal/cuedb"
-	"github.com/cueblox/blox/internal/schema"
+	"github.com/cueblox/blox/internal/repository"
 	"github.com/spf13/cobra"
 )
 
@@ -28,11 +28,11 @@ to quickly create a Cobra application.`,
 		manifest := fmt.Sprintf("https://%s/manifest.json", args[0])
 		res, err := http.Get(manifest)
 		cobra.CheckErr(err)
-		var repos schema.Repository
+		var repos repository.Repository
 		json.NewDecoder(res.Body).Decode(&repos)
 		schemaName := args[1]
 		version := args[2]
-		var selectedVersion *schema.Version
+		var selectedVersion *repository.Version
 		for _, s := range repos.Schemas {
 			if s.Name == schemaName {
 				for _, v := range s.Versions {
