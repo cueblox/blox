@@ -56,7 +56,8 @@ var cmdInstall = &cobra.Command{
 			cobra.CheckErr(err)
 		}
 		pterm.Info.Printf("Installing support for %s\n", p.Name())
-		p.Install()
+		cobra.CheckErr(p.Install())
+		pterm.Success.Printf("%s hosting installed\n", p.Name())
 	},
 }
 
@@ -65,15 +66,6 @@ func init() {
 	hostingCmd.AddCommand(cmdInstall)
 	rootCmd.AddCommand(hostingCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// hostingCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// hostingCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	cmdInstall.Flags().StringVarP(&provider, "provider", "p", "azure", "hosting provider to target")
 	cobra.CheckErr(cmdInstall.MarkFlagRequired("provider"))
 }
