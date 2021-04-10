@@ -365,14 +365,19 @@ func (d *Database) ReferentialIntegrity() error {
 	return nil
 }
 
-func (d *Database) GetOutput() cue.Value {
+func (d *Database) GetOutput() (cue.Value, error) {
+	if len(d.GetTables()) == 0 {
+		return cue.Value{}, fmt.Errorf("No tables to generate output")
+	}
+
 	for _, table := range d.GetTables() {
 		inst, err := d.runtime.Compile("", fmt.Sprintf("{data: %s: _\noutput: %s: [ for key, val in data.%s {val & {id: key} }]}", table.metadata.Plural, table.metadata.Plural, table.metadata.Plural))
 		if err != nil {
-			return d.db
+			return cue.Value{}, err
 		}
+
 		d.db = d.db.FillPath(cue.Path{}, inst.Value())
 	}
 
-	return d.db.LookupPath(cue.ParsePath("output"))
+	return d.db.LookupPath(cue.ParsePath("output")), nil
 }
