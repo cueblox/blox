@@ -88,3 +88,19 @@ func TestRegisterTable(t *testing.T) {
 		t.Fatalf("Was able to register table when ID was already registered: %s", tableOne)
 	}
 }
+
+func TestEmptyDatabaseOutput(t *testing.T) {
+	db, err := newDatabaseWithConfig(`{
+		data_dir: "."
+		schema_dir: "."
+	}`)
+
+	if err != nil {
+		t.Fatal("Failed to create a new database")
+	}
+
+	_, err = db.GetOutput()
+	if err == nil {
+		t.Fatal("Expected error with no tables registered")
+	}
+}

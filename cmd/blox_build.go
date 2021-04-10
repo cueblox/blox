@@ -62,7 +62,9 @@ var buildCmd = &cobra.Command{
 			}
 		}
 
-		output := database.GetOutput()
+		output, err := database.GetOutput()
+		cobra.CheckErr(err)
+
 		jso, err := output.MarshalJSON()
 		cobra.CheckErr(err)
 
