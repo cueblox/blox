@@ -7,6 +7,22 @@ on:
       - "main"
 
 jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        golang:
+          - 1.16
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.golang }}
+      - name: Tests
+        run: go test -v ./...
+
   golangci:
     name: lint
     runs-on: ubuntu-latest

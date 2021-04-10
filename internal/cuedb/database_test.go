@@ -1,13 +1,25 @@
 package cuedb
 
 import (
+	"fmt"
+	"log"
+	"os"
 	"testing"
 )
 
 func TestRegisterTable(t *testing.T) {
-	db, err := NewDatabase()
+	path, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println(path) // for example /home/user
+
+	db, err := newDatabaseWithConfig(`{
+		data_dir: "."
+		schema_dir: "."
+}`)
 	if nil != err {
-		t.FailNow()
+		t.Fatal(err, path)
 	}
 
 	tableOne := `{
