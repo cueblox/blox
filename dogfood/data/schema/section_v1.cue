@@ -5,16 +5,15 @@
 	}
 
 	#Section: {
-		_model: {
+		_dataset: {
 			plural: "sections"
 			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}
 
-	name:  string
-	description: string
-    body?: string
-	weight?: int
+		name:        string
+		description: string
+		body?:       string
+		weight?:     int
 	}
-
 
 }

@@ -1,4 +1,5 @@
 {
-    data_dir: "tests/data"
-    schema_dir: "tests/schemas"
+    data_dir: "dogfood/data/source"
+    schema_dir: "dogfood/data/schema"
+    build_dir: "_build"
 }

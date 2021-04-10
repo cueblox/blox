@@ -5,7 +5,7 @@
 	}
 
 	#Profile: {
-		_model: {
+		_dataset: {
 			plural: "profiles"
 			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}

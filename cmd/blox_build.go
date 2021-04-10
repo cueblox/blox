@@ -94,7 +94,7 @@ func buildModels(config *cuedb.Runtime, runtime *cuedb.Runtime) error {
 	for _, dataSet := range runtime.GetDataSets() {
 		// We're using the Or variant of GetString because we know this call can't
 		// fail, as the config isn't valid without.
-		dataSetDirectory := fmt.Sprintf("%s", config.GetStringOr("data_dir", ""))
+		dataSetDirectory := fmt.Sprintf("%s/%s", config.GetStringOr("data_dir", ""), dataSet.GetDataDirectory())
 
 		err := os.MkdirAll(dataSetDirectory, 0755)
 		if err != nil {

@@ -55,6 +55,10 @@ type DataSet struct {
 	metadata       DataSetMetadata
 }
 
+const RecordBaseCue = `{
+	id: string
+}`
+
 // NewRuntime setups a new database for DataSets to be registered,
 // and data inserted.
 func NewRuntime() (Runtime, error) {
@@ -131,9 +135,9 @@ func (r *Runtime) GetDataSets() map[string]DataSet {
 }
 
 func (r *Runtime) GetDataSet(name string) (DataSet, error) {
-	cueName := name
+	cueName := strings.ToLower(name)
 	if !strings.HasPrefix(cueName, "#") {
-		cueName = fmt.Sprintf("#%s", name)
+		cueName = fmt.Sprintf("#%s", strings.ToLower(name))
 	}
 
 	if dataSet, ok := r.dataSets[cueName]; ok {
@@ -145,6 +149,10 @@ func (r *Runtime) GetDataSet(name string) (DataSet, error) {
 
 func (d *DataSet) ID() string {
 	return strings.ToLower(d.name)
+}
+
+func (d *DataSet) GetDataDirectory() string {
+	return d.metadata.Plural
 }
 
 func (d *DataSet) GetDefinitionPath() cue.Path {
@@ -167,7 +175,7 @@ func (d *DataSet) GetInlinePath() string {
 func (d *DataSet) GetDataMapCue() string {
 	return fmt.Sprintf(`{
 		%s: %s: _
-		%s: %s: [ID=string]: %s.%s
+		%s: %s: [ID=string]: %s.%s & {id: (ID)}
 	}`,
 		d.GetInlinePath(), d.name,
 		dataPathRoot, d.metadata.Plural, d.cuePath.String(), d.name,
@@ -200,6 +208,13 @@ func (r *Runtime) RegisterSchema(cueString string) error {
 		return err
 	}
 
+	// Base Record Constraints
+	baseRecordInstance, err := r.cueRuntime.Compile("", RecordBaseCue)
+	if err != nil {
+		return err
+	}
+	baseRecordValue := baseRecordInstance.Value()
+
 	for fields.Next() {
 		if !fields.IsDefinition() {
 			// Only Definitions can be registered as DataSets
@@ -208,30 +223,30 @@ func (r *Runtime) RegisterSchema(cueString string) error {
 
 		dataSetMetadata, err := r.extractDataSetMetadata(fields.Value())
 		if err != nil {
-			return err
+			// No dataset metadata, skip
+			continue
 		}
 
-		dataset := DataSet{
+		dataSet := DataSet{
 			schemaMetadata: schemaMetadata,
 			name:           fields.Label(),
 			metadata:       dataSetMetadata,
 			cuePath:        schemaPath,
 		}
 
-		if _, ok := r.dataSets[dataset.name]; ok {
+		if _, ok := r.dataSets[dataSet.name]; ok {
 			return fmt.Errorf("DataSet with name '%s' already registered", fields.Label())
 		}
 
 		// Compile our BaseModel
-		r.database = r.database.FillPath(dataset.GetDefinitionPath(), fields.Value())
+		r.database = r.database.FillPath(dataSet.GetDefinitionPath(), baseRecordValue)
 		if err = r.database.Validate(); err != nil {
 			return err
 		}
 
-		r.dataSets[dataset.name] = dataset
+		r.dataSets[strings.ToLower(dataSet.name)] = dataSet
 
-		// TODO: Insert DataKey
-		inst, err := r.cueRuntime.Compile("", dataset.GetDataMapCue())
+		inst, err := r.cueRuntime.Compile("", dataSet.GetDataMapCue())
 		if err != nil {
 			return err
 		}
@@ -273,14 +288,14 @@ func (r *Runtime) ReferentialIntegrity() error {
 		// Walk each field and look for _id labels
 		val := r.database.LookupPath(dataSet.GetDefinitionPath())
 
-		fields, err := val.Fields(cue.Optional(true))
+		fields, err := val.Fields(cue.All())
 		if err != nil {
 			return err
 		}
 
 		for fields.Next() {
 			if strings.HasSuffix(fields.Label(), "_id") {
-				foreignTable, err := r.GetDataSet(fmt.Sprintf("#%s", strings.TrimSuffix(fields.Label(), "_id")))
+				foreignTable, err := r.GetDataSet(fmt.Sprintf("%s", strings.TrimSuffix(fields.Label(), "_id")))
 				if err != nil {
 					return err
 				}
@@ -309,13 +324,15 @@ func (r *Runtime) GetOutput() (cue.Value, error) {
 	}
 
 	for _, dataSet := range r.GetDataSets() {
-		inst, err := r.cueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val & {id: key} }]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
+		inst, err := r.cueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val}]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
 		if err != nil {
 			return cue.Value{}, err
 		}
 
 		r.database = r.database.FillPath(cue.Path{}, inst.Value())
 	}
+
+	fmt.Println(r.database)
 
 	return r.database.LookupPath(cue.ParsePath("output")), nil
 }

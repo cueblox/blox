@@ -5,20 +5,20 @@
 	}
 
 	#Page: {
-		_model: {
+		_dataset: {
 			plural: "pages"
 			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}
 
-	title: string
-	excerpt:  string
-    draft: bool | *false
-    publish_date: string
-    image?: string
-	body?:      string
-	tags?: [...string]
-	section_id?: string
-	weight?: int
+		title:        string
+		excerpt:      string
+		draft:        bool | *false
+		publish_date: string
+		image?:       string
+		body?:        string
+		tags?: [...string]
+		section_id?: string
+		weight?:     int
 	}
 
 }
