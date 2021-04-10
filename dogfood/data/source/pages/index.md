@@ -1,5 +1,6 @@
 ---
 title: Home
+weight: 0
 excerpt: Welcome to where time stands still
 publish_date: "2021-03-19"
 tags:
