@@ -39,7 +39,12 @@ func NewDatabase() (Database, error) {
 		tables:  make(map[string]Table),
 	}
 
-	err = database.LoadConfig()
+	configStr, err := readConfigFile()
+	if err != nil {
+		return database, err
+	}
+
+	err = database.loadConfig(configStr)
 	if nil != err {
 		return Database{}, err
 	}
@@ -47,7 +52,38 @@ func NewDatabase() (Database, error) {
 	return database, nil
 }
 
-func (d *Database) LoadConfig() error {
+func newDatabaseWithConfig(config string) (Database, error) {
+	var cueRuntime cue.Runtime
+	cueInstance, err := cueRuntime.Compile("", "")
+
+	if nil != err {
+		return Database{}, err
+	}
+
+	database := Database{
+		runtime: &cueRuntime,
+		db:      cueInstance.Value(),
+		tables:  make(map[string]Table),
+	}
+
+	err = database.loadConfig(config)
+	if nil != err {
+		return Database{}, err
+	}
+
+	return database, nil
+}
+
+func readConfigFile() (string, error) {
+	config, err := ioutil.ReadFile("blox.cue")
+	if err != nil {
+		return "", err
+	}
+
+	return string(config), nil
+}
+
+func (d *Database) loadConfig(config string) error {
 	configInstance, err := d.runtime.Compile("", BaseConfig)
 	if err != nil {
 		return err
@@ -55,12 +91,7 @@ func (d *Database) LoadConfig() error {
 
 	configValue := configInstance.Value()
 
-	localConfig, err := ioutil.ReadFile("blox.cue")
-	if err != nil {
-		return err
-	}
-
-	localConfigInstance, err := d.runtime.Compile("", localConfig)
+	localConfigInstance, err := d.runtime.Compile("", config)
 	if err != nil {
 		return err
 	}

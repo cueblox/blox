@@ -50,18 +50,27 @@ func TestGetV1Model(t *testing.T) {
 	cueWithModel := `{
 		_model: {
 			plural: "iAmPlurals"
+			supportedExtensions: ["yml", "nopes"]
 		}
 }`
 
 	var cueRuntime cue.Runtime
 	cueInstance, err := cueRuntime.Compile("", cueWithModel)
 
-	plural, err := GetV1Model(cueInstance.Value())
+	model, err := GetV1Model(cueInstance.Value())
 	if nil != err {
 		t.FailNow()
 	}
 
-	if plural != "iAmPlurals" {
+	if model.Plural != "iAmPlurals" {
+		t.FailNow()
+	}
+
+	if model.SupportedExtensions[0] != "yml" {
+		t.FailNow()
+	}
+
+	if model.SupportedExtensions[1] != "nopes" {
 		t.FailNow()
 	}
 
