@@ -2,6 +2,7 @@ package cuedb
 
 import (
 	"fmt"
+	"strings"
 
 	"cuelang.org/go/cue"
 	"github.com/pterm/pterm"
@@ -119,6 +120,29 @@ func (d *DataSet) GetDefinitionPath() cue.Path {
 	return cue.ParsePath(d.cuePath.String() + "." + d.name)
 }
 
+// GetInlinePath returns an inline cue.Path that can be used within a Cue document
+// like "some: key: #Here"
+func (d *DataSet) GetInlinePath() string {
+	inlinePath := ""
+
+	for _, seg := range d.cuePath.Selectors() {
+		inlinePath = fmt.Sprintf("%s: %s", inlinePath, seg)
+	}
+
+	return strings.TrimPrefix(inlinePath, ": ")
+}
+
+// AddDataMap
+func (d *DataSet) GetDataMapCue() string {
+	return fmt.Sprintf(`{
+		%s: %s: _
+		data: %s: [ID=string]: %s.%s
+	}`,
+		d.GetInlinePath(), d.name,
+		d.metadata.Plural, d.cuePath.String(), d.name,
+	)
+}
+
 func (r *Runtime) RegisterSchema(cueString string) error {
 	cueInstance, err := r.cueRuntime.Compile("", cueString)
 	if nil != err {
@@ -176,6 +200,16 @@ func (r *Runtime) RegisterSchema(cueString string) error {
 		r.dataSets[dataset.name] = dataset
 
 		// TODO: Insert DataKey
+		inst, err := r.cueRuntime.Compile("", dataset.GetDataMapCue())
+		if err != nil {
+			return err
+		}
+
+		r.database = r.database.FillPath(cue.Path{}, inst.Value())
+
+		if err := r.database.Validate(); nil != err {
+			return err
+		}
 	}
 
 	return nil

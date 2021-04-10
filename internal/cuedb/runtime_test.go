@@ -3,6 +3,7 @@ package cuedb
 import (
 	"testing"
 
+	"cuelang.org/go/cue"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -101,4 +102,39 @@ func TestRegisterSchema(t *testing.T) {
 	}
 
 	assert.Len(t, runtime.dataSets, 2)
+}
+
+func TestGetDataMapCue(t *testing.T) {
+	somePath := cue.ParsePath("some.data.path")
+
+	dataSet := DataSet{
+		name: "MyDataSet",
+		metadata: DataSetMetadata{
+			Plural: "MyDataSets",
+		},
+		cuePath: somePath,
+	}
+
+	assert.Equal(t, dataSet.GetDataMapCue(), `{
+		some: data: path: MyDataSet: _
+		data: MyDataSets: [ID=string]: some.data.path.MyDataSet
+	}`)
+}
+
+func TestGetInlinePath(t *testing.T) {
+	somePath := cue.ParsePath("some.data.path")
+
+	dataSet := DataSet{
+		cuePath: somePath,
+	}
+
+	assert.Equal(t, dataSet.GetInlinePath(), "some: data: path")
+
+	somePath = cue.ParsePath("another.random.path.of.random.length")
+
+	dataSet = DataSet{
+		cuePath: somePath,
+	}
+
+	assert.Equal(t, dataSet.GetInlinePath(), "another: random: path: of: random: length")
 }
