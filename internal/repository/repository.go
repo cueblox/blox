@@ -142,11 +142,13 @@ func NewRepository(namespace, output, root string) (*Repository, error) {
 		Output:    output,
 	}
 	// create the repository directory
+	pterm.Debug.Printf("\t\tCreating repository root directory at %s", root)
 	err := r.createRoot()
 	if err != nil {
 		return nil, err
 	}
 	// write the config file
+
 	err = r.writeConfig()
 	if err != nil {
 		return nil, err
@@ -315,7 +317,7 @@ func (r *Repository) AddVersion(schema string) error {
 // Build serializes the Repository object
 // into a json file in the `Output` directory.
 func (r *Repository) Build() error {
-
+	pterm.Debug.Printf("\t\tBuilding repository to %s", r.Output)
 	buildDir := path.Join(r.Root, r.Output)
 	buildFile := path.Join(buildDir, "manifest.json")
 
@@ -333,5 +335,7 @@ func (r *Repository) Build() error {
 	if err != nil {
 		return err
 	}
+	pterm.Debug.Printf("\t\tManifest written to %s", buildFile)
+
 	return nil
 }
