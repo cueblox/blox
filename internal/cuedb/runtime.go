@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pterm/pterm"
 )
 
@@ -258,4 +259,77 @@ func (r *Runtime) Insert(dataSet DataSet, record map[string]interface{}) error {
 	}
 
 	return nil
+}
+
+// MarshalJSON returns the database encoded in JSON format
+func (r *Runtime) MarshalJSON() ([]byte, error) {
+	return r.database.LookupPath(cue.ParsePath(dataPathRoot)).MarshalJSON()
+}
+
+// ReferentialIntegrity checks the relationships between
+// the records in the content database
+func (r *Runtime) ReferentialIntegrity() error {
+	for _, dataSet := range r.GetDataSets() {
+		// Walk each field and look for _id labels
+		val := r.database.LookupPath(dataSet.GetDefinitionPath())
+
+		fields, err := val.Fields(cue.Optional(true))
+		if err != nil {
+			return err
+		}
+
+		for fields.Next() {
+			if strings.HasSuffix(fields.Label(), "_id") {
+				foreignTable, err := r.GetDataSet(fmt.Sprintf("#%s", strings.TrimSuffix(fields.Label(), "_id")))
+				if err != nil {
+					return err
+				}
+
+				inst, err := r.cueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\n%s: %s: %s: or([ for k, _ in %s.%s {k}])}", dataPathRoot, foreignTable.metadata.Plural, dataSet.GetInlinePath(), dataSet.name, fields.Label(), dataPathRoot, foreignTable.metadata.Plural))
+				if err != nil {
+					return err
+				}
+
+				r.database = r.database.FillPath(cue.Path{}, inst.Value())
+			}
+		}
+	}
+
+	err := r.database.Validate()
+	if err != nil {
+		return multierror.Prefix(err, "Referential Integrity Failed")
+	}
+
+	return nil
+}
+
+func (r *Runtime) GetOutput() (cue.Value, error) {
+	if len(r.GetDataSets()) == 0 {
+		return cue.Value{}, fmt.Errorf("No DataSets to generate output")
+	}
+
+	for _, dataSet := range r.GetDataSets() {
+		inst, err := r.cueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val & {id: key} }]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
+		if err != nil {
+			return cue.Value{}, err
+		}
+
+		r.database = r.database.FillPath(cue.Path{}, inst.Value())
+	}
+
+	return r.database.LookupPath(cue.ParsePath("output")), nil
+}
+
+func (d *DataSet) IsSupportedExtension(ext string) bool {
+	for _, val := range d.metadata.SupportedExtensions {
+		if val == ext {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (d *DataSet) GetSupportedExtensions() []string {
+	return d.metadata.SupportedExtensions
 }
