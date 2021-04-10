@@ -8,12 +8,20 @@ import (
 	"github.com/pterm/pterm"
 )
 
+const (
+	dataPathRoot   = "data"
+	dataSetField   = "_dataset"
+	schemaPathRoot = "schema"
+	schemaField    = "_schema"
+)
+
 type Runtime struct {
 	cueRuntime *cue.Runtime
 	database   cue.Value
 	dataSets   map[string]DataSet
 }
 
+// Can't use schemaField, yet.
 const SchemaMetadataCue = `{
 	_schema: {
 		namespace: string
@@ -26,6 +34,7 @@ type SchemaMetadata struct {
 	Name      string
 }
 
+// Can't use dataSetField, yet.
 const DataSetMetadataCue = `{
 	_dataset: {
 		plural: string
@@ -82,7 +91,7 @@ func (r *Runtime) extractSchemaMetadata(schema cue.Value) (SchemaMetadata, error
 	}
 
 	schemaMetadata := SchemaMetadata{}
-	schemaValue := versionedSchema.LookupPath(cue.MakePath(cue.Hid("_schema", "_")))
+	schemaValue := versionedSchema.LookupPath(cue.MakePath(cue.Hid(schemaField, "_")))
 
 	err = schemaValue.Decode(&schemaMetadata)
 	if err != nil {
@@ -106,7 +115,7 @@ func (r *Runtime) extractDataSetMetadata(schema cue.Value) (DataSetMetadata, err
 	}
 
 	dataSetMetadata := DataSetMetadata{}
-	schemaValue := dataSetMetadataCueVal.LookupPath(cue.MakePath(cue.Hid("_dataset", "_")))
+	schemaValue := dataSetMetadataCueVal.LookupPath(cue.MakePath(cue.Hid(dataSetField, "_")))
 
 	err = schemaValue.Decode(&dataSetMetadata)
 	if err != nil {
@@ -114,6 +123,27 @@ func (r *Runtime) extractDataSetMetadata(schema cue.Value) (DataSetMetadata, err
 	}
 
 	return dataSetMetadata, nil
+}
+
+func (r *Runtime) GetDataSets() map[string]DataSet {
+	return r.dataSets
+}
+
+func (r *Runtime) GetDataSet(name string) (DataSet, error) {
+	cueName := name
+	if !strings.HasPrefix(cueName, "#") {
+		cueName = fmt.Sprintf("#%s", name)
+	}
+
+	if dataSet, ok := r.dataSets[cueName]; ok {
+		return dataSet, nil
+	}
+
+	return DataSet{}, fmt.Errorf("Couldn't find DataSet with name %s", name)
+}
+
+func (d *DataSet) ID() string {
+	return strings.ToLower(d.name)
 }
 
 func (d *DataSet) GetDefinitionPath() cue.Path {
@@ -136,10 +166,10 @@ func (d *DataSet) GetInlinePath() string {
 func (d *DataSet) GetDataMapCue() string {
 	return fmt.Sprintf(`{
 		%s: %s: _
-		data: %s: [ID=string]: %s.%s
+		%s: %s: [ID=string]: %s.%s
 	}`,
 		d.GetInlinePath(), d.name,
-		d.metadata.Plural, d.cuePath.String(), d.name,
+		dataPathRoot, d.metadata.Plural, d.cuePath.String(), d.name,
 	)
 }
 
@@ -156,7 +186,7 @@ func (r *Runtime) RegisterSchema(cueString string) error {
 		return err
 	}
 
-	schemaPath := cue.ParsePath(fmt.Sprintf(`schema."%s"."%s"`, schemaMetadata.Namespace, schemaMetadata.Name))
+	schemaPath := cue.ParsePath(fmt.Sprintf(`%s."%s"."%s"`, schemaPathRoot, schemaMetadata.Namespace, schemaMetadata.Name))
 
 	// First, Unify whatever schemas the users want. We'll
 	// do our best to extract whatever information from
@@ -210,6 +240,21 @@ func (r *Runtime) RegisterSchema(cueString string) error {
 		if err := r.database.Validate(); nil != err {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (d *DataSet) CueDataPath() cue.Path {
+	return cue.ParsePath(fmt.Sprintf("%s.%s", dataPathRoot, d.metadata.Plural))
+}
+
+func (r *Runtime) Insert(dataSet DataSet, record map[string]interface{}) error {
+	r.database = r.database.FillPath(dataSet.CueDataPath(), record)
+
+	err := r.database.Validate()
+	if nil != err {
+		return err
 	}
 
 	return nil
