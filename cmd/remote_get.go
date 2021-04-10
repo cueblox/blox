@@ -43,10 +43,13 @@ to quickly create a Cobra application.`,
 				}
 			}
 		}
-		database, err := cuedb.NewDatabase()
+		config, err := cuedb.NewRuntime()
 		cobra.CheckErr(err)
-		schemaDir, err := database.GetConfigString("schema_dir")
+		cobra.CheckErr(config.LoadConfig())
+
 		cobra.CheckErr(err)
+		schemaDir := config.GetStringOr("schema_dir", "schema")
+
 		err = os.MkdirAll(schemaDir, 0755)
 		cobra.CheckErr(err)
 		filename := fmt.Sprintf("%s_%s.cue", schemaName, version)
