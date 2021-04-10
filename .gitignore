@@ -2,8 +2,9 @@
 /bin/
 /test/tests.*
 /test/coverage.*
-repository/
+/repository/
 !/dogfood/repository/
+!/internal/repository/
 /repository.yaml
 /blox
 /_build/
