@@ -2,9 +2,9 @@
 
 Blox is the CLI for working with [CueBlox](https://cueblox.com).
 
-## What is Blo
+## What is Blox?
 
-Coming Soon
+See our rapidly-evolving documentation [here](https://github.com/cueblox/blox/blob/main/dogfood/data/source/pages/index.md)
 
 ## Vocabulary
 
