@@ -2,6 +2,7 @@ package cuedb
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"cuelang.org/go/cue"
@@ -250,10 +251,10 @@ func TestGetDataMapCue(t *testing.T) {
 		cuePath: somePath,
 	}
 
-	assert.Equal(t, dataSet.GetDataMapCue(), `{
+	assert.Equal(t, strings.ReplaceAll(dataSet.GetDataMapCue(), " ", ""), strings.ReplaceAll(`{
 		some: data: path: MyDataSet: _
-		data: MyDataSets: [ID=string]: some.data.path.MyDataSet
-	}`)
+		data: MyDataSets: [ID=string]: some.data.path.MyDataSet & {id: (ID)}
+	}`, " ", ""))
 }
 
 func TestGetInlinePath(t *testing.T) {
