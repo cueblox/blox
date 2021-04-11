@@ -13,9 +13,10 @@ func TestGetString(t *testing.T) {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
 
-	runtime.loadConfigString(`{
+	err = runtime.loadConfigString(`{
 		data_dir: "my-data-dir"
 }`)
+	assert.Equal(t, nil, err)
 
 	_, err = runtime.GetString("data_dir_non_exist")
 	assert.NotEqual(t, nil, err)

@@ -34,6 +34,7 @@ func TestExtractSchemaMetadata(t *testing.T) {
 	}
 
 	cueInstance, err := runtime.cueRuntime.Compile("", schemaCue)
+	assert.Equal(t, nil, err)
 
 	schemaMetdata, err := runtime.extractSchemaMetadata(cueInstance.Value())
 	if err != nil {
@@ -58,6 +59,7 @@ func TestExtractDataSetMetadata(t *testing.T) {
 	}
 
 	cueInstance, err := runtime.cueRuntime.Compile("", dataSetCue)
+	assert.Equal(t, nil, err)
 
 	dataSetMetdata, err := runtime.extractDataSetMetadata(cueInstance.Value())
 	if err != nil {
@@ -151,6 +153,7 @@ func TestGetDataSets(t *testing.T) {
 	// I would like to remove this, but for now we'll work with
 	// either
 	dataSet, err := runtime.GetDataSet("#One")
+	assert.Equal(t, nil, err)
 	assert.Equal(t, "#One", dataSet.name)
 
 	dataSet, err = runtime.GetDataSet("One")

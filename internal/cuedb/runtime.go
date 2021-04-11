@@ -55,6 +55,9 @@ type DataSet struct {
 	metadata       DataSetMetadata
 }
 
+// RecordBaseCue is the "Base" configuration that blox
+// expects to exist, but doesn't enforce in user-land.
+// We'll inject this Cue into each DataSet definition.
 const RecordBaseCue = `{
 	id: string
 }`
@@ -295,7 +298,7 @@ func (r *Runtime) ReferentialIntegrity() error {
 
 		for fields.Next() {
 			if strings.HasSuffix(fields.Label(), "_id") {
-				foreignTable, err := r.GetDataSet(fmt.Sprintf("%s", strings.TrimSuffix(fields.Label(), "_id")))
+				foreignTable, err := r.GetDataSet(strings.TrimSuffix(fields.Label(), "_id"))
 				if err != nil {
 					return err
 				}
