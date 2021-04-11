@@ -5,15 +5,14 @@
 	}
 
 	#Category: {
-		_model: {
+		_dataset: {
 			plural: "categories"
 			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}
 
-	name:  string
-	description: string
-    body?: string
+		name:        string
+		description: string
+		body?:       string
 	}
-
 
 }

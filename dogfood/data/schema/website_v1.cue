@@ -5,7 +5,7 @@
 	}
 
 	#Website: {
-		_model: {
+		_dataset: {
 			plural: "websites"
 			supportedExtensions: ["yaml", "yml"]
 		}

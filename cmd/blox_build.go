@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -24,11 +25,16 @@ var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Validate and build your data",
 	Run: func(cmd *cobra.Command, args []string) {
-		database, err := cuedb.NewDatabase()
+		// This can happen at a global Cobra level, if I knew how
+		config, err := cuedb.NewRuntime()
+		cobra.CheckErr(err)
+		cobra.CheckErr(config.LoadConfig())
+
+		runtime, err := cuedb.NewRuntime()
 		cobra.CheckErr(err)
 
 		// Load Schemas!
-		schemaDir, err := database.GetConfigString("schema_dir")
+		schemaDir, err := config.GetString("schema_dir")
 		cobra.CheckErr(err)
 
 		err = filepath.WalkDir(schemaDir, func(path string, d fs.DirEntry, err error) error {
@@ -41,7 +47,7 @@ var buildCmd = &cobra.Command{
 					return err
 				}
 
-				err = database.RegisterTables(string(bb))
+				err = runtime.RegisterSchema(string(bb))
 				if err != nil {
 					return err
 				}
@@ -50,11 +56,11 @@ var buildCmd = &cobra.Command{
 		})
 		cobra.CheckErr(err)
 
-		cobra.CheckErr(buildModels(&database))
+		cobra.CheckErr(buildModels(&config, &runtime))
 
 		if referentialIntegrity {
 			pterm.Info.Println("Checking Referential Integrity")
-			err = database.ReferentialIntegrity()
+			err = runtime.ReferentialIntegrity()
 			if err != nil {
 				pterm.Error.Println(err)
 			} else {
@@ -62,13 +68,13 @@ var buildCmd = &cobra.Command{
 			}
 		}
 
-		output, err := database.GetOutput()
+		output, err := runtime.GetOutput()
 		cobra.CheckErr(err)
 
 		jso, err := output.MarshalJSON()
 		cobra.CheckErr(err)
 
-		buildDir, err := database.GetConfigString("build_dir")
+		buildDir, err := config.GetString("build_dir")
 		cobra.CheckErr(err)
 		err = os.MkdirAll(buildDir, 0755)
 		cobra.CheckErr(err)
@@ -80,19 +86,23 @@ var buildCmd = &cobra.Command{
 	},
 }
 
-func buildModels(db *cuedb.Database) error {
+func buildModels(config *cuedb.Runtime, runtime *cuedb.Runtime) error {
 	var errors error
 
 	pterm.Info.Println("Validating ...")
 
-	for _, table := range db.GetTables() {
-		err := os.MkdirAll(db.GetTableDataDir(table), 0755)
+	for _, dataSet := range runtime.GetDataSets() {
+		// We're using the Or variant of GetString because we know this call can't
+		// fail, as the config isn't valid without.
+		dataSetDirectory := fmt.Sprintf("%s/%s", config.GetStringOr("data_dir", ""), dataSet.GetDataDirectory())
+
+		err := os.MkdirAll(dataSetDirectory, 0755)
 		if err != nil {
 			errors = multierror.Append(err)
 			continue
 		}
 
-		err = filepath.Walk(db.GetTableDataDir(table),
+		err = filepath.Walk(dataSetDirectory,
 			func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
@@ -104,7 +114,7 @@ func buildModels(db *cuedb.Database) error {
 
 				ext := strings.TrimPrefix(filepath.Ext(path), ".")
 
-				if !table.IsSupportedExtension(ext) {
+				if !dataSet.IsSupportedExtension(ext) {
 					return nil
 				}
 
@@ -138,7 +148,7 @@ func buildModels(db *cuedb.Database) error {
 				record := make(map[string]interface{})
 				record[slug] = istruct
 
-				err = db.Insert(table, record)
+				err = runtime.Insert(dataSet, record)
 				if err != nil {
 					return multierror.Append(err)
 				}
