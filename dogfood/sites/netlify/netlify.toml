@@ -2,7 +2,3 @@
 node_bundler = "esbuild"
 
 [functions.api]
-
-[[redirects]]
-from = "/"
-to = "/"
