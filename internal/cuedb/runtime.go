@@ -300,7 +300,12 @@ func (r *Runtime) ReferentialIntegrity() error {
 					return err
 				}
 
-				inst, err := r.cueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\n%s: %s: %s: or([ for k, _ in %s.%s {k}])}", dataPathRoot, foreignTable.metadata.Plural, dataSet.GetInlinePath(), dataSet.name, fields.Label(), dataPathRoot, foreignTable.metadata.Plural))
+				optional := ""
+				if fields.IsOptional() {
+					optional = "?"
+				}
+
+				inst, err := r.cueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
 				if err != nil {
 					return err
 				}
@@ -331,8 +336,6 @@ func (r *Runtime) GetOutput() (cue.Value, error) {
 
 		r.database = r.database.FillPath(cue.Path{}, inst.Value())
 	}
-
-	fmt.Println(r.database)
 
 	return r.database.LookupPath(cue.ParsePath("output")), nil
 }
