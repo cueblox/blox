@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 
 	"cuelang.org/go/cue"
+	"github.com/pterm/pterm"
 )
 
 type Config struct {
@@ -30,6 +31,7 @@ func NewConfig(base string) (*Config, error) {
 // the configuration provided in when the `Engine`
 // was initialized with `New()`
 func (r *Config) LoadConfig(path string) error {
+	pterm.Debug.Printf("\t\tLoading config: %s\n", path)
 	cueConfig, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err

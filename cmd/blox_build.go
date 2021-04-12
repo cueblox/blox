@@ -25,12 +25,12 @@ var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Validate and build your data",
 	Run: func(cmd *cobra.Command, args []string) {
-		// This can happen at a global Cobra level, if I knew how
 		engine, err := cuedb.NewEngine()
 		cobra.CheckErr(err)
 
 		// Load Schemas!
 		schemaDir, err := engine.Config.GetString("schema_dir")
+		pterm.Debug.Printf("\t\tSchema Directory: %s\n", schemaDir)
 		cobra.CheckErr(err)
 
 		err = filepath.WalkDir(schemaDir, func(path string, d fs.DirEntry, err error) error {
@@ -42,6 +42,7 @@ var buildCmd = &cobra.Command{
 				if err != nil {
 					return err
 				}
+				pterm.Debug.Printf("\t\tLoading Schema: %s\n", path)
 
 				err = engine.RegisterSchema(string(bb))
 				if err != nil {
@@ -51,6 +52,7 @@ var buildCmd = &cobra.Command{
 			return nil
 		})
 		cobra.CheckErr(err)
+		pterm.Debug.Println("\t\tBuilding Models")
 
 		cobra.CheckErr(buildModels(engine))
 
@@ -88,6 +90,8 @@ func buildModels(engine *cuedb.Engine) error {
 	pterm.Info.Println("Validating ...")
 
 	for _, dataSet := range engine.GetDataSets() {
+		pterm.Debug.Println("\t\tDataset: %s", dataSet.ID())
+
 		// We're using the Or variant of GetString because we know this call can't
 		// fail, as the config isn't valid without.
 		dataSetDirectory := fmt.Sprintf("%s/%s", engine.Config.GetStringOr("data_dir", ""), dataSet.GetDataDirectory())

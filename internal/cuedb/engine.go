@@ -48,7 +48,7 @@ func NewEngine() (*Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	pterm.Debug.Printf("\t\tLoading default config from %s\n", defaultConfigName)
 	err = cfg.LoadConfig(defaultConfigName)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,6 @@ func (r *Engine) RegisterSchema(cueString string) error {
 	if err != nil {
 		return err
 	}
-
 	schemaPath := cue.ParsePath(fmt.Sprintf(`%s."%s"."%s"`, schemaPathRoot, schemaMetadata.Namespace, schemaMetadata.Name))
 
 	// First, Unify whatever schemas the users want. We'll
@@ -199,6 +198,7 @@ func (r *Engine) RegisterSchema(cueString string) error {
 	baseRecordValue := baseRecordInstance.Value()
 
 	for fields.Next() {
+		pterm.Debug.Println("\t\t\tNext field")
 		if !fields.IsDefinition() {
 			// Only Definitions can be registered as DataSets
 			continue
@@ -206,9 +206,12 @@ func (r *Engine) RegisterSchema(cueString string) error {
 
 		dataSetMetadata, err := r.extractDataSetMetadata(fields.Value())
 		if err != nil {
+
+			pterm.Debug.Printf("\t\t\t%v\n", err)
 			// No dataset metadata, skip
 			continue
 		}
+		pterm.Debug.Printf("\t\t\t%s\n", fields.Value())
 
 		dataSet := DataSet{
 			schemaMetadata: schemaMetadata,
