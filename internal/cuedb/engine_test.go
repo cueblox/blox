@@ -2,26 +2,24 @@ package cuedb
 
 import (
 	"fmt"
-	"path"
 	"strings"
 	"testing"
 
 	"cuelang.org/go/cue"
-	"github.com/cueblox/blox"
 	"github.com/stretchr/testify/assert"
 )
 
-func testConfig(t *testing.T) *blox.Config {
-	c, err := blox.NewConfig(BaseConfig)
-	if err != nil {
-		t.Error(err)
-	}
-	err = c.LoadConfig(path.Join("..", "..", "blox.cue"))
-	if err != nil {
-		t.Error()
-	}
-	return c
-}
+// func testConfig(t *testing.T) *blox.Config {
+// 	c, err := blox.NewConfig(BaseConfig)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// 	err = c.LoadConfig(path.Join("..", "..", "blox.cue"))
+// 	if err != nil {
+// 		t.Error()
+// 	}
+// 	return c
+// }
 func TestNewRuntime(t *testing.T) {
 	//cfg := testConfig(t)
 	runtime, err := NewEngine()
