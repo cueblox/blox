@@ -2,7 +2,7 @@ project_name: blox
 
 builds:
   - id: blox
-    main: ./main.go
+    main: ./cli/blox/main.go
     binary: blox
     # Default is `-s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser`.
     ldflags:
