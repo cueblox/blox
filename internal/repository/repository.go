@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cueblox/blox/config"
+	"github.com/cueblox/blox"
 	"github.com/otiai10/copy"
 	"github.com/pterm/pterm"
 )
@@ -32,7 +32,7 @@ type Repository struct {
 // current directory
 func GetRepository() (*Repository, error) {
 	// initialize config engine with defaults
-	cfg, err := config.New(BaseConfig)
+	cfg, err := blox.New(BaseConfig)
 	if err != nil {
 		return nil, err
 	}
