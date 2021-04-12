@@ -5,8 +5,8 @@ import (
 )
 
 type Runtime struct {
-	cueRuntime *cue.Runtime
-	database   cue.Value
+	CueRuntime *cue.Runtime
+	Database   cue.Value
 }
 
 // NewRuntime creates a new runtime engine
@@ -19,8 +19,8 @@ func NewRuntime() (*Runtime, error) {
 	}
 
 	runtime := &Runtime{
-		cueRuntime: &cueRuntime,
-		database:   cueInstance.Value(),
+		CueRuntime: &cueRuntime,
+		Database:   cueInstance.Value(),
 	}
 
 	return runtime, nil
@@ -37,8 +37,8 @@ func NewRuntimeWithBase(base string) (*Runtime, error) {
 	}
 
 	runtime := &Runtime{
-		cueRuntime: &cueRuntime,
-		database:   cueInstance.Value(),
+		CueRuntime: &cueRuntime,
+		Database:   cueInstance.Value(),
 	}
 
 	return runtime, nil

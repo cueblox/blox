@@ -26,15 +26,11 @@ var buildCmd = &cobra.Command{
 	Short: "Validate and build your data",
 	Run: func(cmd *cobra.Command, args []string) {
 		// This can happen at a global Cobra level, if I knew how
-		config, err := cuedb.NewRuntime()
-		cobra.CheckErr(err)
-		cobra.CheckErr(config.LoadConfig())
-
-		runtime, err := cuedb.NewRuntime()
+		engine, err := cuedb.NewEngine()
 		cobra.CheckErr(err)
 
 		// Load Schemas!
-		schemaDir, err := config.GetString("schema_dir")
+		schemaDir, err := engine.Config.GetString("schema_dir")
 		cobra.CheckErr(err)
 
 		err = filepath.WalkDir(schemaDir, func(path string, d fs.DirEntry, err error) error {
@@ -47,7 +43,7 @@ var buildCmd = &cobra.Command{
 					return err
 				}
 
-				err = runtime.RegisterSchema(string(bb))
+				err = engine.RegisterSchema(string(bb))
 				if err != nil {
 					return err
 				}
@@ -56,11 +52,11 @@ var buildCmd = &cobra.Command{
 		})
 		cobra.CheckErr(err)
 
-		cobra.CheckErr(buildModels(&config, &runtime))
+		cobra.CheckErr(buildModels(engine))
 
 		if referentialIntegrity {
 			pterm.Info.Println("Checking Referential Integrity")
-			err = runtime.ReferentialIntegrity()
+			err = engine.ReferentialIntegrity()
 			if err != nil {
 				pterm.Error.Println(err)
 			} else {
@@ -68,13 +64,13 @@ var buildCmd = &cobra.Command{
 			}
 		}
 
-		output, err := runtime.GetOutput()
+		output, err := engine.GetOutput()
 		cobra.CheckErr(err)
 
 		jso, err := output.MarshalJSON()
 		cobra.CheckErr(err)
 
-		buildDir, err := config.GetString("build_dir")
+		buildDir, err := engine.Config.GetString("build_dir")
 		cobra.CheckErr(err)
 		err = os.MkdirAll(buildDir, 0755)
 		cobra.CheckErr(err)
@@ -86,15 +82,15 @@ var buildCmd = &cobra.Command{
 	},
 }
 
-func buildModels(config *cuedb.Runtime, runtime *cuedb.Runtime) error {
+func buildModels(engine *cuedb.Engine) error {
 	var errors error
 
 	pterm.Info.Println("Validating ...")
 
-	for _, dataSet := range runtime.GetDataSets() {
+	for _, dataSet := range engine.GetDataSets() {
 		// We're using the Or variant of GetString because we know this call can't
 		// fail, as the config isn't valid without.
-		dataSetDirectory := fmt.Sprintf("%s/%s", config.GetStringOr("data_dir", ""), dataSet.GetDataDirectory())
+		dataSetDirectory := fmt.Sprintf("%s/%s", engine.Config.GetStringOr("data_dir", ""), dataSet.GetDataDirectory())
 
 		err := os.MkdirAll(dataSetDirectory, 0755)
 		if err != nil {
@@ -148,7 +144,7 @@ func buildModels(config *cuedb.Runtime, runtime *cuedb.Runtime) error {
 				record := make(map[string]interface{})
 				record[slug] = istruct
 
-				err = runtime.Insert(dataSet, record)
+				err = engine.Insert(dataSet, record)
 				if err != nil {
 					return multierror.Append(err)
 				}

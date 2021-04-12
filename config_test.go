@@ -20,7 +20,7 @@ func TestGetString(t *testing.T) {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
 
-	err = runtime.loadConfigString(`{
+	err = runtime.LoadConfigString(`{
 		data_dir: "my-data-dir"
 }`)
 	assert.Equal(t, nil, err)

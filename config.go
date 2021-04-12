@@ -35,26 +35,26 @@ func (r *Config) LoadConfig(path string) error {
 		return err
 	}
 
-	return r.loadConfigString(string(cueConfig))
+	return r.LoadConfigString(string(cueConfig))
 }
 
-func (r *Config) loadConfigString(cueConfig string) error {
-	cueInstance, err := r.cueRuntime.Compile("", cueConfig)
+func (r *Config) LoadConfigString(cueConfig string) error {
+	cueInstance, err := r.CueRuntime.Compile("", cueConfig)
 	if err != nil {
 		return err
 	}
 
 	cueValue := cueInstance.Value()
 
-	r.database = r.database.Unify(cueValue)
-	if err = r.database.Validate(); err != nil {
+	r.Database = r.Database.Unify(cueValue)
+	if err = r.Database.Validate(); err != nil {
 		return err
 	}
 
 	return nil
 }
 func (r *Config) GetString(key string) (string, error) {
-	keyValue := r.database.LookupPath(cue.ParsePath(key))
+	keyValue := r.Database.LookupPath(cue.ParsePath(key))
 
 	if keyValue.Exists() {
 		return keyValue.String()
