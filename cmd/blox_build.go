@@ -90,7 +90,7 @@ func buildModels(engine *cuedb.Engine) error {
 	pterm.Info.Println("Validating ...")
 
 	for _, dataSet := range engine.GetDataSets() {
-		pterm.Debug.Println("\t\tDataset: %s", dataSet.ID())
+		pterm.Debug.Printf("\t\tDataset: %s\n", dataSet.ID())
 
 		// We're using the Or variant of GetString because we know this call can't
 		// fail, as the config isn't valid without.
