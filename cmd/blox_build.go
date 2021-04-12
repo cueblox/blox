@@ -22,13 +22,30 @@ var (
 	referentialIntegrity bool
 )
 
+const DefaultConfigName = "blox.cue"
+
+const BaseConfig = `{
+    data_dir: string
+    schema_dir: string | *"schemas"
+    build_dir: string | *"_build"
+}`
+
 var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Validate and build your data",
 	Run: func(cmd *cobra.Command, args []string) {
+		userConfig, err := ioutil.ReadFile("blox.cue")
+		cobra.CheckErr(err)
+
 		engine, err := cuedb.NewEngine()
 		cobra.CheckErr(err)
-		cfg, err := blox.NewConfig(cuedb.BaseConfig)
+
+		cfg, err := blox.NewConfig(BaseConfig)
+		cobra.CheckErr(err)
+
+		err = cfg.LoadConfigString(string(userConfig))
+		cobra.CheckErr(err)
+
 		// Load Schemas!
 		schemaDir, err := cfg.GetString("schema_dir")
 		pterm.Debug.Printf("\t\tSchema Directory: %s\n", schemaDir)
