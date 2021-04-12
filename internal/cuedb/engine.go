@@ -17,12 +17,6 @@ const (
 	schemaField    = "_schema"
 )
 
-const BaseConfig = `{
-    data_dir: string
-    schema_dir: string | *"schemas"
-    build_dir: string | *"_build"
-}`
-
 type Engine struct {
 	// configuration
 	// embedded runtime database
@@ -36,7 +30,6 @@ type Engine struct {
 const RecordBaseCue = `{
 	id: string
 }`
-const DefaultConfigName = "blox.cue"
 
 func NewEngine() (*Engine, error) {
 	r, err := blox.NewRuntime()
