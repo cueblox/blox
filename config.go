@@ -7,34 +7,29 @@ import (
 	"cuelang.org/go/cue"
 )
 
-type Engine struct {
-	cueRuntime *cue.Runtime
-	database   cue.Value
+type Config struct {
+	*Runtime
 }
 
-// New setup a new config engine with
-// base as the default
-func New(base string) (Engine, error) {
-	var cueRuntime cue.Runtime
-	cueInstance, err := cueRuntime.Compile("", base)
-
-	if nil != err {
-		return Engine{}, err
+// New setup a new config type with
+// base as the defaults
+func NewConfig(base string) (*Config, error) {
+	r, err := NewRuntimeWithBase(base)
+	if err != nil {
+		return nil, err
+	}
+	config := &Config{
+		Runtime: r,
 	}
 
-	engine := Engine{
-		cueRuntime: &cueRuntime,
-		database:   cueInstance.Value(),
-	}
-
-	return engine, nil
+	return config, nil
 }
 
 // LoadConfig opens the configuration file
 // specified in `path` and validates it against
 // the configuration provided in when the `Engine`
 // was initialized with `New()`
-func (r *Engine) LoadConfig(path string) error {
+func (r *Config) LoadConfig(path string) error {
 	cueConfig, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -43,7 +38,7 @@ func (r *Engine) LoadConfig(path string) error {
 	return r.loadConfigString(string(cueConfig))
 }
 
-func (r *Engine) loadConfigString(cueConfig string) error {
+func (r *Config) loadConfigString(cueConfig string) error {
 	cueInstance, err := r.cueRuntime.Compile("", cueConfig)
 	if err != nil {
 		return err
@@ -58,8 +53,7 @@ func (r *Engine) loadConfigString(cueConfig string) error {
 
 	return nil
 }
-
-func (r *Engine) GetString(key string) (string, error) {
+func (r *Config) GetString(key string) (string, error) {
 	keyValue := r.database.LookupPath(cue.ParsePath(key))
 
 	if keyValue.Exists() {
@@ -69,7 +63,7 @@ func (r *Engine) GetString(key string) (string, error) {
 	return "", fmt.Errorf("couldn't find key '%s'", key)
 }
 
-func (r *Engine) GetStringOr(key string, def string) string {
+func (r *Config) GetStringOr(key string, def string) string {
 	cueValue, err := r.GetString(key)
 
 	if err != nil {
