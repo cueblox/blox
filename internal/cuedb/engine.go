@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
+	"github.com/cueblox/blox"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pterm/pterm"
 )
@@ -16,43 +17,17 @@ const (
 	schemaField    = "_schema"
 )
 
-type Runtime struct {
-	cueRuntime *cue.Runtime
-	database   cue.Value
-	dataSets   map[string]DataSet
-}
-
-// Can't use schemaField, yet.
-const SchemaMetadataCue = `{
-	_schema: {
-		namespace: string
-		name: string
-	}
+const BaseConfig = `{
+    data_dir: string
+    schema_dir: string | *"schemas"
+    build_dir: string | *"_build"
 }`
 
-type SchemaMetadata struct {
-	Namespace string
-	Name      string
-}
-
-// Can't use dataSetField, yet.
-const DataSetMetadataCue = `{
-	_dataset: {
-		plural: string
-		supportedExtensions: [...string]
-	}
-}`
-
-type DataSetMetadata struct {
-	Plural              string
-	SupportedExtensions []string
-}
-
-type DataSet struct {
-	name           string
-	schemaMetadata SchemaMetadata
-	cuePath        cue.Path
-	metadata       DataSetMetadata
+type Engine struct {
+	// configuration
+	// embedded runtime database
+	*blox.Runtime
+	dataSets map[string]DataSet
 }
 
 // RecordBaseCue is the "Base" configuration that blox
@@ -61,32 +36,28 @@ type DataSet struct {
 const RecordBaseCue = `{
 	id: string
 }`
+const DefaultConfigName = "blox.cue"
 
-// NewRuntime setups a new database for DataSets to be registered,
-// and data inserted.
-func NewRuntime() (Runtime, error) {
-	var cueRuntime cue.Runtime
-	cueInstance, err := cueRuntime.Compile("", "")
-
-	if nil != err {
-		return Runtime{}, err
+func NewEngine() (*Engine, error) {
+	r, err := blox.NewRuntime()
+	if err != nil {
+		return nil, err
 	}
 
-	runtime := Runtime{
-		cueRuntime: &cueRuntime,
-		database:   cueInstance.Value(),
-		dataSets:   make(map[string]DataSet),
+	runtime := &Engine{
+		Runtime:  r,
+		dataSets: make(map[string]DataSet),
 	}
 
 	return runtime, nil
 }
 
-func (r *Runtime) CountDataSets() int {
+func (r *Engine) CountDataSets() int {
 	return len(r.dataSets)
 }
 
-func (r *Runtime) extractSchemaMetadata(schema cue.Value) (SchemaMetadata, error) {
-	cueInstance, err := r.cueRuntime.Compile("", SchemaMetadataCue)
+func (r *Engine) extractSchemaMetadata(schema cue.Value) (SchemaMetadata, error) {
+	cueInstance, err := r.CueRuntime.Compile("", SchemaMetadataCue)
 	if err != nil {
 		pterm.Debug.Println("Failed to compile Cue")
 		return SchemaMetadata{}, err
@@ -109,8 +80,8 @@ func (r *Runtime) extractSchemaMetadata(schema cue.Value) (SchemaMetadata, error
 	return schemaMetadata, nil
 }
 
-func (r *Runtime) extractDataSetMetadata(schema cue.Value) (DataSetMetadata, error) {
-	cueInstance, err := r.cueRuntime.Compile("", DataSetMetadataCue)
+func (r *Engine) extractDataSetMetadata(schema cue.Value) (DataSetMetadata, error) {
+	cueInstance, err := r.CueRuntime.Compile("", DataSetMetadataCue)
 	if err != nil {
 		pterm.Debug.Println("Failed to compile Cue")
 		return DataSetMetadata{}, err
@@ -133,11 +104,11 @@ func (r *Runtime) extractDataSetMetadata(schema cue.Value) (DataSetMetadata, err
 	return dataSetMetadata, nil
 }
 
-func (r *Runtime) GetDataSets() map[string]DataSet {
+func (r *Engine) GetDataSets() map[string]DataSet {
 	return r.dataSets
 }
 
-func (r *Runtime) GetDataSet(name string) (DataSet, error) {
+func (r *Engine) GetDataSet(name string) (DataSet, error) {
 	cueName := strings.ToLower(name)
 	if !strings.HasPrefix(cueName, "#") {
 		cueName = fmt.Sprintf("#%s", strings.ToLower(name))
@@ -147,7 +118,7 @@ func (r *Runtime) GetDataSet(name string) (DataSet, error) {
 		return dataSet, nil
 	}
 
-	return DataSet{}, fmt.Errorf("Couldn't find DataSet with name %s", name)
+	return DataSet{}, fmt.Errorf("couldn't find DataSet with name %s", name)
 }
 
 func (d *DataSet) ID() string {
@@ -174,19 +145,8 @@ func (d *DataSet) GetInlinePath() string {
 	return strings.TrimPrefix(inlinePath, ": ")
 }
 
-// AddDataMap
-func (d *DataSet) GetDataMapCue() string {
-	return fmt.Sprintf(`{
-		%s: %s: _
-		%s: %s: [ID=string]: %s.%s & {id: (ID)}
-	}`,
-		d.GetInlinePath(), d.name,
-		dataPathRoot, d.metadata.Plural, d.cuePath.String(), d.name,
-	)
-}
-
-func (r *Runtime) RegisterSchema(cueString string) error {
-	cueInstance, err := r.cueRuntime.Compile("", cueString)
+func (r *Engine) RegisterSchema(cueString string) error {
+	cueInstance, err := r.CueRuntime.Compile("", cueString)
 	if nil != err {
 		return err
 	}
@@ -197,13 +157,12 @@ func (r *Runtime) RegisterSchema(cueString string) error {
 	if err != nil {
 		return err
 	}
-
 	schemaPath := cue.ParsePath(fmt.Sprintf(`%s."%s"."%s"`, schemaPathRoot, schemaMetadata.Namespace, schemaMetadata.Name))
 
 	// First, Unify whatever schemas the users want. We'll
 	// do our best to extract whatever information from
 	// it we require
-	r.database = r.database.FillPath(schemaPath, cueValue)
+	r.Database = r.Database.FillPath(schemaPath, cueValue)
 
 	// Find DataSets and register
 	fields, err := cueValue.Fields(cue.Definitions(true))
@@ -212,13 +171,14 @@ func (r *Runtime) RegisterSchema(cueString string) error {
 	}
 
 	// Base Record Constraints
-	baseRecordInstance, err := r.cueRuntime.Compile("", RecordBaseCue)
+	baseRecordInstance, err := r.CueRuntime.Compile("", RecordBaseCue)
 	if err != nil {
 		return err
 	}
 	baseRecordValue := baseRecordInstance.Value()
 
 	for fields.Next() {
+		pterm.Debug.Println("\t\t\tNext field")
 		if !fields.IsDefinition() {
 			// Only Definitions can be registered as DataSets
 			continue
@@ -226,9 +186,12 @@ func (r *Runtime) RegisterSchema(cueString string) error {
 
 		dataSetMetadata, err := r.extractDataSetMetadata(fields.Value())
 		if err != nil {
+
+			pterm.Debug.Printf("\t\t\t%v\n", err)
 			// No dataset metadata, skip
 			continue
 		}
+		pterm.Debug.Printf("\t\t\t%s\n", fields.Value())
 
 		dataSet := DataSet{
 			schemaMetadata: schemaMetadata,
@@ -242,21 +205,21 @@ func (r *Runtime) RegisterSchema(cueString string) error {
 		}
 
 		// Compile our BaseModel
-		r.database = r.database.FillPath(dataSet.GetDefinitionPath(), baseRecordValue)
-		if err = r.database.Validate(); err != nil {
+		r.Database = r.Database.FillPath(dataSet.GetDefinitionPath(), baseRecordValue)
+		if err = r.Database.Validate(); err != nil {
 			return err
 		}
 
 		r.dataSets[strings.ToLower(dataSet.name)] = dataSet
 
-		inst, err := r.cueRuntime.Compile("", dataSet.GetDataMapCue())
+		inst, err := r.CueRuntime.Compile("", dataSet.GetDataMapCue())
 		if err != nil {
 			return err
 		}
 
-		r.database = r.database.FillPath(cue.Path{}, inst.Value())
+		r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
 
-		if err := r.database.Validate(); nil != err {
+		if err := r.Database.Validate(); nil != err {
 			return err
 		}
 	}
@@ -264,14 +227,10 @@ func (r *Runtime) RegisterSchema(cueString string) error {
 	return nil
 }
 
-func (d *DataSet) CueDataPath() cue.Path {
-	return cue.ParsePath(fmt.Sprintf("%s.%s", dataPathRoot, d.metadata.Plural))
-}
+func (r *Engine) Insert(dataSet DataSet, record map[string]interface{}) error {
+	r.Database = r.Database.FillPath(dataSet.CueDataPath(), record)
 
-func (r *Runtime) Insert(dataSet DataSet, record map[string]interface{}) error {
-	r.database = r.database.FillPath(dataSet.CueDataPath(), record)
-
-	err := r.database.Validate()
+	err := r.Database.Validate()
 	if nil != err {
 		return err
 	}
@@ -280,16 +239,16 @@ func (r *Runtime) Insert(dataSet DataSet, record map[string]interface{}) error {
 }
 
 // MarshalJSON returns the database encoded in JSON format
-func (r *Runtime) MarshalJSON() ([]byte, error) {
-	return r.database.LookupPath(cue.ParsePath(dataPathRoot)).MarshalJSON()
+func (r *Engine) MarshalJSON() ([]byte, error) {
+	return r.Database.LookupPath(cue.ParsePath(dataPathRoot)).MarshalJSON()
 }
 
 // ReferentialIntegrity checks the relationships between
 // the records in the content database
-func (r *Runtime) ReferentialIntegrity() error {
+func (r *Engine) ReferentialIntegrity() error {
 	for _, dataSet := range r.GetDataSets() {
 		// Walk each field and look for _id labels
-		val := r.database.LookupPath(dataSet.GetDefinitionPath())
+		val := r.Database.LookupPath(dataSet.GetDefinitionPath())
 
 		fields, err := val.Fields(cue.All())
 		if err != nil {
@@ -308,17 +267,17 @@ func (r *Runtime) ReferentialIntegrity() error {
 					optional = "?"
 				}
 
-				inst, err := r.cueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
+				inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
 				if err != nil {
 					return err
 				}
 
-				r.database = r.database.FillPath(cue.Path{}, inst.Value())
+				r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
 			}
 		}
 	}
 
-	err := r.database.Validate()
+	err := r.Database.Validate()
 	if err != nil {
 		return multierror.Prefix(err, "Referential Integrity Failed")
 	}
@@ -326,33 +285,19 @@ func (r *Runtime) ReferentialIntegrity() error {
 	return nil
 }
 
-func (r *Runtime) GetOutput() (cue.Value, error) {
+func (r *Engine) GetOutput() (cue.Value, error) {
 	if len(r.GetDataSets()) == 0 {
 		return cue.Value{}, fmt.Errorf("No DataSets to generate output")
 	}
 
 	for _, dataSet := range r.GetDataSets() {
-		inst, err := r.cueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val}]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
+		inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val}]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
 		if err != nil {
 			return cue.Value{}, err
 		}
 
-		r.database = r.database.FillPath(cue.Path{}, inst.Value())
+		r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
 	}
 
-	return r.database.LookupPath(cue.ParsePath("output")), nil
-}
-
-func (d *DataSet) IsSupportedExtension(ext string) bool {
-	for _, val := range d.metadata.SupportedExtensions {
-		if val == ext {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (d *DataSet) GetSupportedExtensions() []string {
-	return d.metadata.SupportedExtensions
+	return r.Database.LookupPath(cue.ParsePath("output")), nil
 }

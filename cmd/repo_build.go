@@ -19,6 +19,7 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		repo, err := repository.GetRepository()
 		cobra.CheckErr(err)
+		pterm.Info.Println("Building Repository")
 		cobra.CheckErr(repo.Build())
 		pterm.Success.Println("Build Complete")
 	},

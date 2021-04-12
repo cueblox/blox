@@ -2,17 +2,32 @@ package cuedb
 
 import (
 	"fmt"
+	"path"
 	"strings"
 	"testing"
 
 	"cuelang.org/go/cue"
+	"github.com/cueblox/blox"
 	"github.com/stretchr/testify/assert"
 )
 
+func testConfig(t *testing.T) *blox.Config {
+	c, err := blox.NewConfig(BaseConfig)
+	if err != nil {
+		t.Error(err)
+	}
+	err = c.LoadConfig(path.Join("..", "..", "blox.cue"))
+	if err != nil {
+		t.Error()
+	}
+	return c
+}
 func TestNewRuntime(t *testing.T) {
-	runtime, err := NewRuntime()
+	//cfg := testConfig(t)
+	runtime, err := NewEngine()
 
 	if err != nil {
+		fmt.Println(err)
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
 
@@ -27,13 +42,13 @@ func TestExtractSchemaMetadata(t *testing.T) {
 		name: "TestSchema"
 	}
 }`
-	runtime, err := NewRuntime()
+	runtime, err := NewEngine()
 
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
 
-	cueInstance, err := runtime.cueRuntime.Compile("", schemaCue)
+	cueInstance, err := runtime.CueRuntime.Compile("", schemaCue)
 	assert.Equal(t, nil, err)
 
 	schemaMetdata, err := runtime.extractSchemaMetadata(cueInstance.Value())
@@ -52,13 +67,13 @@ func TestExtractDataSetMetadata(t *testing.T) {
 		supportedExtensions: ["txt", "tar.gz"]
 	}
 }`
-	runtime, err := NewRuntime()
+	runtime, err := NewEngine()
 
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
 
-	cueInstance, err := runtime.cueRuntime.Compile("", dataSetCue)
+	cueInstance, err := runtime.CueRuntime.Compile("", dataSetCue)
 	assert.Equal(t, nil, err)
 
 	dataSetMetdata, err := runtime.extractDataSetMetadata(cueInstance.Value())
@@ -94,7 +109,7 @@ func TestRegisterSchema(t *testing.T) {
 			sport: string
 		}
 }`
-	runtime, err := NewRuntime()
+	runtime, err := NewEngine()
 
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
@@ -132,7 +147,7 @@ func TestGetDataSets(t *testing.T) {
 			sport: string
 		}
 }`
-	runtime, err := NewRuntime()
+	runtime, err := NewEngine()
 
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
@@ -188,7 +203,7 @@ func TestInsert(t *testing.T) {
 			sport: string
 		}
 }`
-	runtime, err := NewRuntime()
+	runtime, err := NewEngine()
 
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
@@ -206,7 +221,7 @@ func TestInsert(t *testing.T) {
 	recordOne := map[string]interface{}{"david": map[string]string{"name": "David"}}
 	assert.Equal(t, nil, runtime.Insert(dataSet, recordOne))
 
-	nameValueOne := runtime.database.LookupPath(cue.ParsePath("data.OnePlural.david.name"))
+	nameValueOne := runtime.Database.LookupPath(cue.ParsePath("data.OnePlural.david.name"))
 	nameValueOneStr, err := nameValueOne.String()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "David", nameValueOneStr)
@@ -214,7 +229,7 @@ func TestInsert(t *testing.T) {
 	recordTwo := map[string]interface{}{"brian": map[string]string{"name": "Brian"}}
 	assert.Equal(t, nil, runtime.Insert(dataSet, recordTwo))
 
-	nameValueTwo := runtime.database.LookupPath(cue.ParsePath("data.OnePlural.brian.name"))
+	nameValueTwo := runtime.Database.LookupPath(cue.ParsePath("data.OnePlural.brian.name"))
 	nameValueTwoStr, err := nameValueTwo.String()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "Brian", nameValueTwoStr)

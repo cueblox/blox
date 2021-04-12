@@ -6,92 +6,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
-	"cuelang.org/go/cue"
+	"github.com/cueblox/blox"
 	"github.com/otiai10/copy"
 	"github.com/pterm/pterm"
 )
 
 //go:embed config.cue
 var BaseConfig string
-
-// Database stores information about the
-// repository
-type Database struct {
-	runtime *cue.Runtime
-	db      cue.Value
-	config  *cue.Value
-}
-
-// NewDatabase creates a "world" struct to store
-// records
-func NewDatabase() (Database, error) {
-	var cueRuntime cue.Runtime
-	cueInstance, err := cueRuntime.Compile("", "")
-
-	if nil != err {
-		return Database{}, err
-	}
-
-	database := Database{
-		runtime: &cueRuntime,
-		db:      cueInstance.Value(),
-	}
-
-	err = database.LoadConfig()
-	if nil != err {
-		return Database{}, err
-	}
-
-	return database, nil
-}
-
-func (d *Database) LoadConfig() error {
-	configInstance, err := d.runtime.Compile("", BaseConfig)
-	if err != nil {
-		return err
-	}
-
-	configValue := configInstance.Value()
-
-	localConfig, err := ioutil.ReadFile("repository.cue")
-	if err != nil {
-		return err
-	}
-
-	localConfigInstance, err := d.runtime.Compile("", localConfig)
-	if err != nil {
-		return err
-	}
-
-	mergedConfig := configValue.Unify(localConfigInstance.Value())
-	if err = mergedConfig.Validate(cue.Concrete(true)); err != nil {
-		return err
-	}
-
-	d.config = &mergedConfig
-
-	return nil
-}
-
-func (d *Database) GetConfigString(key string) (string, error) {
-	value, err := d.config.LookupField(key)
-	if err != nil {
-		return "", err
-	}
-
-	str, err := value.Value.String()
-	if err != nil {
-		return "", err
-	}
-
-	return str, nil
-}
 
 // Repository is a group of schemas
 type Repository struct {
@@ -105,19 +31,27 @@ type Repository struct {
 // described by the repository.cue file in the
 // current directory
 func GetRepository() (*Repository, error) {
-	sdb, err := NewDatabase()
+	// initialize config engine with defaults
+	cfg, err := blox.NewConfig(BaseConfig)
 	if err != nil {
 		return nil, err
 	}
-	build_dir, err := sdb.GetConfigString("output_dir")
+	// load user config
+	cfg.LoadConfig("repository.cue")
+
+	build_dir, err := cfg.GetString("output_dir")
+	pterm.Debug.Printf("\t\tBuild Directory: %s\n", build_dir)
 	if err != nil {
 		return nil, err
 	}
-	namespace, err := sdb.GetConfigString("namespace")
+	namespace, err := cfg.GetString("namespace")
+
+	pterm.Debug.Printf("\t\tNamespace: %s\n", namespace)
 	if err != nil {
 		return nil, err
 	}
-	reporoot, err := sdb.GetConfigString("repository_root")
+	reporoot, err := cfg.GetString("repository_root")
+	pterm.Debug.Printf("\t\tRepository Root: %s\n", reporoot)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +76,7 @@ func NewRepository(namespace, output, root string) (*Repository, error) {
 		Output:    output,
 	}
 	// create the repository directory
-	pterm.Debug.Printf("\t\tCreating repository root directory at %s", root)
+	pterm.Debug.Printf("\t\tCreating repository root directory at %s\n", root)
 	err := r.createRoot()
 	if err != nil {
 		return nil, err
@@ -206,7 +140,6 @@ func (r *Repository) load() error {
 			// not a dir, must be file
 			// we only care about files in
 			// version directories
-			fmt.Println("file", len(paths), path)
 			if len(paths) == 4 {
 				if d.Name() == "schema.cue" {
 					bb, err := os.ReadFile(path)
@@ -317,7 +250,7 @@ func (r *Repository) AddVersion(schema string) error {
 // Build serializes the Repository object
 // into a json file in the `Output` directory.
 func (r *Repository) Build() error {
-	pterm.Debug.Printf("\t\tBuilding repository to %s", r.Output)
+	pterm.Debug.Printf("\t\tBuilding repository to %s\n", r.Output)
 	buildDir := path.Join(r.Root, r.Output)
 	buildFile := path.Join(buildDir, "manifest.json")
 
@@ -335,7 +268,7 @@ func (r *Repository) Build() error {
 	if err != nil {
 		return err
 	}
-	pterm.Debug.Printf("\t\tManifest written to %s", buildFile)
+	pterm.Debug.Printf("\t\tManifest written to %s\n", buildFile)
 
 	return nil
 }
