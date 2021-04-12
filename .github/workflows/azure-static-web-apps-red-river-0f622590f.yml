@@ -2,6 +2,9 @@ name: Deploy Content Server
 
 on:
   push:
+    paths:
+      - .github/**
+      - dogfood/**
     branches:
       - main
 
