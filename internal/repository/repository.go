@@ -32,7 +32,7 @@ type Repository struct {
 // current directory
 func GetRepository() (*Repository, error) {
 	// initialize config engine with defaults
-	cfg, err := blox.New(BaseConfig)
+	cfg, err := blox.NewConfig(BaseConfig)
 	if err != nil {
 		return nil, err
 	}
