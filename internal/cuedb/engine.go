@@ -17,7 +17,7 @@ const (
 	schemaField    = "_schema"
 )
 
-const baseConfig = `{
+const BaseConfig = `{
     data_dir: string
     schema_dir: string | *"schemas"
     build_dir: string | *"_build"
@@ -25,7 +25,6 @@ const baseConfig = `{
 
 type Engine struct {
 	// configuration
-	Config *blox.Config
 	// embedded runtime database
 	*blox.Runtime
 	dataSets map[string]DataSet
@@ -37,34 +36,15 @@ type Engine struct {
 const RecordBaseCue = `{
 	id: string
 }`
-const defaultConfigName = "blox.cue"
+const DefaultConfigName = "blox.cue"
 
-// NewRuntime setups a new database for DataSets to be registered,
-// and data inserted.
 func NewEngine() (*Engine, error) {
-
-	// create a new Config with the defaults
-	cfg, err := blox.NewConfig(baseConfig)
-	if err != nil {
-		return nil, err
-	}
-	pterm.Debug.Printf("\t\tLoading default config from %s\n", defaultConfigName)
-	err = cfg.LoadConfig(defaultConfigName)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewEngineWithConfig(cfg)
-}
-
-func NewEngineWithConfig(c *blox.Config) (*Engine, error) {
 	r, err := blox.NewRuntime()
 	if err != nil {
 		return nil, err
 	}
 
 	runtime := &Engine{
-		Config:   c,
 		Runtime:  r,
 		dataSets: make(map[string]DataSet),
 	}

@@ -12,7 +12,7 @@ import (
 )
 
 func testConfig(t *testing.T) *blox.Config {
-	c, err := blox.NewConfig(baseConfig)
+	c, err := blox.NewConfig(BaseConfig)
 	if err != nil {
 		t.Error(err)
 	}
@@ -23,7 +23,8 @@ func testConfig(t *testing.T) *blox.Config {
 	return c
 }
 func TestNewRuntime(t *testing.T) {
-	runtime, err := NewEngineWithConfig(testConfig(t))
+	//cfg := testConfig(t)
+	runtime, err := NewEngine()
 
 	if err != nil {
 		fmt.Println(err)
@@ -41,7 +42,7 @@ func TestExtractSchemaMetadata(t *testing.T) {
 		name: "TestSchema"
 	}
 }`
-	runtime, err := NewEngineWithConfig(testConfig(t))
+	runtime, err := NewEngine()
 
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
@@ -66,7 +67,7 @@ func TestExtractDataSetMetadata(t *testing.T) {
 		supportedExtensions: ["txt", "tar.gz"]
 	}
 }`
-	runtime, err := NewEngineWithConfig(testConfig(t))
+	runtime, err := NewEngine()
 
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
@@ -108,7 +109,7 @@ func TestRegisterSchema(t *testing.T) {
 			sport: string
 		}
 }`
-	runtime, err := NewEngineWithConfig(testConfig(t))
+	runtime, err := NewEngine()
 
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
@@ -146,7 +147,7 @@ func TestGetDataSets(t *testing.T) {
 			sport: string
 		}
 }`
-	runtime, err := NewEngineWithConfig(testConfig(t))
+	runtime, err := NewEngine()
 
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
@@ -202,7 +203,7 @@ func TestInsert(t *testing.T) {
 			sport: string
 		}
 }`
-	runtime, err := NewEngineWithConfig(testConfig(t))
+	runtime, err := NewEngine()
 
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")

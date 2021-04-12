@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/repository"
 	"github.com/spf13/cobra"
@@ -43,10 +44,9 @@ to quickly create a Cobra application.`,
 				}
 			}
 		}
-		engine, err := cuedb.NewEngine()
-		cobra.CheckErr(err)
 
-		schemaDir := engine.Config.GetStringOr("schema_dir", "schema")
+		cfg, err := blox.NewConfig(cuedb.BaseConfig)
+		schemaDir := cfg.GetStringOr("schema_dir", "schema")
 
 		err = os.MkdirAll(schemaDir, 0755)
 		cobra.CheckErr(err)

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/encoding/markdown"
 	"github.com/goccy/go-yaml"
@@ -27,9 +28,9 @@ var buildCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		engine, err := cuedb.NewEngine()
 		cobra.CheckErr(err)
-
+		cfg, err := blox.NewConfig(cuedb.BaseConfig)
 		// Load Schemas!
-		schemaDir, err := engine.Config.GetString("schema_dir")
+		schemaDir, err := cfg.GetString("schema_dir")
 		pterm.Debug.Printf("\t\tSchema Directory: %s\n", schemaDir)
 		cobra.CheckErr(err)
 
@@ -54,7 +55,7 @@ var buildCmd = &cobra.Command{
 		cobra.CheckErr(err)
 		pterm.Debug.Println("\t\tBuilding Models")
 
-		cobra.CheckErr(buildModels(engine))
+		cobra.CheckErr(buildModels(engine, cfg))
 
 		if referentialIntegrity {
 			pterm.Info.Println("Checking Referential Integrity")
@@ -72,7 +73,7 @@ var buildCmd = &cobra.Command{
 		jso, err := output.MarshalJSON()
 		cobra.CheckErr(err)
 
-		buildDir, err := engine.Config.GetString("build_dir")
+		buildDir, err := cfg.GetString("build_dir")
 		cobra.CheckErr(err)
 		err = os.MkdirAll(buildDir, 0755)
 		cobra.CheckErr(err)
@@ -84,7 +85,7 @@ var buildCmd = &cobra.Command{
 	},
 }
 
-func buildModels(engine *cuedb.Engine) error {
+func buildModels(engine *cuedb.Engine, cfg *blox.Config) error {
 	var errors error
 
 	pterm.Info.Println("Validating ...")
@@ -94,7 +95,7 @@ func buildModels(engine *cuedb.Engine) error {
 
 		// We're using the Or variant of GetString because we know this call can't
 		// fail, as the config isn't valid without.
-		dataSetDirectory := fmt.Sprintf("%s/%s", engine.Config.GetStringOr("data_dir", ""), dataSet.GetDataDirectory())
+		dataSetDirectory := fmt.Sprintf("%s/%s", cfg.GetStringOr("data_dir", ""), dataSet.GetDataDirectory())
 
 		err := os.MkdirAll(dataSetDirectory, 0755)
 		if err != nil {
