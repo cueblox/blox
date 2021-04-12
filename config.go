@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	*Runtime
+	runtime *Runtime
 }
 
 // New setup a new config type with
@@ -20,7 +20,7 @@ func NewConfig(base string) (*Config, error) {
 		return nil, err
 	}
 	config := &Config{
-		Runtime: r,
+		runtime: r,
 	}
 
 	return config, nil
@@ -41,22 +41,22 @@ func (r *Config) LoadConfig(path string) error {
 }
 
 func (r *Config) LoadConfigString(cueConfig string) error {
-	cueInstance, err := r.CueRuntime.Compile("", cueConfig)
+	cueInstance, err := r.runtime.CueRuntime.Compile("", cueConfig)
 	if err != nil {
 		return err
 	}
 
 	cueValue := cueInstance.Value()
 
-	r.Database = r.Database.Unify(cueValue)
-	if err = r.Database.Validate(); err != nil {
+	r.runtime.Database = r.runtime.Database.Unify(cueValue)
+	if err = r.runtime.Database.Validate(); err != nil {
 		return err
 	}
 
 	return nil
 }
 func (r *Config) GetString(key string) (string, error) {
-	keyValue := r.Database.LookupPath(cue.ParsePath(key))
+	keyValue := r.runtime.Database.LookupPath(cue.ParsePath(key))
 
 	if keyValue.Exists() {
 		return keyValue.String()
