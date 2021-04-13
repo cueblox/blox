@@ -18,7 +18,6 @@ const (
 )
 
 type Engine struct {
-	// configuration
 	// embedded runtime database
 	*blox.Runtime
 	dataSets map[string]DataSet
