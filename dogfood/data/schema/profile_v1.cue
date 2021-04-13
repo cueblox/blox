@@ -10,8 +10,13 @@
 			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}
 
+		// First name, please
 		first_name: string @template("Forename")
+		// WHat's your last name?
 		last_name:  string @template("Surname")
+		// Yes or No, huh?
+		yesno: bool @template(false)
+		// How old are you even? You better be 21
 		age?:       int    @template(21)
 		company?:   string @template("CueBlox")
 		title?:     string @template("Cue Slinger")

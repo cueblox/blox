@@ -1,6 +1,7 @@
 package cueutils
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -35,7 +36,7 @@ func GetAcceptedValues(node ast.Node) ([]string, error) {
 	return []string{"None"}, nil
 }
 
-func CreateFromTemplate(valueOut cue.Value, valueIn cue.Value) (cue.Value, error) {
+func CreateFromTemplate(valueOut cue.Value, valueIn cue.Value, interactive bool) (cue.Value, error) {
 	fieldIterator, err := valueIn.Fields(cue.Optional(true))
 	if err != nil {
 		return valueOut, err
@@ -45,12 +46,14 @@ func CreateFromTemplate(valueOut cue.Value, valueIn cue.Value) (cue.Value, error
 		fieldValue := fieldIterator.Value()
 
 		if cue.StructKind == fieldValue.IncompleteKind() {
-			valueOut, err = CreateFromTemplate(valueOut, fieldValue)
+			valueOut, err = CreateFromTemplate(valueOut, fieldValue, interactive)
 			if err != nil {
 				return valueOut, err
 			}
 			continue
 		}
+
+		comments := fieldValue.Doc()
 
 		templateAttribute := fieldValue.Attribute("template")
 		if err = templateAttribute.Err(); err != nil {
@@ -63,19 +66,33 @@ func CreateFromTemplate(valueOut cue.Value, valueIn cue.Value) (cue.Value, error
 
 		switch fieldValue.IncompleteKind() {
 		case cue.StringKind:
-			valueOut = valueOut.FillPath(fieldValue.Path(), templateValue)
+			if interactive {
+				valueOut = valueOut.FillPath(fieldValue.Path(), scanString(fieldIterator.Label(), comments))
+			} else {
+				valueOut = valueOut.FillPath(fieldValue.Path(), templateValue)
+			}
 
 		case cue.IntKind:
-			i, err := strconv.Atoi(templateValue)
-			if err != nil {
-				return valueOut, err
+			var i int
+			if interactive {
+				i = scanInt(fieldIterator.Label(), comments)
+			} else {
+				i, err = strconv.Atoi(templateValue)
+				if err != nil {
+					return valueOut, err
+				}
 			}
 			valueOut = valueOut.FillPath(fieldValue.Path(), i)
 
 		case cue.BoolKind:
-			b, err := strconv.ParseBool(templateValue)
-			if err != nil {
-				return valueOut, err
+			var b bool
+			if interactive {
+				b = scanBool(fieldIterator.Label(), comments)
+			} else {
+				b, err = strconv.ParseBool(templateValue)
+				if err != nil {
+					return valueOut, err
+				}
 			}
 			valueOut = valueOut.FillPath(fieldValue.Path(), b)
 
@@ -90,5 +107,57 @@ func CreateFromTemplate(valueOut cue.Value, valueIn cue.Value) (cue.Value, error
 		}
 	}
 
+	fmt.Println(valueOut)
 	return valueOut, nil
+}
+
+func scanString(field string, comments []*ast.CommentGroup) string {
+	var str string
+
+	for _, comment := range comments {
+		pterm.Description.Println(comment.Text())
+	}
+
+	pterm.BgCyan.Printf("%s: ", field)
+
+	_, err := fmt.Scanln(&str)
+	if err != nil {
+		return ""
+	}
+
+	return str
+}
+
+func scanInt(field string, comments []*ast.CommentGroup) int {
+	var i int
+
+	for _, comment := range comments {
+		pterm.Description.Println(comment.Text())
+	}
+
+	pterm.BgCyan.Printf("%s: ", field)
+
+	_, err := fmt.Scanln(&i)
+	if err != nil {
+		return 0
+	}
+
+	return i
+}
+
+func scanBool(field string, comments []*ast.CommentGroup) bool {
+	var b bool
+
+	for _, comment := range comments {
+		pterm.Description.Println(comment.Text())
+	}
+
+	pterm.BgCyan.Printf("%s: ", field)
+
+	_, err := fmt.Scanln(&b)
+	if err != nil {
+		return false
+	}
+
+	return b
 }

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"cuelang.org/go/cue"
 	"cuelang.org/go/encoding/yaml"
 	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
@@ -18,6 +19,7 @@ import (
 
 var (
 	dataSetName string
+	interactive bool
 )
 
 // newCmd represents the new command
@@ -86,7 +88,9 @@ to quickly create a Cobra application.`,
 		dsp := dataSet.GetDefinitionPath()
 		dsv := engine.Runtime.Database.LookupPath(dsp)
 
-		templateValue, err := cueutils.CreateFromTemplate(templateInstance.Value(), dsv)
+		var templateValue cue.Value
+		templateValue, err = cueutils.CreateFromTemplate(templateInstance.Value(), dsv, interactive)
+
 		cobra.CheckErr(err)
 		templateValue = templateValue.LookupPath(dataSet.GetDefinitionPath())
 
@@ -107,6 +111,7 @@ func init() {
 	rootCmd.AddCommand(newCmd)
 
 	newCmd.Flags().StringVar(&dataSetName, "dataset", "", "Which DataSet to create content for?")
+	newCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive")
 	cobra.CheckErr(newCmd.MarkFlagRequired("dataset"))
 	newCmd.SetUsageTemplate("blox new")
 }
