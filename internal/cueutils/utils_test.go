@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/parser"
 	"github.com/stretchr/testify/assert"
@@ -117,4 +118,64 @@ func TestGetAcceptedValuesList(t *testing.T) {
 	}
 
 	assert.ElementsMatch(t, []string{"list"}, acceptedValues)
+}
+
+func TestCreateFromTemplate(t *testing.T) {
+	cueWithTemplateAttributes := `{
+		// NameComment
+		name: string @template(Random Name) //NameInlineComments
+		age: int @template(21)
+		happy: bool @template(true)
+		scottish: bool @template(false)
+		movies: [...string] @template(The Matrix, Top Gun)
+		social: {
+			network: string @template(twitter)
+			name: string @template(rawkode)
+		}
+	}`
+
+	var cueRuntime cue.Runtime
+	cueInstance, err := cueRuntime.Compile("", cueWithTemplateAttributes)
+	assert.Equal(t, nil, err)
+
+	cueValue := cueInstance.Value()
+
+	cueTemplate, err := CreateFromTemplate(cueValue, cueValue)
+	assert.Equal(t, nil, err)
+
+	name, err := cueTemplate.LookupPath(cue.ParsePath("name")).String()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "Random Name", name)
+
+	age, err := cueTemplate.LookupPath(cue.ParsePath("age")).Int64()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int64(21), age)
+
+	happy, err := cueTemplate.LookupPath(cue.ParsePath("happy")).Bool()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, true, happy)
+
+	scottish, err := cueTemplate.LookupPath(cue.ParsePath("scottish")).Bool()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, false, scottish)
+
+	social := cueTemplate.LookupPath(cue.ParsePath("social"))
+
+	socialNetwork, err := social.LookupPath(cue.ParsePath("network")).String()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "twitter", socialNetwork)
+
+	socialName, err := social.LookupPath(cue.ParsePath("name")).String()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "rawkode", socialName)
+
+	movies, err := cueTemplate.LookupPath(cue.ParsePath("movies")).List()
+	expectedMovies := []string{"The Matrix"}
+	assert.Equal(t, nil, err)
+	for _, expectedMovie := range expectedMovies {
+		movies.Next()
+		movieString, err := movies.Value().String()
+		assert.Equal(t, nil, err)
+		assert.Equal(t, expectedMovie, movieString)
+	}
 }
