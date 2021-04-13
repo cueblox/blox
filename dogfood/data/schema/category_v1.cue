@@ -10,9 +10,9 @@
 			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}
 
-		name:        string
-		description: string
-		body?:       string
+		name:        string @template("Name")
+		description: string @template("Description")
+		body?:       string @template("This is my category for ...")
 	}
 
 }
