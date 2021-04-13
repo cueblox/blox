@@ -125,6 +125,9 @@ func TestCreateFromTemplate(t *testing.T) {
 		// NameComment
 		name: string @template(Random Name) //NameInlineComments
 		age: int @template(21)
+		happy: bool @template(true)
+		scottish: bool @template(false)
+		movies: [...string] @template(The Matrix, Top Gun)
 		social: {
 			network: string @template(twitter)
 			name: string @template(rawkode)
@@ -148,7 +151,16 @@ func TestCreateFromTemplate(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(21), age)
 
+	happy, err := cueTemplate.LookupPath(cue.ParsePath("happy")).Bool()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, true, happy)
+
+	scottish, err := cueTemplate.LookupPath(cue.ParsePath("scottish")).Bool()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, false, scottish)
+
 	social := cueTemplate.LookupPath(cue.ParsePath("social"))
+
 	socialNetwork, err := social.LookupPath(cue.ParsePath("network")).String()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "twitter", socialNetwork)
@@ -156,4 +168,14 @@ func TestCreateFromTemplate(t *testing.T) {
 	socialName, err := social.LookupPath(cue.ParsePath("name")).String()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "rawkode", socialName)
+
+	movies, err := cueTemplate.LookupPath(cue.ParsePath("movies")).List()
+	expectedMovies := []string{"The Matrix"}
+	assert.Equal(t, nil, err)
+	for _, expectedMovie := range expectedMovies {
+		movies.Next()
+		movieString, err := movies.Value().String()
+		assert.Equal(t, nil, err)
+		assert.Equal(t, expectedMovie, movieString)
+	}
 }

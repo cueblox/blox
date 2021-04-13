@@ -1,47 +1,112 @@
 package cmd
 
-// import (
-// 	"path"
+import (
+	"fmt"
+	"io/fs"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
 
-// 	"github.com/cueblox/blox/internal/blox"
-// 	"github.com/cueblox/blox/internal/config"
-// 	"github.com/pterm/pterm"
-// 	"github.com/spf13/cobra"
-// )
+	"cuelang.org/go/encoding/yaml"
+	"github.com/cueblox/blox"
+	"github.com/cueblox/blox/internal/cuedb"
+	"github.com/cueblox/blox/internal/cueutils"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+)
 
-// var (
-// 	model string
-// )
+var (
+	dataSetName string
+)
 
-// // newCmd represents the new command
-// var newCmd = &cobra.Command{
-// 	Use:   "new",
-// 	Short: "Create a new content file",
-// 	Long: `A longer description that spans multiple lines and likely contains examples
-// and usage of using your command. For example:
+// newCmd represents the new command
+var newCmd = &cobra.Command{
+	Use:   "new",
+	Short: "Create a new content file",
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
 
-// Cobra is a CLI library for Go that empowers applications.
-// This application is a tool to generate the needed files
-// to quickly create a Cobra application.`,
-// 	Args: cobra.MinimumNArgs(1),
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		model, err := blox.GetModel(model)
-// 		cobra.CheckErr(err)
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	Args: cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		userConfig, err := ioutil.ReadFile("blox.cue")
+		cobra.CheckErr(err)
 
-// 		pterm.Info.Printf("Creating new %s in %s\n", model.Name, model.SourceContentPath())
+		engine, err := cuedb.NewEngine()
+		cobra.CheckErr(err)
 
-// 		slug := args[0]
-// 		cfg, err := config.Load()
-// 		cobra.CheckErr(err)
-// 		cobra.CheckErr(model.New(slug+cfg.DefaultExtension, model.SourceContentPath()))
-// 		pterm.Info.Printf("Your new content file is ready at %s\n", path.Join(model.SourceFilePath(slug)))
-// 	},
-// }
+		cfg, err := blox.NewConfig(BaseConfig)
+		cobra.CheckErr(err)
 
-// func init() {
-// 	rootCmd.AddCommand(newCmd)
+		err = cfg.LoadConfigString(string(userConfig))
+		cobra.CheckErr(err)
 
-// 	newCmd.Flags().StringVarP(&model, "type", "t", "article", "type of content to create")
-// 	cobra.CheckErr(newCmd.MarkFlagRequired("type"))
-// 	newCmd.SetUsageTemplate("blox new --type [type name] [slug]")
-// }
+		// Load Schemas!
+		schemaDir, err := cfg.GetString("schema_dir")
+		pterm.Debug.Printf("\t\tSchema Directory: %s\n", schemaDir)
+		cobra.CheckErr(err)
+
+		err = filepath.WalkDir(schemaDir, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if !d.IsDir() {
+				bb, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				pterm.Debug.Printf("\t\tLoading Schema: %s\n", path)
+
+				err = engine.RegisterSchema(string(bb))
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		cobra.CheckErr(err)
+
+		dataSet, err := engine.GetDataSet(dataSetName)
+		if err != nil {
+			pterm.Error.Printf("Couldn't find dataset '%s'\n", dataSetName)
+			pterm.Info.Println("The following DataSets are available:")
+			dataSets := engine.GetDataSets()
+			for _, dataSet := range dataSets {
+				pterm.Info.Printf("\t%s\n", strings.TrimPrefix(dataSet.ID(), "#"))
+			}
+			return
+		}
+
+		templateInstance, err := engine.CueRuntime.Compile("", "")
+		cobra.CheckErr(err)
+
+		dsp := dataSet.GetDefinitionPath()
+		dsv := engine.Runtime.Database.LookupPath(dsp)
+
+		templateValue, err := cueutils.CreateFromTemplate(templateInstance.Value(), dsv)
+		cobra.CheckErr(err)
+		templateValue = templateValue.LookupPath(dataSet.GetDefinitionPath())
+
+		dataSetDirectory := fmt.Sprintf("%s/%s", cfg.GetStringOr("data_dir", ""), dataSet.GetDataDirectory())
+
+		slug := args[0]
+		pterm.Info.Printf("Creating new %s at %s/%s.yaml\n", dataSet.ID(), dataSetDirectory, slug)
+
+		bytes, err := yaml.Encode(templateValue)
+		cobra.CheckErr(err)
+
+		err = ioutil.WriteFile(fmt.Sprintf("%s/%s.yaml", dataSetDirectory, slug), bytes, 0644)
+		cobra.CheckErr(err)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(newCmd)
+
+	newCmd.Flags().StringVar(&dataSetName, "dataset", "", "Which DataSet to create content for?")
+	cobra.CheckErr(newCmd.MarkFlagRequired("dataset"))
+	newCmd.SetUsageTemplate("blox new")
+}
