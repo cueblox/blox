@@ -10,8 +10,8 @@
 			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}
 
-		first_name: string @template("David")
-		last_name:  string @template("McKay")
+		first_name: string @template("Forename")
+		last_name:  string @template("Surname")
 		age?:       int    @template(21)
 		company?:   string @template("CueBlox")
 		title?:     string @template("Cue Slinger")
@@ -21,13 +21,13 @@
 
 	#TwitterAccount: {
 		network:  "twitter"
-		username: string @template("rawkode")
+		username: string @template("twitter-handle")
 		url:      *"https://twitter.com/\(username)" | string
 	}
 
 	#GitHubAccount: {
 		network:  "github"
-		username: string @template("rawkode")
+		username: string @template("github-handle")
 		url:      *"https://github.com/\(username)" | string
 	}
 

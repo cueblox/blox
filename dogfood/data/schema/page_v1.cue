@@ -10,10 +10,10 @@
 			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}
 
-		title:        string
-		excerpt:      string
+		title:        string @template("My New Page")
+		excerpt:      string @template("Small description about my page")
 		draft:        bool | *false
-		publish_date: string
+		publish_date: string @template("2020-01-01")
 		image?:       string
 		body?:        string
 		tags?: [...string]
