@@ -1,16 +1,17 @@
 {
-  "name": "graphql",
-  "version": "0.1.1",
+  "name": "api",
+  "version": "1.0.0",
   "description": "",
   "scripts": {
+    "start": "func start",
     "test": "echo \"No tests yet...\""
   },
-  "author": "brian ketelsne",
   "dependencies": {
     "azure-function-express": "^2.0.0",
     "express": "^4.17.1",
-    "json-graphql-server": "^2.2.2",
+    "glob": "^7.1.6",
+    "json-graphql-server": "^2.2.0",
     "json-server": "^0.16.3",
-    "sync-fetch": "^0.3.0"
+    "sync-fetch": "0.3.0"
   }
 }
