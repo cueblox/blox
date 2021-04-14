@@ -21,7 +21,7 @@ brew tap cueblox/tap
 Then install the `brew` formula:
 
 ```bash
-brew install cueblox/tap/blox
+brew install blox
 ```
 
 Support for other package managers is in our roadmap, if you'd like to contribute, see [issue 55](https://github.com/cueblox/blox/issues/55).
