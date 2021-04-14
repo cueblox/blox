@@ -8,7 +8,7 @@ weight: 1
 
 # Introduction
 
-CueBlox is a suite of slightly opinionated tools for managing content repositories of YAML and Markdown documents.
+CueBlox is a suite of slightly opinionated tools for managing and sharing content repositories of YAML and Markdown documents.
 
 ## Motivation
 
