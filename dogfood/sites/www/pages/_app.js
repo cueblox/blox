@@ -2,7 +2,6 @@ import '@/styles/globals.css';
 
 import App from "next/app";
 import Layout from '@/components/Layout';
-import { ThemeProvider } from 'next-themes';
 import { createContext } from "react";
 import { getSections } from "@/lib/cms";
 
@@ -13,11 +12,9 @@ function MyApp({ Component, pageProps }) {
   const { sections } = pageProps;
   return (
     <GlobalContext.Provider value={sections}>
-      <ThemeProvider forcedTheme={Component.theme || undefined} attribute="class">
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
-      </ThemeProvider>
+      <Layout>
+        <Component {...pageProps} />
+      </Layout>
     </GlobalContext.Provider>
 
   )
