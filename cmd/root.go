@@ -20,26 +20,17 @@ var Version string
 var rootCmd = &cobra.Command{
 	Use:     "blox",
 	Version: Version,
-	Short:   "A gitops tool for data and content",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short:   "CueBlox is a suite of slightly opinionated tools for managing and sharing content repositories of YAML and Markdown documents.",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if debug {
 			pterm.EnableDebugMessages()
-		} else {
-			if quiet {
-				pterm.DisableOutput()
-			}
+			return
 		}
 
+		if quiet {
+			pterm.DisableOutput()
+		}
 	},
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -51,15 +42,9 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.blox.yaml)")
-
 	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "disable logging")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging, overrides 'quiet' flag")
-
 }
 
 // initConfig reads in config file and ENV variables if set.

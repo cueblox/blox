@@ -23,13 +23,10 @@ var (
 // newCmd represents the new command
 var newCmd = &cobra.Command{
 	Use:   "new",
-	Short: "Create a new content file",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Create a new content file for the target dataset",
+	Long: `This command will allow you to create new content based on the
+template attributes within the schemata. By providing a dataset name and ID(slug)
+for the new content, you can quickly scaffold new content with ease.`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		userConfig, err := ioutil.ReadFile("blox.cue")
@@ -45,11 +42,11 @@ to quickly create a Cobra application.`,
 		cobra.CheckErr(err)
 
 		// Load Schemas!
-		schemaDir, err := cfg.GetString("schema_dir")
-		pterm.Debug.Printf("\t\tSchema Directory: %s\n", schemaDir)
+		schemataDir, err := cfg.GetString("schemata_dir")
+		pterm.Debug.Printf("\t\tSchemata Directory: %s\n", schemataDir)
 		cobra.CheckErr(err)
 
-		err = filepath.WalkDir(schemaDir, func(path string, d fs.DirEntry, err error) error {
+		err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
@@ -108,5 +105,4 @@ func init() {
 
 	newCmd.Flags().StringVar(&dataSetName, "dataset", "", "Which DataSet to create content for?")
 	cobra.CheckErr(newCmd.MarkFlagRequired("dataset"))
-	newCmd.SetUsageTemplate("blox new")
 }
