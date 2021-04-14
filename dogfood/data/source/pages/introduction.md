@@ -49,3 +49,7 @@ CueBlox provides pre-built examples that allow you to build automated content de
 ## Teamwork Makes the Dream Work
 
 A fundamental problem we set out to solve was collaboration across teams of any size. CueBlox enables this by allowing teams to create and publish their own Schemata, including built-in support for versioning. With shared schemata, your team can be confident that everyone will create data that can be consumed and aggregated without manual intervention.
+
+## Beyond The Blog
+
+While the toolset is well suited for managing markdown content that you intend to publish, that's far from the only use case we envisioned. One of our primary goals was to allow a git-based workflow for other types of data. As a concrete example, the primary authors of CueBlox are in Developer Relations. We intend to create shared schemata for our teams to allow us to share information about events, speaking engagements, conferences and other types of data that might be aggregated to create a team calendar, or provide metrics for management. Because CueBlox is markdown or YAML stored in a git repository, we can even enable git workflows for approval. Imagine creating a travel request by submitting a PR to a shared team content repository. Approval and merging automatically create the data about the event and travel costs. Your workflows are only limited by your imagination, but CueBlox enables everyone to create and consume the data.
