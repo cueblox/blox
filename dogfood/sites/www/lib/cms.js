@@ -1,7 +1,7 @@
 import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 
 const client = new ApolloClient({
-  uri: process.env.NEXT_PUBLIC_CMS_URL,
+  uri: process.env.NEXT_PUBLIC_CMS_URL || 'https://api.cueblox.com/api/graphql',
   cache: new InMemoryCache()
 });
 
