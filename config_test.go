@@ -7,11 +7,10 @@ import (
 )
 
 const base = `{
-    data_dir: string
-    schema_dir: string | *"schemas"
-    build_dir: string | *"_build"
-}
-`
+    build_dir:    string | *"_build"
+    data_dir:     string | *"data"
+    schemata_dir: string | *"schemata"
+}`
 
 func TestGetString(t *testing.T) {
 	runtime, err := NewConfig(base)
@@ -30,9 +29,9 @@ func TestGetString(t *testing.T) {
 	assert.NotEqual(t, nil, err)
 
 	// test defaulted key
-	schDir, err := runtime.GetString("schema_dir")
+	schDir, err := runtime.GetString("schemata_dir")
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "schemas", schDir)
+	assert.Equal(t, "schemata", schDir)
 
 	// test parsed key
 	configString, err := runtime.GetString("data_dir")
