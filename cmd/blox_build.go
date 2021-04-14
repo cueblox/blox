@@ -39,7 +39,7 @@ your content into a single JSON file, which can be consumed by your tooling
 of choice.
 
 Referential Integrity can be enforced with -i. This ensures that any fields
-ending with _id are valid references to identifies within the other content type.`,
+ending with _id are valid references to identifiers within the other content type.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		userConfig, err := ioutil.ReadFile("blox.cue")
 		cobra.CheckErr(err)

@@ -13,7 +13,7 @@ import (
 // listCmd represents the list command
 var remoteListCmd = &cobra.Command{
 	Use:   "list <remote repository URL>",
-	Short: "List schemas and versions available in a remote repository",
+	Short: "List schemata and versions available in a remote repository",
 	Args:  cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
