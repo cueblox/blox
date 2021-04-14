@@ -12,13 +12,19 @@ See our rapidly-evolving documentation [here](https://github.com/cueblox/blox/bl
 
 A Blox is a collection of DataSets, grouped into a Schema, and distributed as a repository.
 
+These Blox can be consumed using the `blox` CLI to provide data validation and generation for your content repositories, ensuring type safety across your content.
+
 ### DataSet
 
-A DataSet defines something
+A DataSet is a type with a strongly defined schema, using [Cue](https://cuelang.org).
+
+See [examples](./dogfood/schemata/profile_v1.cue)
 
 ### Schema
 
 A Schema is a Cue file definition of one or more DataSets, with some metadata to help connect some dots for the `blox` CLI.
+
+See [examples](./dogfood/schemata)
 
 ### Repository
 
