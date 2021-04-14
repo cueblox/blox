@@ -25,14 +25,21 @@ var (
 const DefaultConfigName = "blox.cue"
 
 const BaseConfig = `{
-    data_dir: string
-    schema_dir: string | *"schemas"
-    build_dir: string | *"_build"
+    build_dir:    string | *"_build"
+    data_dir:     string | *"data"
+    schemata_dir: string | *"schemata"
 }`
 
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Validate and build your data",
+	Short: "Validate & Build",
+	Long: `The build command will ensure that your content is correct by
+validating it against your schemata. Once validated, it will render all
+your content into a single JSON file, which can be consumed by your tooling
+of choice.
+
+Referential Integrity can be enforced with -i. This ensures that any fields
+ending with _id are valid references to identifies within the other content type.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		userConfig, err := ioutil.ReadFile("blox.cue")
 		cobra.CheckErr(err)
@@ -47,68 +54,65 @@ var buildCmd = &cobra.Command{
 		cobra.CheckErr(err)
 
 		// Load Schemas!
-		schemaDir, err := cfg.GetString("schema_dir")
-		pterm.Debug.Printf("\t\tSchema Directory: %s\n", schemaDir)
+		schemataDir, err := cfg.GetString("schemata_dir")
 		cobra.CheckErr(err)
+		pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
 
-		err = filepath.WalkDir(schemaDir, func(path string, d fs.DirEntry, err error) error {
+		err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
+
 			if !d.IsDir() {
 				bb, err := os.ReadFile(path)
 				if err != nil {
 					return err
 				}
-				pterm.Debug.Printf("\t\tLoading Schema: %s\n", path)
 
+				pterm.Debug.Printf("\t\tAttempting to register schema: %s\n", path)
 				err = engine.RegisterSchema(string(bb))
 				if err != nil {
 					return err
 				}
 			}
+
 			return nil
 		})
 		cobra.CheckErr(err)
-		pterm.Debug.Println("\t\tBuilding Models")
 
-		cobra.CheckErr(buildModels(engine, cfg))
+		pterm.Debug.Println("\t\tBuilding DataSets")
+		cobra.CheckErr(buildDataSets(engine, cfg))
 
 		if referentialIntegrity {
-			pterm.Info.Println("Checking Referential Integrity")
-			err = engine.ReferentialIntegrity()
-			if err != nil {
-				pterm.Error.Println(err)
-			} else {
-				pterm.Success.Println("Foreign Keys Validated")
-			}
+			pterm.Info.Println("Verifying Referential Integrity")
+			cobra.CheckErr(engine.ReferentialIntegrity())
+			pterm.Success.Println("Referential Integrity OK")
 		}
 
+		pterm.Debug.Println("Building output data blox")
 		output, err := engine.GetOutput()
 		cobra.CheckErr(err)
 
+		pterm.Debug.Println("Rendering data blox to JSON")
 		jso, err := output.MarshalJSON()
 		cobra.CheckErr(err)
 
 		buildDir, err := cfg.GetString("build_dir")
 		cobra.CheckErr(err)
-		err = os.MkdirAll(buildDir, 0755)
-		cobra.CheckErr(err)
+		cobra.CheckErr(os.MkdirAll(buildDir, 0755))
+
 		filename := "data.json"
 		filePath := path.Join(buildDir, filename)
-		err = os.WriteFile(filePath, jso, 0755)
-		cobra.CheckErr(err)
-
+		cobra.CheckErr(os.WriteFile(filePath, jso, 0755))
+		pterm.Success.Printf("Data blox written to '%s'\n", filePath)
 	},
 }
 
-func buildModels(engine *cuedb.Engine, cfg *blox.Config) error {
+func buildDataSets(engine *cuedb.Engine, cfg *blox.Config) error {
 	var errors error
 
-	pterm.Info.Println("Validating ...")
-
 	for _, dataSet := range engine.GetDataSets() {
-		pterm.Debug.Printf("\t\tDataset: %s\n", dataSet.ID())
+		pterm.Debug.Printf("\t\tBuilding Dataset: %s\n", dataSet.ID())
 
 		// We're using the Or variant of GetString because we know this call can't
 		// fail, as the config isn't valid without.
@@ -158,7 +162,6 @@ func buildModels(engine *cuedb.Engine, cfg *blox.Config) error {
 				var istruct = make(map[string]interface{})
 
 				err = yaml.Unmarshal(bytes, &istruct)
-
 				if err != nil {
 					return multierror.Append(err)
 				}
@@ -182,16 +185,15 @@ func buildModels(engine *cuedb.Engine, cfg *blox.Config) error {
 	}
 
 	if errors != nil {
-		pterm.Error.Println("Validations failed")
-	} else {
-		pterm.Success.Println("Validations complete")
+		pterm.Error.Println("Validation Failed")
+		return errors
 	}
 
-	return errors
+	pterm.Success.Println("Validation Complete")
+	return nil
 }
 
 func init() {
 	rootCmd.AddCommand(buildCmd)
-
-	buildCmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Enforce referential integrity")
+	buildCmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
 }

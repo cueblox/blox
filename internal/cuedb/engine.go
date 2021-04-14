@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	dataPathRoot   = "data"
-	dataSetField   = "_dataset"
-	schemaPathRoot = "schema"
-	schemaField    = "_schema"
+	dataPathRoot     = "data"
+	dataSetField     = "_dataset"
+	schemataPathRoot = "schemata"
+	schemaField      = "_schema"
 )
 
 type Engine struct {
@@ -149,7 +149,7 @@ func (r *Engine) RegisterSchema(cueString string) error {
 	if err != nil {
 		return err
 	}
-	schemaPath := cue.ParsePath(fmt.Sprintf(`%s."%s"."%s"`, schemaPathRoot, schemaMetadata.Namespace, schemaMetadata.Name))
+	schemaPath := cue.ParsePath(fmt.Sprintf(`%s."%s"."%s"`, schemataPathRoot, schemaMetadata.Namespace, schemaMetadata.Name))
 
 	// First, Unify whatever schemas the users want. We'll
 	// do our best to extract whatever information from
