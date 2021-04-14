@@ -26,4 +26,4 @@ jobs:
           prerelease: true
           title: "CueBlox"
           files: |
-            dogfood/data/_build/data.json
+            dogfood/_build/data.json
