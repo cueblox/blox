@@ -92,6 +92,9 @@ for the new content, you can quickly scaffold new content with ease.`,
 		slug := args[0]
 		pterm.Info.Printf("Creating new %s at %s/%s.yaml\n", dataSet.ID(), dataSetDirectory, slug)
 
+		err = os.MkdirAll(dataSetDirectory, 0755)
+		cobra.CheckErr(err)
+
 		bytes, err := yaml.Encode(templateValue)
 		cobra.CheckErr(err)
 
