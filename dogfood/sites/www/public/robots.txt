@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://next-tails-blog.vercel.app/sitemap.xml
