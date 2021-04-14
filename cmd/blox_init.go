@@ -73,7 +73,7 @@ func createDirectories() error {
 func init() {
 	rootCmd.AddCommand(initCmd)
 
-	initCmd.Flags().StringVarP(&sourceDir, "source", "s", "source", "where pre-processed content will be stored (source markdown)")
+	initCmd.Flags().StringVarP(&sourceDir, "source", "s", "content", "where pre-processed content will be stored (source markdown)")
 	initCmd.Flags().StringVarP(&buildDir, "destination", "d", "_build", "where post-processed content will be stored (output json)")
 	initCmd.Flags().StringVarP(&staticDir, "static", "k", "static", "where static files will be stored")
 	initCmd.Flags().StringVarP(&schemaDir, "schema", "a", "schema", "where schema definitions will be stored")
