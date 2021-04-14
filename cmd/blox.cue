@@ -1,5 +1,5 @@
 {
   build_dir:    "_build"
-  data_dir:     "content"
+  data_dir:     "data"
   schemata_dir: "schemata"
 }
