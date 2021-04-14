@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "NEXT_PUBLIC_CMS_URL=https://api.cueblox.com/api/; next build && next export",
+    "build": "NEXT_PUBLIC_CMS_URL=https://api.cueblox.com/api/graphql; next build && next export",
     "start": "next start"
   },
   "dependencies": {
