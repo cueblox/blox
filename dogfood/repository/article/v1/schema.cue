@@ -5,23 +5,23 @@
 	}
 
 	#Article: {
-		_model: {
+		_dataset: {
 			plural: "articles"
 			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}
 
-	title: string
-	excerpt:  string
-    featured: bool | *false
-    draft: bool | *false
-    publish_date: string
-    image?: string
-    last_edit_date?: string
-    edit_description?: string
-	body?:      string
-	tags?: [...string]
-    category_id?: string
-    profile_id?: string
+		title:             string @template("My New Article")
+		excerpt:           string @template("Small Description")
+		featured:          bool | *false
+		draft:             bool | *false
+		publish_date:      string @template("2020-01-01")
+		image?:            string
+		last_edit_date?:   string
+		edit_description?: string
+		body?:             string @template("My Awesome Article")
+		tags?: [...string]
+		category_id?: string
+		profile_id?:  string
 	}
 
 }
