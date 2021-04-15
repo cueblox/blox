@@ -26,9 +26,16 @@ var (
 const DefaultConfigName = "blox.cue"
 
 const BaseConfig = `{
+    #Remote: {
+        name: string
+        version: string
+        repository: string
+    }
     build_dir:    string | *"_build"
     data_dir:     string | *"data"
     schemata_dir: string | *"schemata"
+	remotes: [ ...#Remote ]
+
 }`
 
 var buildCmd = &cobra.Command{
@@ -43,12 +50,19 @@ Referential Integrity can be enforced with -i. This ensures that any fields
 ending with _id are valid references to identifiers within the other content type.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		userConfig, err := ioutil.ReadFile("blox.cue")
+
+		pterm.Debug.Printf("loading user config")
+
 		cobra.CheckErr(err)
 
 		engine, err := cuedb.NewEngine()
+
+		pterm.Debug.Printf("new engine")
 		cobra.CheckErr(err)
 
 		cfg, err := blox.NewConfig(BaseConfig)
+
+		pterm.Debug.Printf("newConfig")
 		cobra.CheckErr(err)
 
 		err = cfg.LoadConfigString(string(userConfig))
@@ -59,8 +73,9 @@ ending with _id are valid references to identifiers within the other content typ
 		cobra.CheckErr(err)
 
 		remotes, err := cfg.GetList("remotes")
-		cobra.CheckErr(err)
-		parseRemotes(remotes)
+		if err == nil {
+			parseRemotes(remotes)
+		}
 
 		pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
 
@@ -203,6 +218,15 @@ func init() {
 	rootCmd.AddCommand(buildCmd)
 	buildCmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
 }
+
+const remoteCue = `{
+    #Remote: {
+        name: string
+        version: string
+        repository: string
+    }
+  remotes: [ ...#Remote ]
+}`
 
 func parseRemotes(value cue.Value) error {
 	iter, err := value.List()
