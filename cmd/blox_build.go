@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"cuelang.org/go/cue"
 	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/encoding/markdown"
@@ -25,9 +26,16 @@ var (
 const DefaultConfigName = "blox.cue"
 
 const BaseConfig = `{
+    #Remote: {
+        name: string
+        version: string
+        repository: string
+    }
     build_dir:    string | *"_build"
     data_dir:     string | *"data"
     schemata_dir: string | *"schemata"
+	remotes: [ ...#Remote ]
+
 }`
 
 var buildCmd = &cobra.Command{
@@ -42,12 +50,19 @@ Referential Integrity can be enforced with -i. This ensures that any fields
 ending with _id are valid references to identifiers within the other content type.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		userConfig, err := ioutil.ReadFile("blox.cue")
+
+		pterm.Debug.Printf("loading user config")
+
 		cobra.CheckErr(err)
 
 		engine, err := cuedb.NewEngine()
+
+		pterm.Debug.Printf("new engine")
 		cobra.CheckErr(err)
 
 		cfg, err := blox.NewConfig(BaseConfig)
+
+		pterm.Debug.Printf("newConfig")
 		cobra.CheckErr(err)
 
 		err = cfg.LoadConfigString(string(userConfig))
@@ -56,6 +71,12 @@ ending with _id are valid references to identifiers within the other content typ
 		// Load Schemas!
 		schemataDir, err := cfg.GetString("schemata_dir")
 		cobra.CheckErr(err)
+
+		remotes, err := cfg.GetList("remotes")
+		if err == nil {
+			parseRemotes(remotes)
+		}
+
 		pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
 
 		err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
@@ -196,4 +217,54 @@ func buildDataSets(engine *cuedb.Engine, cfg *blox.Config) error {
 func init() {
 	rootCmd.AddCommand(buildCmd)
 	buildCmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
+}
+
+const remoteCue = `{
+    #Remote: {
+        name: string
+        version: string
+        repository: string
+    }
+  remotes: [ ...#Remote ]
+}`
+
+func parseRemotes(value cue.Value) error {
+	iter, err := value.List()
+	if err != nil {
+		return err
+	}
+	for iter.Next() {
+		val := iter.Value()
+		name, err := val.FieldByName("name", false)
+		if err != nil {
+			return err
+
+		}
+		n, err := name.Value.String()
+		if err != nil {
+			return err
+		}
+		version, err := val.FieldByName("version", false)
+		if err != nil {
+			return err
+
+		}
+		v, err := version.Value.String()
+		if err != nil {
+			return err
+		}
+		repository, err := val.FieldByName("repository", false)
+		if err != nil {
+			return err
+		}
+		r, err := repository.Value.String()
+		if err != nil {
+			return err
+		}
+		err = ensureRemote(n, v, r)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

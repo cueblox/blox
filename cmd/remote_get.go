@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -20,19 +21,52 @@ var remoteGetCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(3),
 
 	Run: func(cmd *cobra.Command, args []string) {
-		manifest := fmt.Sprintf("https://%s/manifest.json", args[0])
+
+		repo := args[0]
+		schemaName := args[1]
+		version := args[2]
+
+		err := ensureRemote(schemaName, version, repo)
+		cobra.CheckErr(err)
+	},
+}
+
+func init() {
+	remoteCmd.AddCommand(remoteGetCmd)
+}
+
+// ensureRemote downloads a remote schema at a specific
+// version if it doesn't exist locally
+func ensureRemote(name, version, repo string) error {
+
+	// load config
+	userConfig, err := ioutil.ReadFile("blox.cue")
+	cobra.CheckErr(err)
+
+	cfg, err := blox.NewConfig(BaseConfig)
+	cobra.CheckErr(err)
+
+	err = cfg.LoadConfigString(string(userConfig))
+	cobra.CheckErr(err)
+
+	// Load Schemas!
+	schemataDir, err := cfg.GetString("schemata_dir")
+	cobra.CheckErr(err)
+
+	schemaFilePath := path.Join(schemataDir, fmt.Sprintf("%s_%s.cue", name, version))
+	_, err = os.Stat(schemaFilePath)
+	if os.IsNotExist(err) {
+		pterm.Info.Printf("Schema does not exist locally: %s_%s.cue\n", name, version)
+		manifest := fmt.Sprintf("https://%s/manifest.json", repo)
 		res, err := http.Get(manifest)
 		cobra.CheckErr(err)
 
 		var repos repository.Repository
 		json.NewDecoder(res.Body).Decode(&repos)
 
-		schemaName := args[1]
-		version := args[2]
-
 		var selectedVersion *repository.Version
 		for _, s := range repos.Schemas {
-			if s.Name == schemaName {
+			if s.Name == name {
 				for _, v := range s.Versions {
 					if v.Name == version {
 						selectedVersion = v
@@ -42,17 +76,17 @@ var remoteGetCmd = &cobra.Command{
 			}
 		}
 
-		cfg, err := blox.NewConfig(BaseConfig)
-		schemataDir := cfg.GetStringOr("schemata_dir", "schemata")
+		// make schemata directory
 		cobra.CheckErr(os.MkdirAll(schemataDir, 0755))
 
-		filename := fmt.Sprintf("%s_%s.cue", schemaName, version)
+		// TODO: don't overwrite each time
+		filename := fmt.Sprintf("%s_%s.cue", name, version)
 		filePath := path.Join(schemataDir, filename)
-		cobra.CheckErr(os.WriteFile(filePath, []byte(selectedVersion.Definition), 0755))
-
-	},
-}
-
-func init() {
-	remoteCmd.AddCommand(remoteGetCmd)
+		err = os.WriteFile(filePath, []byte(selectedVersion.Definition), 0755)
+		cobra.CheckErr(err)
+		pterm.Info.Printf("Schema downloaded: %s_%s.cue\n", name, version)
+		return nil
+	}
+	pterm.Info.Println("Schema already exists locally, skipping download.")
+	return nil
 }
