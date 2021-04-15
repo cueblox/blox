@@ -5,20 +5,20 @@
 	}
 
 	#Page: {
-		_model: {
+		_dataset: {
 			plural: "pages"
 			supportedExtensions: ["yaml", "yml", "md", "mdx"]
 		}
 
-	title: string
-	excerpt:  string
-    draft: bool | *false
-    publish_date: string
-    image?: string
-	body?:      string
-	tags?: [...string]
-	section_id?: string
-	weight?: int
+		title:        string @template("My New Page")
+		excerpt:      string @template("Small description about my page")
+		draft:        bool | *false
+		publish_date: string @template("2020-01-01")
+		image?:       string
+		body?:        string
+		tags?: [...string]
+		section_id?: string
+		weight?:     int
 	}
 
 }

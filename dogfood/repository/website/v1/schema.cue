@@ -5,12 +5,12 @@
 	}
 
 	#Website: {
-		_model: {
+		_dataset: {
 			plural: "websites"
 			supportedExtensions: ["yaml", "yml"]
 		}
 
-		url:         string
+		url:         string @template("https://google.com")
 		profile_id?: string
 		body?:       string
 	}
