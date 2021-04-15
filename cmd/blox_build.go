@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"cuelang.org/go/cue"
 	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/encoding/markdown"
@@ -56,6 +57,11 @@ ending with _id are valid references to identifiers within the other content typ
 		// Load Schemas!
 		schemataDir, err := cfg.GetString("schemata_dir")
 		cobra.CheckErr(err)
+
+		remotes, err := cfg.GetList("remotes")
+		cobra.CheckErr(err)
+		parseRemotes(remotes)
+
 		pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
 
 		err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
@@ -196,4 +202,45 @@ func buildDataSets(engine *cuedb.Engine, cfg *blox.Config) error {
 func init() {
 	rootCmd.AddCommand(buildCmd)
 	buildCmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
+}
+
+func parseRemotes(value cue.Value) error {
+	iter, err := value.List()
+	if err != nil {
+		return err
+	}
+	for iter.Next() {
+		val := iter.Value()
+		name, err := val.FieldByName("name", false)
+		if err != nil {
+			return err
+
+		}
+		n, err := name.Value.String()
+		if err != nil {
+			return err
+		}
+		version, err := val.FieldByName("version", false)
+		if err != nil {
+			return err
+
+		}
+		v, err := version.Value.String()
+		if err != nil {
+			return err
+		}
+		repository, err := val.FieldByName("repository", false)
+		if err != nil {
+			return err
+		}
+		r, err := repository.Value.String()
+		if err != nil {
+			return err
+		}
+		err = ensureRemote(n, v, r)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

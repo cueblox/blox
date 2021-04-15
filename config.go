@@ -1,6 +1,7 @@
 package blox
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 
@@ -63,6 +64,21 @@ func (r *Config) GetString(key string) (string, error) {
 	}
 
 	return "", fmt.Errorf("couldn't find key '%s'", key)
+}
+
+func (r *Config) GetList(key string) (cue.Value, error) {
+
+	keyValue := r.runtime.Database.LookupPath(cue.ParsePath(key))
+
+	if keyValue.Exists() {
+		_, err := keyValue.List()
+		if err != nil {
+			return cue.Value{}, err
+		}
+
+		return keyValue, nil
+	}
+	return cue.Value{}, errors.New("not found")
 }
 
 func (r *Config) GetStringOr(key string, def string) string {
