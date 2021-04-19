@@ -21,7 +21,7 @@ all: fmt shoulders | $(BIN) ; $(info $(M) building executable…) @ ## Build pro
 	$Q $(GO) build \
 		-tags release \
 		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
-		-o $(BIN)/$(basename $(MODULE)) main.go
+		-o $(BIN)/$(basename $(MODULE)) cli/blox/main.go
 
 # Tools
 
