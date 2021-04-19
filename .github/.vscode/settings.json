@@ -1,0 +1,9 @@
+{
+    "azureFunctions.deploySubpath": "dogfood/sites/api.cueblox.com/api",
+    "azureFunctions.postDeployTask": "npm install",
+    "azureFunctions.projectLanguage": "JavaScript",
+    "azureFunctions.projectRuntime": "~3",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.projectSubpath": "dogfood/sites/api.cueblox.com/api",
+    "azureFunctions.preDeployTask": "npm prune"
+}

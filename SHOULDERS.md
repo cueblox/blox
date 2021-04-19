@@ -119,6 +119,8 @@ Thank you to the following **GIANTS**:
 
 * [github.com/google/renameio](https://godoc.org/github.com/google/renameio)
 
+* [github.com/google/safehtml](https://godoc.org/github.com/google/safehtml)
+
 * [github.com/googleapis/gax-go/v2](https://godoc.org/github.com/googleapis/gax-go/v2)
 
 * [github.com/gookit/color](https://godoc.org/github.com/gookit/color)
@@ -170,6 +172,8 @@ Thank you to the following **GIANTS**:
 * [github.com/hashicorp/serf](https://godoc.org/github.com/hashicorp/serf)
 
 * [github.com/inconshreveable/mousetrap](https://godoc.org/github.com/inconshreveable/mousetrap)
+
+* [github.com/jba/templatecheck](https://godoc.org/github.com/jba/templatecheck)
 
 * [github.com/jonboulle/clockwork](https://godoc.org/github.com/jonboulle/clockwork)
 
@@ -275,7 +279,11 @@ Thank you to the following **GIANTS**:
 
 * [github.com/ryanuber/columnize](https://godoc.org/github.com/ryanuber/columnize)
 
+* [github.com/sanity-io/litter](https://godoc.org/github.com/sanity-io/litter)
+
 * [github.com/sean-/seed](https://godoc.org/github.com/sean-/seed)
+
+* [github.com/sergi/go-diff](https://godoc.org/github.com/sergi/go-diff)
 
 * [github.com/shurcooL/sanitized_anchor_name](https://godoc.org/github.com/shurcooL/sanitized_anchor_name)
 
@@ -355,6 +363,8 @@ Thank you to the following **GIANTS**:
 
 * [golang.org/x/tools](https://godoc.org/golang.org/x/tools)
 
+* [golang.org/x/tools/gopls](https://godoc.org/golang.org/x/tools/gopls)
+
 * [golang.org/x/xerrors](https://godoc.org/golang.org/x/xerrors)
 
 * [google.golang.org/api](https://godoc.org/google.golang.org/api)
@@ -380,5 +390,9 @@ Thank you to the following **GIANTS**:
 * [gopkg.in/yaml.v3](https://godoc.org/gopkg.in/yaml.v3)
 
 * [honnef.co/go/tools](https://godoc.org/honnef.co/go/tools)
+
+* [mvdan.cc/gofumpt](https://godoc.org/mvdan.cc/gofumpt)
+
+* [mvdan.cc/xurls/v2](https://godoc.org/mvdan.cc/xurls/v2)
 
 * [rsc.io/binaryregexp](https://godoc.org/rsc.io/binaryregexp)

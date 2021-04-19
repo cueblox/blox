@@ -8,4 +8,5 @@
 /repository.yaml
 /blox
 /_build/
+/dist/
 cli/blox/blox
