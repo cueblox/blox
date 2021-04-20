@@ -160,9 +160,12 @@ func buildDataSets(engine *cuedb.Engine, cfg *blox.Config) error {
 				if !dataSet.IsSupportedExtension(ext) {
 					return nil
 				}
-
-				slug := strings.TrimSuffix(filepath.Base(path), "."+ext)
-
+				relative, err := filepath.Rel(dataSetDirectory, path)
+				if err != nil {
+					return err
+				}
+				slug := strings.TrimSuffix(relative, "."+ext)
+				pterm.Debug.Println(slug)
 				bytes, err := ioutil.ReadFile(path)
 				if err != nil {
 					return multierror.Append(err)
