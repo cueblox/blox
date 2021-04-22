@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	cuelang.org/go v0.3.0
+	github.com/arrase/cobraplugins v0.0.0-20200712113530-7d44df38707e // indirect
 	github.com/goccy/go-yaml v1.8.9
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
