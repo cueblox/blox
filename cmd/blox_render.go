@@ -18,7 +18,6 @@ package cmd
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -36,16 +35,15 @@ var template string
 var with string
 var each bool
 
-// executeCmd represents the execute command
-var executeCmd = &cobra.Command{
-	Use:   "execute",
-	Short: "Execute templates with compiled data",
-	Long: `Execute templates with compiled data. 
+// renderCmd represents the execute command
+var renderCmd = &cobra.Command{
+	Use:   "render",
+	Short: "Render templates with compiled data",
+	Long: `Render templates with compiled data. 
 Use the 'with' parameter to restrict the data set to a single content type.
 Use the 'each' parameter to execute the template once for each item.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		fmt.Println("execute called")
 		// begin cut and paste from blox_build
 		userConfig, err := ioutil.ReadFile("blox.cue")
 
@@ -170,8 +168,8 @@ Use the 'each' parameter to execute the template once for each item.`,
 }
 
 func init() {
-	rootCmd.AddCommand(executeCmd)
-	executeCmd.Flags().StringVarP(&template, "template", "t", "", "template to execute")
-	executeCmd.Flags().StringVarP(&with, "with", "w", "", "dataset to use")
-	executeCmd.Flags().BoolVarP(&each, "each", "e", false, "execute template once per item")
+	rootCmd.AddCommand(renderCmd)
+	renderCmd.Flags().StringVarP(&template, "template", "t", "", "template to render")
+	renderCmd.Flags().StringVarP(&with, "with", "w", "", "dataset to use")
+	renderCmd.Flags().BoolVarP(&each, "each", "e", false, "render template once per item")
 }
