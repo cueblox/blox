@@ -3,10 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path"
-	"path/filepath"
 
-	"github.com/arrase/cobraplugins"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -45,7 +42,6 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	loadPlugins(rootCmd)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.blox.yaml)")
 	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "disable logging")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging, overrides 'quiet' flag")
@@ -72,25 +68,4 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
-}
-
-func loadPlugins(cmd *cobra.Command) {
-	pterm.Info.Println("Searching for plugins")
-	home, err := homedir.Dir()
-	cobra.CheckErr(err)
-	pluginPath := path.Join(home, ".blox", "plugins")
-	err = filepath.Walk(pluginPath,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if !info.IsDir() {
-
-				pterm.Info.Printf("\tloading %s\n", path)
-				cmd.AddCommand(cobraplugins.GetCmd(path, "MainCmd"))
-			}
-
-			return nil
-		})
-	cobra.CheckErr(err)
 }
