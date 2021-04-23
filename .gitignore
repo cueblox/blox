@@ -11,3 +11,5 @@
 /dist/
 cli/blox/blox
 /.github/.vscode/
+dogfood/_build/
+dogfood/data/_build/
