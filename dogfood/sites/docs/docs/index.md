@@ -5,7 +5,7 @@ CueBlox is a set of tools that allow you to create and consume datasets from YAM
 
 At the core is a tool that aggregates similar files into collections of data. If you've ever built a website with a static site generator like Hugo, this will be familiar.
 
-Where CueBlox really shines though is in the additional functionality it enables. CueBlox has several features that enable some interesting and novel integrations for your data:
+Where CueBlox really shines though is in the additional functionality it enables. CueBlox has several features that enable some interesting and novel integrations for your data. You can use one or all of these features, depending on your needs. We like to think of it as a "Value Pyramid", because the more CueBlox features you use, the more of its value you realize:
 
 ![CueBlox Value Pyramid](img/pyramid.png "CueBlox Value Pyramid")
 
