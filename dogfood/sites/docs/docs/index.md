@@ -9,7 +9,8 @@ Where CueBlox really shines though is in the additional functionality it enables
 
 ![CueBlox Value Pyramid](img/pyramid.png "CueBlox Value Pyramid")
 
-### Validate your datasets against a schema.
+
+## Markdown and YAML Validation
 
 Ensure your data is always valid by providing defaults and validation rules using the [Cue](https://cuelang.org) language to define schemata for your data.
 
@@ -55,15 +56,12 @@ The schema that validates this page looks like the code block below. We've comme
   }
 ```
 
-### Aggregate your datasets and export them into a JSON file
+## Data Conversion
 
 Data that is locked in your git repository is only useful in that repository. CueBlox allows you to validate, aggregate, and export your data in the integration-friendly JSON format for consumption elsewhere. The data that drives this website is processed through CueBlox and automatically published as a GitHub release. You can see it [here](https://github.com/cueblox/blox/releases/tag/blox)
 
-### Leverage third party tools to make your data easily accessible
 
-CueBlox "build" command provides a JSON file that can be published as a release artifact, that works extremely well with GraphQL and REST based API providers. In fact, this [website is built](https://github.com/cueblox/blox/dogfood/) on this feature.
-
-### Create and consume standardized schemata for you and your team
+## Shared Schemata
 
 The schemata you create are available to you locally in your content directory. But you can also create a set of schemata that is published for others to consume. The schema we use to build all of the CueBlox website are published on [this website](https://schemas.cueblox.com/) All the information about the schemata available, including version information is available in the `manifest.json` file linked in the HTML.
 
@@ -84,6 +82,20 @@ schemas.cueblox.com | website  | v1
 
 Using published schemata this way allows you to create and consume standardized data across several projects, teams, and people. In fact, it is the core driver for our development of CueBlox -- enabling teams to publish information individually, but have it aggregated and consumed at a higher level without data validation worries. When everyone uses the same schema, all the data is always consistent.
 
-### Leverage all of this functionality using GitOps principles
+## Custom Schemata Repository
+
+When you grow beyond the schemata we provide by default you can use the `blox repo` command to create your own schema repository. You'll have full control over the definitions and you can point your team at your custom repository to keep everyone on the same page.
+
+## Consistent Aggregated Team Data
+
+When everyone uses the same schemata you can easily aggregate data from multiple sources with the confidence that there won't be any anomalies or inconsistencies in their data. Manage a team event calendar. Create a publishing schedule for your social media. Aggregate documentation from different projects into a single website. You're only limited by your imagination.
+
+
+## Leverage all of this functionality using GitOps principles
 
 CueBlox was built for lazy people. If it can be generated, we generate it. If it can be automated, we automate it. The end result is that the only thing you need to do to publish your content is check it into your git repository. GitHub actions take care of the rest!
+
+
+## Use third party tools to make your data easily accessible
+
+CueBlox `build` command provides a JSON file that can be published as a release artifact, that works extremely well with GraphQL and REST based API providers. In fact, this [website is built](https://github.com/cueblox/blox/dogfood/) on this feature.

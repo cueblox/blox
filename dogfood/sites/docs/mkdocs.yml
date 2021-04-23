@@ -1,3 +1,24 @@
 site_name: CueBlox
+repo_url: https://github.com/cueblox/blox
+nav:
+    - Home: index.md
+    - 'User Guide': 
+      - 'Introduction': introduction.md
+      - 'Quick Start': get-started.md
+      - 'Data Validation': validation.md
+      - 'Data Conversion': conversion.md
+      - 'Shared Schemata': shared_schema.md
+      - 'Custom Schemata': custom_schema.md
+    - 'Command Line Tool': 
+      - 'CLI': 'blox.md'
+    - 'Details': 
+      - 'Foundations': 'foundations.md'
 theme:
+  features:
+    - navigation.sections
+    - navigation.expand
   name: material
+  logo: assets/cueblox-logo.svg
+  palette:
+    primary: light blue
+    accent: pink
