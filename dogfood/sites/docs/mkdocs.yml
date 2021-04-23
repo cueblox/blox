@@ -1,3 +1,16 @@
 site_name: CueBlox
+repo_url: https://github.com/cueblox/blox
+nav:
+    - Home: index.md
+    - Introduction: introduction.md
+    - Quick Start: get-started.md
+    - Foundations: foundations.md
 theme:
+  features:
+    - navigation.sections
+    - navigation.expand
   name: material
+  logo: assets/cueblox-logo.svg
+  palette:
+    primary: light blue
+    accent: pink
