@@ -21,8 +21,11 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.x
-      - name: Build mkdocs
+      - name: Install mkdocs
         run: pip install mkdocs-material
+        working-directory: dogfood/sites/docs
+      - name: Build mkdocs
+        run: mkdocs build
         working-directory: dogfood/sites/docs
 
       - name: Build And Deploy
