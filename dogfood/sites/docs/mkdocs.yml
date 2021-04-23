@@ -9,8 +9,9 @@ nav:
       - 'Data Conversion': conversion.md
       - 'Shared Schemata': shared_schema.md
       - 'Custom Schemata': custom_schema.md
-    - 'Command Line Tool': 
+    - 'Tools': 
       - 'CLI': 'blox.md'
+      - 'Extras': 'extras.md'
     - 'Details': 
       - 'Foundations': 'foundations.md'
 theme:
