@@ -20,6 +20,7 @@ var (
 	dataDir     string
 	buildDir    string
 	schemataDir string
+	staticDir   string
 	starter     string
 	skipConfig  bool
 )
@@ -63,7 +64,11 @@ func createDirectories() error {
 	if err != nil {
 		return err
 	}
-
+	pterm.Debug.Printf("Creating directory for static files at '%s'\n", staticDir)
+	err = os.MkdirAll(staticDir, 0755)
+	if err != nil {
+		return err
+	}
 	pterm.Debug.Println("Creating 'blox.cue' configuration file")
 	return ioutil.WriteFile("blox.cue", []byte(bloxcue), 0644)
 }
@@ -74,6 +79,7 @@ func init() {
 	initCmd.Flags().StringVarP(&dataDir, "data", "d", "data", "where pre-processed content will be stored (source markdown or yaml)")
 	initCmd.Flags().StringVarP(&buildDir, "build", "b", "_build", "where post-processed content will be stored (output json)")
 	initCmd.Flags().StringVarP(&schemataDir, "schemata", "s", "schemata", "where the schemata will be stored")
+	initCmd.Flags().StringVarP(&staticDir, "static", "a", "static", "where the static originals will be found")
 	initCmd.Flags().BoolVarP(&skipConfig, "skip", "c", false, "don't write a configuration file")
 
 	initCmd.Flags().StringVarP(&starter, "starter", "t", "", "use a pre-defined starter in the CURRENT directory")

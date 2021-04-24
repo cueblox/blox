@@ -10,6 +10,7 @@ const base = `{
     build_dir:    string | *"_build"
     data_dir:     string | *"data"
     schemata_dir: string | *"schemata"
+	static_dir:   string | *"static"
 }`
 
 func TestGetString(t *testing.T) {
