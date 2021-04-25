@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -16,6 +14,7 @@ import (
 	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/encoding/markdown"
+	"github.com/disintegration/imaging"
 	"github.com/goccy/go-yaml"
 	"github.com/h2non/filetype"
 	"github.com/hashicorp/go-multierror"
@@ -292,37 +291,44 @@ func processImages(cfg *blox.Config) error {
 	if !fi.IsDir() {
 		return errors.New("given static directory is not a directory")
 	}
-	err = filepath.Walk(staticDir,
+	imagesDirectory := filepath.Join(staticDir, "images")
+	err = filepath.Walk(imagesDirectory,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
-			pterm.Info.Printf("\t\tProcessing %s\n", path)
+
+			pterm.Debug.Printf("\t\tProcessing %s\n", path)
 			if !info.IsDir() {
 				buf, err := ioutil.ReadFile(path)
 				if err != nil {
 					return err
 				}
 				if filetype.IsImage(buf) {
-					pterm.Debug.Printf("File is an image: %s\n", path)
+
+					src, err := imaging.Open(path)
+					if err != nil {
+						return err
+					}
+
+					relpath, err := filepath.Rel(staticDir, path)
+					if err != nil {
+						return err
+					}
+					pterm.Debug.Printf("\t\tFile is an image: %s\n", relpath)
 					kind, err := filetype.Match(buf)
 					if err != nil {
 						return err
 					}
-					pterm.Info.Printf("File type: %s. MIME: %s\n", kind.Extension, kind.MIME.Value)
-					reader, err := os.ReadFile(path)
+					pterm.Debug.Printf("\t\tFile type: %s. MIME: %s\n", kind.Extension, kind.MIME.Value)
 					if err != nil {
 						return err
 					}
-					var b bytes.Buffer
-					encoder := base64.NewEncoder(base64.StdEncoding, &b)
-					defer encoder.Close()
-					encoder.Write(reader)
+
 					bi := &BloxImage{
-						FileName: path,
-						Height:   0,
-						Width:    0,
-						Base64:   b.String(),
+						FileName: relpath,
+						Height:   src.Bounds().Dy(),
+						Width:    src.Bounds().Dx(),
 					}
 					bytes, err := yaml.Marshal(bi)
 					if err != nil {
@@ -332,17 +338,21 @@ func processImages(cfg *blox.Config) error {
 					if err != nil {
 						return err
 					}
-					imgDir := filepath.Join(dataDir, "images")
-					err = os.MkdirAll(imgDir, 0755)
+
+					ext := strings.TrimPrefix(filepath.Ext(relpath), ".")
+					slug := strings.TrimSuffix(relpath, "."+ext)
+
+					outputPath := filepath.Join(dataDir, slug+".yaml")
+					err = os.MkdirAll(filepath.Dir(outputPath), 0755)
 					if err != nil {
+						pterm.Error.Println(err)
 						return err
 					}
-					outputPath := filepath.Join(imgDir, "something.yaml")
 					err = os.WriteFile(outputPath, bytes, 0755)
 					if err != nil {
+						pterm.Error.Println(err)
 						return err
 					}
-					pterm.Info.Println(bi.FileName)
 				} else {
 					pterm.Debug.Printf("File is not an image: %s\n", path)
 				}
@@ -355,14 +365,6 @@ func processImages(cfg *blox.Config) error {
 }
 
 type BloxImage struct {
-	FileName string `yaml:"file_name"`
-	Height   int    `yaml:"height"`
-	Width    int    `yaml:"width"`
-	Base64   string `yaml:"base_64"`
-	Formats  map[string]ImageFormat
-}
-
-type ImageFormat struct {
 	FileName string `yaml:"file_name"`
 	Height   int    `yaml:"height"`
 	Width    int    `yaml:"width"`

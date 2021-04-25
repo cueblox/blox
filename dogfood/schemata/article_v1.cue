@@ -15,7 +15,7 @@
 		featured:          bool | *false
 		draft:             bool | *false
 		publish_date:      string @template("2020-01-01")
-		image?:            string
+		image_id?:            string
 		last_edit_date?:   string
 		edit_description?: string
 		body?:             string @template("My Awesome Article")
