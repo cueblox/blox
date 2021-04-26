@@ -38,6 +38,7 @@ const BaseConfig = `{
     data_dir:     string | *"data"
     schemata_dir: string | *"schemata"
 	static_dir: string | *"static"
+	template_dir: string | *"templates"
 	remotes: [ ...#Remote ]
 
 }`
@@ -82,7 +83,9 @@ ending with _id are valid references to identifiers within the other content typ
 		}
 
 		err = processImages(cfg)
-
+		if err != nil {
+			cobra.CheckErr(err)
+		}
 		pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
 
 		err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
@@ -284,6 +287,9 @@ func parseRemotes(value cue.Value) error {
 // in the 'images' data directory.
 func processImages(cfg *blox.Config) error {
 	staticDir, err := cfg.GetString("static_dir")
+	if err != nil {
+		pterm.Info.Printf("no static directory present, skipping image linking")
+	}
 	cobra.CheckErr(err)
 	pterm.Info.Printf("processing images in %s\n", staticDir)
 	fi, err := os.Stat(staticDir)

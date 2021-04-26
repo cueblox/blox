@@ -16,6 +16,7 @@
 		company?:   string @template("CueBlox")
 		title?:     string @template("Cue Slinger")
 		body?:      string @template("☕️ Required")
+		image_id?:  string
 		social_accounts?: [...#TwitterAccount | #GitHubAccount | #MiscellaneousAccount]
 	}
 

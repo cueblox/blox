@@ -13,6 +13,10 @@
 		file_name:        	string 
 		width:      		int
 		height:        		int
+		alt_text?:			string
+		caption?:			string
+		attribution?:		string
+		attribution_link?:	string
 	}
 
 }
