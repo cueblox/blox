@@ -14,7 +14,7 @@
 		excerpt:      string @template("Small description about my page")
 		draft:        bool | *false
 		publish_date: string @template("2020-01-01")
-		image?:       string
+		image_id?:       string
 		body?:        string
 		tags?: [...string]
 		section_id?: string

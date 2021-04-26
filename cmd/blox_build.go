@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -13,7 +14,9 @@ import (
 	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/encoding/markdown"
+	"github.com/disintegration/imaging"
 	"github.com/goccy/go-yaml"
+	"github.com/h2non/filetype"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -34,6 +37,8 @@ const BaseConfig = `{
     build_dir:    string | *"_build"
     data_dir:     string | *"data"
     schemata_dir: string | *"schemata"
+	static_dir: string | *"static"
+	template_dir: string | *"templates"
 	remotes: [ ...#Remote ]
 
 }`
@@ -77,6 +82,10 @@ ending with _id are valid references to identifiers within the other content typ
 			parseRemotes(remotes)
 		}
 
+		err = processImages(cfg)
+		if err != nil {
+			cobra.CheckErr(err)
+		}
 		pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
 
 		err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
@@ -270,4 +279,104 @@ func parseRemotes(value cue.Value) error {
 		}
 	}
 	return nil
+}
+
+// processImages scans the static dir for images
+// when it finds an image, it reads the image metadata
+// and saves a corresponding YAML file describing the image
+// in the 'images' data directory.
+func processImages(cfg *blox.Config) error {
+	staticDir, err := cfg.GetString("static_dir")
+	if err != nil {
+		pterm.Info.Printf("no static directory present, skipping image linking")
+	}
+	cobra.CheckErr(err)
+	pterm.Info.Printf("processing images in %s\n", staticDir)
+	fi, err := os.Stat(staticDir)
+	cobra.CheckErr(err)
+	if !fi.IsDir() {
+		return errors.New("given static directory is not a directory")
+	}
+	imagesDirectory := filepath.Join(staticDir, "images")
+	err = filepath.Walk(imagesDirectory,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			pterm.Debug.Printf("\t\tProcessing %s\n", path)
+			if !info.IsDir() {
+				buf, err := ioutil.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				if filetype.IsImage(buf) {
+
+					src, err := imaging.Open(path)
+					if err != nil {
+						return err
+					}
+
+					relpath, err := filepath.Rel(staticDir, path)
+					if err != nil {
+						return err
+					}
+					pterm.Debug.Printf("\t\tFile is an image: %s\n", relpath)
+					kind, err := filetype.Match(buf)
+					if err != nil {
+						return err
+					}
+					pterm.Debug.Printf("\t\tFile type: %s. MIME: %s\n", kind.Extension, kind.MIME.Value)
+					if err != nil {
+						return err
+					}
+
+					bi := &BloxImage{
+						FileName: relpath,
+						Height:   src.Bounds().Dy(),
+						Width:    src.Bounds().Dx(),
+					}
+					bytes, err := yaml.Marshal(bi)
+					if err != nil {
+						return err
+					}
+					dataDir, err := cfg.GetString("data_dir")
+					if err != nil {
+						return err
+					}
+
+					ext := strings.TrimPrefix(filepath.Ext(relpath), ".")
+					slug := strings.TrimSuffix(relpath, "."+ext)
+
+					outputPath := filepath.Join(dataDir, slug+".yaml")
+					err = os.MkdirAll(filepath.Dir(outputPath), 0755)
+					if err != nil {
+						pterm.Error.Println(err)
+						return err
+					}
+					// only write the yaml file if it doesn't exist.
+					// don't overwrite existing records.
+					_, err = os.Stat(outputPath)
+					if err != nil && errors.Is(err, os.ErrNotExist) {
+						err = os.WriteFile(outputPath, bytes, 0755)
+						if err != nil {
+							pterm.Error.Println(err)
+							return err
+						}
+					}
+				} else {
+					pterm.Debug.Printf("File is not an image: %s\n", path)
+				}
+			}
+
+			return nil
+		})
+	cobra.CheckErr(err)
+	return nil
+}
+
+type BloxImage struct {
+	FileName string `yaml:"file_name"`
+	Height   int    `yaml:"height"`
+	Width    int    `yaml:"width"`
 }
