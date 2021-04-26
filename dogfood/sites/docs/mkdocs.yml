@@ -1,19 +1,22 @@
 site_name: CueBlox
 repo_url: https://github.com/cueblox/blox
 nav:
-    - Home: index.md
-    - 'User Guide': 
-      - 'Introduction': introduction.md
-      - 'Quick Start': get-started.md
-      - 'Data Validation': validation.md
-      - 'Data Conversion': conversion.md
-      - 'Shared Schemata': shared_schema.md
-      - 'Custom Schemata': custom_schema.md
-    - 'Tools': 
-      - 'CLI': 'blox.md'
-      - 'Extras': 'extras.md'
-    - 'Details': 
-      - 'Foundations': 'foundations.md'
+  - Home: index.md
+  - "User Guide":
+      - "Introduction": introduction.md
+      - "Quick Start": get-started.md
+      - "Data Validation": validation.md
+      - "Data Conversion": conversion.md
+      - "Shared Schemata": shared_schema.md
+      - "Custom Schemata": custom_schema.md
+  - "Walkthrough":
+      - "Creating Your Blox": creating-your-blox/init.md
+      - "Defining Your First Schema": creating-your-blox/first-schema.md
+  - "Tools":
+      - "CLI": "blox.md"
+      - "Extras": "extras.md"
+  - "Details":
+      - "Foundations": "foundations.md"
 theme:
   features:
     - navigation.sections
