@@ -17,12 +17,17 @@ M = $(shell printf "\033[34;1m▶\033[0m")
 export GO111MODULE=on
 
 .PHONY: all
-all: fmt shoulders | $(BIN) ; $(info $(M) building executable…) @ ## Build program binary
+all: clean fmt shoulders | $(BIN) ; $(info $(M) building executable…) @ ## Build program binary
 	$Q $(GO) build \
 		-tags release \
 		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
 		-o $(BIN)/$(basename $(MODULE)) cli/blox/main.go
 
+install: clean fmt shoulders | $(BIN) ; $(info $(M) building executable…) @ ## Build program binary
+	$Q $(GO) install \
+		-tags release \
+		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
+		github.com/cueblox/blox/cli/blox
 # Tools
 
 $(BIN):
