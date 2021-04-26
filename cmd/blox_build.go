@@ -354,10 +354,15 @@ func processImages(cfg *blox.Config) error {
 						pterm.Error.Println(err)
 						return err
 					}
-					err = os.WriteFile(outputPath, bytes, 0755)
-					if err != nil {
-						pterm.Error.Println(err)
-						return err
+					// only write the yaml file if it doesn't exist.
+					// don't overwrite existing records.
+					_, err = os.Stat(outputPath)
+					if err != nil && errors.Is(err, os.ErrNotExist) {
+						err = os.WriteFile(outputPath, bytes, 0755)
+						if err != nil {
+							pterm.Error.Println(err)
+							return err
+						}
 					}
 				} else {
 					pterm.Debug.Printf("File is not an image: %s\n", path)

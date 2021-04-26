@@ -135,8 +135,6 @@ Thank you to the following **GIANTS**:
 
 * [github.com/grpc-ecosystem/grpc-gateway](https://godoc.org/github.com/grpc-ecosystem/grpc-gateway)
 
-* [github.com/h2non/bimg](https://godoc.org/github.com/h2non/bimg)
-
 * [github.com/h2non/filetype](https://godoc.org/github.com/h2non/filetype)
 
 * [github.com/hashicorp/consul/api](https://godoc.org/github.com/hashicorp/consul/api)
