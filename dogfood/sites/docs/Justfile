@@ -1,0 +1,4 @@
+dev:
+    poetry install --no-root
+    poetry run mkdocs serve
+    
