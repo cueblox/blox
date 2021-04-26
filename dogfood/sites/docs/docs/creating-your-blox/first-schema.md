@@ -75,8 +75,17 @@ That's all the boilerplate. Now we can define what our `Artist` structure should
 
         name: string
         url?: string
+
+        hungry: bool | *false
     }
 }
 ```
 
-We've now added our first two fields / property to the Artist definition. Firstly, we've added a mandatory field called `name` and an optional field called `url`. Fields with `?` are optional and can be missing from our data files.
+We've now added our first three fields / property to the Artist definition. Firstly, we've added a mandatory field called `name` and an optional field called `url`. Fields with `?` are optional and can be missing from our data files. The last field, `hungry`, is another CUE construct, this time for default fields. This allows you to have mandatory fields with a sensible default when they're missing. In this instance, we're setting `hungry` to be of type `bool` with a default of `false`. `*` is used to indicate a default value.
+
+### Further Reading
+
+We won't go into more details of CUE itself, but we will encourage you to read the following to understand the full potential of using CUE for validation:
+
+- [Official Docs](https://cuelang.org/docs/usecases/validation/)
+- [CUEtorials](https://cuetorials.com/)

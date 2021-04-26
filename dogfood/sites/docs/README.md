@@ -3,9 +3,9 @@
 ## Developing
 
 ```shell
+# If you don't have mkdocs installed, you can use
 poetry install --no-root
-mkdocs serve
 
-## or use Justfile
-# just dev
+# Run mkdocs locally
+mkdocs serve
 ```
