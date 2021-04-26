@@ -4,11 +4,10 @@ go 1.16
 
 require (
 	cuelang.org/go v0.3.0
-	github.com/disintegration/imaging v1.6.2 // indirect
+	github.com/disintegration/imaging v1.6.2
 	github.com/goccy/go-yaml v1.8.9
 	github.com/google/go-cmp v0.5.5 // indirect
-	github.com/h2non/bimg v1.1.5 // indirect
-	github.com/h2non/filetype v1.1.1 // indirect
+	github.com/h2non/filetype v1.1.1
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/otiai10/copy v1.5.0
