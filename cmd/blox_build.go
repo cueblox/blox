@@ -282,8 +282,8 @@ func parseRemotes(value cue.Value) error {
 }
 
 // processImages scans the static dir for images
-// when it finds an image, it reads it and converts
-// it to base64, saving the image as a yaml file
+// when it finds an image, it reads the image metadata
+// and saves a corresponding YAML file describing the image
 // in the 'images' data directory.
 func processImages(cfg *blox.Config) error {
 	staticDir, err := cfg.GetString("static_dir")
