@@ -25,69 +25,68 @@ var (
 	skipConfig  bool
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Create folders and configuration to maintain content with the blox toolset",
-	Long: `Create a group of folders to store your content. A directory for your data,
-schemata, and build output will be created.`,
-	Run: func(cmd *cobra.Command, args []string) {
+type bloxInitCmd struct {
+	cmd *cobra.Command
+}
 
-		if starter != "" {
-			cobra.CheckErr(installStarter(starter))
-			pterm.Info.Println("Starter initialized.")
-			return
-		}
-		// not a starter
-		err := createDirectories()
-		cobra.CheckErr(err)
-		pterm.Info.Println("Initialized folder structures.")
+func newBloxInitCmd() *bloxInitCmd {
+	root := &bloxInitCmd{}
+	cmd := &cobra.Command{
+		Use:   "init",
+		Short: "Create folders and configuration to maintain content with the blox toolset",
+		Long: `Create a group of folders to store your content. A directory for your data,
+	schemata, and build output will be created.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if starter != "" {
+				cobra.CheckErr(installStarter(starter))
+				pterm.Info.Println("Starter initialized.")
+				return
+			}
+			// not a starter
+			err := createDirectories()
+			cobra.CheckErr(err)
+			pterm.Info.Println("Initialized folder structures.")
+		},
+	}
+	cmd.Flags().StringVarP(&dataDir, "data", "d", "data", "where pre-processed content will be stored (source markdown or yaml)")
+	cmd.Flags().StringVarP(&buildDir, "build", "b", "_build", "where post-processed content will be stored (output json)")
+	cmd.Flags().StringVarP(&schemataDir, "schemata", "s", "schemata", "where the schemata will be stored")
+	cmd.Flags().StringVarP(&staticDir, "static", "a", "static", "where the static originals will be found")
+	cmd.Flags().BoolVarP(&skipConfig, "skip", "c", false, "don't write a configuration file")
 
-	},
+	cmd.Flags().StringVarP(&starter, "starter", "t", "", "use a pre-defined starter in the CURRENT directory")
+	root.cmd = cmd
+	return root
 }
 
 func createDirectories() error {
 	pterm.Debug.Printf("Creating directory for data at '%s'\n", dataDir)
-	err := os.MkdirAll(dataDir, 0755)
+	err := os.MkdirAll(dataDir, 0o755)
 	if err != nil {
 		return err
 	}
 
 	pterm.Debug.Printf("Creating directory for schemata at '%s'\n", schemataDir)
-	err = os.MkdirAll(schemataDir, 0755)
+	err = os.MkdirAll(schemataDir, 0o755)
 	if err != nil {
 		return err
 	}
 
 	pterm.Debug.Printf("Creating directory for build output at '%s'\n", buildDir)
-	err = os.MkdirAll(buildDir, 0755)
+	err = os.MkdirAll(buildDir, 0o755)
 	if err != nil {
 		return err
 	}
 	pterm.Debug.Printf("Creating directory for static files at '%s'\n", staticDir)
-	err = os.MkdirAll(staticDir, 0755)
+	err = os.MkdirAll(staticDir, 0o755)
 	if err != nil {
 		return err
 	}
 	pterm.Debug.Println("Creating 'blox.cue' configuration file")
-	return ioutil.WriteFile("blox.cue", []byte(bloxcue), 0644)
-}
-
-func init() {
-	rootCmd.AddCommand(initCmd)
-
-	initCmd.Flags().StringVarP(&dataDir, "data", "d", "data", "where pre-processed content will be stored (source markdown or yaml)")
-	initCmd.Flags().StringVarP(&buildDir, "build", "b", "_build", "where post-processed content will be stored (output json)")
-	initCmd.Flags().StringVarP(&schemataDir, "schemata", "s", "schemata", "where the schemata will be stored")
-	initCmd.Flags().StringVarP(&staticDir, "static", "a", "static", "where the static originals will be found")
-	initCmd.Flags().BoolVarP(&skipConfig, "skip", "c", false, "don't write a configuration file")
-
-	initCmd.Flags().StringVarP(&starter, "starter", "t", "", "use a pre-defined starter in the CURRENT directory")
-
+	return ioutil.WriteFile("blox.cue", []byte(bloxcue), 0o644)
 }
 
 func installStarter(starter string) error {
-
 	pterm.Info.Printf("Installing starter %s\n", starter)
 	// kinda hacky, look for things that make a url or domain name
 	// if it's internal, it'll just be one word

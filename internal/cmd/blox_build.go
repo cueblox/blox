@@ -22,9 +22,113 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	referentialIntegrity bool
-)
+type bloxBuildCmd struct {
+	cmd *cobra.Command
+}
+
+func newBloxBuildCmd() *bloxBuildCmd {
+	root := &bloxBuildCmd{}
+	cmd := &cobra.Command{
+		Use:   "build",
+		Short: "Validate & Build dataset",
+		Long: `The build command will ensure that your dataset is correct by
+	validating it against your schemata. Once validated, it will render all
+	your content into a single JSON file, which can be consumed by your tooling
+	of choice.
+	
+	Referential Integrity can be enforced with -i. This ensures that any fields
+	ending with _id are valid references to identifiers within the other content type.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			userConfig, err := ioutil.ReadFile("blox.cue")
+
+			pterm.Debug.Printf("loading user config")
+
+			cobra.CheckErr(err)
+
+			engine, err := cuedb.NewEngine()
+
+			pterm.Debug.Printf("new engine")
+			cobra.CheckErr(err)
+
+			cfg, err := blox.NewConfig(BaseConfig)
+
+			pterm.Debug.Printf("newConfig")
+			cobra.CheckErr(err)
+
+			err = cfg.LoadConfigString(string(userConfig))
+			cobra.CheckErr(err)
+
+			// Load Schemas!
+			schemataDir, err := cfg.GetString("schemata_dir")
+			cobra.CheckErr(err)
+
+			remotes, err := cfg.GetList("remotes")
+			if err == nil {
+				cobra.CheckErr(parseRemotes(remotes))
+			}
+
+			err = processImages(cfg)
+			if err != nil {
+				cobra.CheckErr(err)
+			}
+			pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
+
+			err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
+				if err != nil {
+					return err
+				}
+
+				if !d.IsDir() {
+					bb, err := os.ReadFile(path)
+					if err != nil {
+						return err
+					}
+
+					pterm.Debug.Printf("\t\tAttempting to register schema: %s\n", path)
+					err = engine.RegisterSchema(string(bb))
+					if err != nil {
+						return err
+					}
+				}
+
+				return nil
+			})
+			cobra.CheckErr(err)
+
+			pterm.Debug.Println("\t\tBuilding DataSets")
+			cobra.CheckErr(buildDataSets(engine, cfg))
+
+			if referentialIntegrity {
+				pterm.Info.Println("Verifying Referential Integrity")
+				cobra.CheckErr(engine.ReferentialIntegrity())
+				pterm.Success.Println("Referential Integrity OK")
+			}
+
+			pterm.Debug.Println("Building output data blox")
+			output, err := engine.GetOutput()
+			cobra.CheckErr(err)
+
+			pterm.Debug.Println("Rendering data blox to JSON")
+			jso, err := output.MarshalJSON()
+			cobra.CheckErr(err)
+
+			buildDir, err := cfg.GetString("build_dir")
+			cobra.CheckErr(err)
+			cobra.CheckErr(os.MkdirAll(buildDir, 0o755))
+
+			filename := "data.json"
+			filePath := path.Join(buildDir, filename)
+			cobra.CheckErr(os.WriteFile(filePath, jso, 0o755))
+			pterm.Success.Printf("Data blox written to '%s'\n", filePath)
+		},
+	}
+	cmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
+
+	root.cmd = cmd
+	return root
+}
+
+var referentialIntegrity bool
 
 const DefaultConfigName = "blox.cue"
 
@@ -43,101 +147,6 @@ const BaseConfig = `{
 
 }`
 
-var buildCmd = &cobra.Command{
-	Use:   "build",
-	Short: "Validate & Build",
-	Long: `The build command will ensure that your content is correct by
-validating it against your schemata. Once validated, it will render all
-your content into a single JSON file, which can be consumed by your tooling
-of choice.
-
-Referential Integrity can be enforced with -i. This ensures that any fields
-ending with _id are valid references to identifiers within the other content type.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		userConfig, err := ioutil.ReadFile("blox.cue")
-
-		pterm.Debug.Printf("loading user config")
-
-		cobra.CheckErr(err)
-
-		engine, err := cuedb.NewEngine()
-
-		pterm.Debug.Printf("new engine")
-		cobra.CheckErr(err)
-
-		cfg, err := blox.NewConfig(BaseConfig)
-
-		pterm.Debug.Printf("newConfig")
-		cobra.CheckErr(err)
-
-		err = cfg.LoadConfigString(string(userConfig))
-		cobra.CheckErr(err)
-
-		// Load Schemas!
-		schemataDir, err := cfg.GetString("schemata_dir")
-		cobra.CheckErr(err)
-
-		remotes, err := cfg.GetList("remotes")
-		if err == nil {
-			parseRemotes(remotes)
-		}
-
-		err = processImages(cfg)
-		if err != nil {
-			cobra.CheckErr(err)
-		}
-		pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
-
-		err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if !d.IsDir() {
-				bb, err := os.ReadFile(path)
-				if err != nil {
-					return err
-				}
-
-				pterm.Debug.Printf("\t\tAttempting to register schema: %s\n", path)
-				err = engine.RegisterSchema(string(bb))
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
-		})
-		cobra.CheckErr(err)
-
-		pterm.Debug.Println("\t\tBuilding DataSets")
-		cobra.CheckErr(buildDataSets(engine, cfg))
-
-		if referentialIntegrity {
-			pterm.Info.Println("Verifying Referential Integrity")
-			cobra.CheckErr(engine.ReferentialIntegrity())
-			pterm.Success.Println("Referential Integrity OK")
-		}
-
-		pterm.Debug.Println("Building output data blox")
-		output, err := engine.GetOutput()
-		cobra.CheckErr(err)
-
-		pterm.Debug.Println("Rendering data blox to JSON")
-		jso, err := output.MarshalJSON()
-		cobra.CheckErr(err)
-
-		buildDir, err := cfg.GetString("build_dir")
-		cobra.CheckErr(err)
-		cobra.CheckErr(os.MkdirAll(buildDir, 0755))
-
-		filename := "data.json"
-		filePath := path.Join(buildDir, filename)
-		cobra.CheckErr(os.WriteFile(filePath, jso, 0755))
-		pterm.Success.Printf("Data blox written to '%s'\n", filePath)
-	},
-}
-
 func buildDataSets(engine *cuedb.Engine, cfg *blox.Config) error {
 	var errors error
 
@@ -148,7 +157,7 @@ func buildDataSets(engine *cuedb.Engine, cfg *blox.Config) error {
 		// fail, as the config isn't valid without.
 		dataSetDirectory := fmt.Sprintf("%s/%s", cfg.GetStringOr("data_dir", ""), dataSet.GetDataDirectory())
 
-		err := os.MkdirAll(dataSetDirectory, 0755)
+		err := os.MkdirAll(dataSetDirectory, 0o755)
 		if err != nil {
 			errors = multierror.Append(err)
 			continue
@@ -192,7 +201,7 @@ func buildDataSets(engine *cuedb.Engine, cfg *blox.Config) error {
 					bytes = []byte(mdStr)
 				}
 
-				var istruct = make(map[string]interface{})
+				istruct := make(map[string]interface{})
 
 				err = yaml.Unmarshal(bytes, &istruct)
 				if err != nil {
@@ -208,7 +217,6 @@ func buildDataSets(engine *cuedb.Engine, cfg *blox.Config) error {
 				}
 
 				return err
-
 			},
 		)
 
@@ -226,20 +234,6 @@ func buildDataSets(engine *cuedb.Engine, cfg *blox.Config) error {
 	return nil
 }
 
-func init() {
-	rootCmd.AddCommand(buildCmd)
-	buildCmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
-}
-
-const remoteCue = `{
-    #Remote: {
-        name: string
-        version: string
-        repository: string
-    }
-  remotes: [ ...#Remote ]
-}`
-
 func parseRemotes(value cue.Value) error {
 	iter, err := value.List()
 	if err != nil {
@@ -250,7 +244,6 @@ func parseRemotes(value cue.Value) error {
 		name, err := val.FieldByName("name", false)
 		if err != nil {
 			return err
-
 		}
 		n, err := name.Value.String()
 		if err != nil {
@@ -259,7 +252,6 @@ func parseRemotes(value cue.Value) error {
 		version, err := val.FieldByName("version", false)
 		if err != nil {
 			return err
-
 		}
 		v, err := version.Value.String()
 		if err != nil {
@@ -349,7 +341,7 @@ func processImages(cfg *blox.Config) error {
 					slug := strings.TrimSuffix(relpath, "."+ext)
 
 					outputPath := filepath.Join(dataDir, slug+".yaml")
-					err = os.MkdirAll(filepath.Dir(outputPath), 0755)
+					err = os.MkdirAll(filepath.Dir(outputPath), 0o755)
 					if err != nil {
 						pterm.Error.Println(err)
 						return err
@@ -358,7 +350,7 @@ func processImages(cfg *blox.Config) error {
 					// don't overwrite existing records.
 					_, err = os.Stat(outputPath)
 					if err != nil && errors.Is(err, os.ErrNotExist) {
-						err = os.WriteFile(outputPath, bytes, 0755)
+						err = os.WriteFile(outputPath, bytes, 0o755)
 						if err != nil {
 							pterm.Error.Println(err)
 							return err

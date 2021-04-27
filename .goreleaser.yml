@@ -1,12 +1,17 @@
 project_name: blox
 
+before:
+  hooks:
+    - go mod tidy
+    - ./scripts/completions.sh
+
 builds:
   - id: blox
-    main: ./cli/blox/main.go
+    main: ./cmd/blox
     binary: blox
     # Default is `-s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser`.
     ldflags:
-      - -s -w -X github.com/cueblox/blox/cmd.Version={{.Version}}
+    - -s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }} -X main.date={{ .CommitDate }} -X main.builtBy=goreleaser
     goos:
       - linux
       - darwin
@@ -44,6 +49,25 @@ docker_manifests:
     image_templates:
       - "ghcr.io/cueblox/blox:{{ .Tag }}-amd64"
       - "ghcr.io/cueblox/blox:{{ .Tag }}-arm64"
+      
+changelog:
+  filters:
+    exclude:
+      - Merge
+archives:
+- replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    386: i386
+    amd64: x86_64
+  format_overrides:
+    - goos: windows
+      format: zip
+  files:
+    - README.md
+    - LICENSE
+    - completions/*
 
 brews:
   - name: blox
@@ -60,3 +84,10 @@ brews:
     homepage: "https://github.com/cueblox/"
     description: "CueBlox"
     license: "MIT"
+    test: |
+      system "#{bin}/blox -v"
+    install: |-
+      bin.install "blox"
+      bash_completion.install "completions/blox.bash" => "blox"
+      zsh_completion.install "completions/blox.zsh" => "_blox"
+      fish_completion.install "completions/blox.fish"

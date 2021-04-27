@@ -13,3 +13,16 @@ cli/blox/blox
 /.github/.vscode/
 dogfood/_build/
 dogfood/data/_build/
+vendor
+*.rpm
+*.deb
+!dummy.deb
+*.apk
+coverage.txt
+dist
+.DS_Store
+bin
+coverage.out
+/blox
+testdata/acceptance/tmp/
+completions/

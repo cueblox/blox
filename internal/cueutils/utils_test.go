@@ -12,7 +12,6 @@ import (
 
 func getAstNodeValue(cue string, label string) (ast.Node, error) {
 	lAst, err := parser.ParseFile("", cue)
-
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +36,6 @@ func TestGetAcceptedValuesString(t *testing.T) {
 	}
 
 	acceptedValues, err := GetAcceptedValues(node)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +50,6 @@ func TestGetAcceptedValuesInt(t *testing.T) {
 	}
 
 	acceptedValues, err := GetAcceptedValues(node)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,7 +64,6 @@ func TestGetAcceptedValuesFloat(t *testing.T) {
 	}
 
 	acceptedValues, err := GetAcceptedValues(node)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +78,6 @@ func TestGetAcceptedValuesNumber(t *testing.T) {
 	}
 
 	acceptedValues, err := GetAcceptedValues(node)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +92,6 @@ func TestGetAcceptedValuesBool(t *testing.T) {
 	}
 
 	acceptedValues, err := GetAcceptedValues(node)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +106,6 @@ func TestGetAcceptedValuesList(t *testing.T) {
 	}
 
 	acceptedValues, err := GetAcceptedValues(node)
-
 	if err != nil {
 		t.Fatal(err)
 	}

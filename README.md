@@ -29,7 +29,3 @@ See [examples](./dogfood/schemata)
 ### Repository
 
 Collection of schemas, distributed via HTTP with a `manifest.json`. Can be downloaded by the `blox` CLI.
-
-## Shoulders of Giants
-
-Blox would not be possible if not for all of the great projects it depends on. Please see [SHOULDERS.md](SHOULDERS.md) to see a list of them.

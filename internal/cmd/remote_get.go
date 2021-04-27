@@ -14,31 +14,34 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// getCmd represents the get command
-var remoteGetCmd = &cobra.Command{
-	Use:   "get <repository> <schema name> <version>",
-	Short: "Add a remote schema to your repository",
-	Args:  cobra.ExactArgs(3),
-
-	Run: func(cmd *cobra.Command, args []string) {
-
-		repo := args[0]
-		schemaName := args[1]
-		version := args[2]
-
-		err := ensureRemote(schemaName, version, repo)
-		cobra.CheckErr(err)
-	},
+type remoteGetCmd struct {
+	cmd *cobra.Command
 }
 
-func init() {
-	remoteCmd.AddCommand(remoteGetCmd)
+func newRemoteGetCmd() *remoteGetCmd {
+	root := &remoteGetCmd{}
+	cmd := &cobra.Command{
+		Use:   "get <repository> <schema name> <version>",
+		Short: "Add a remote schema to your repository",
+		Args:  cobra.ExactArgs(3),
+
+		Run: func(cmd *cobra.Command, args []string) {
+			repo := args[0]
+			schemaName := args[1]
+			version := args[2]
+
+			err := ensureRemote(schemaName, version, repo)
+			cobra.CheckErr(err)
+		},
+	}
+
+	root.cmd = cmd
+	return root
 }
 
 // ensureRemote downloads a remote schema at a specific
 // version if it doesn't exist locally
 func ensureRemote(name, version, repo string) error {
-
 	// load config
 	userConfig, err := ioutil.ReadFile("blox.cue")
 	cobra.CheckErr(err)
@@ -62,7 +65,8 @@ func ensureRemote(name, version, repo string) error {
 		cobra.CheckErr(err)
 
 		var repos repository.Repository
-		json.NewDecoder(res.Body).Decode(&repos)
+		err = json.NewDecoder(res.Body).Decode(&repos)
+		cobra.CheckErr(err)
 
 		var selectedVersion *repository.Version
 		for _, s := range repos.Schemas {
@@ -77,12 +81,12 @@ func ensureRemote(name, version, repo string) error {
 		}
 
 		// make schemata directory
-		cobra.CheckErr(os.MkdirAll(schemataDir, 0755))
+		cobra.CheckErr(os.MkdirAll(schemataDir, 0o755))
 
 		// TODO: don't overwrite each time
 		filename := fmt.Sprintf("%s_%s.cue", name, version)
 		filePath := path.Join(schemataDir, filename)
-		err = os.WriteFile(filePath, []byte(selectedVersion.Definition), 0755)
+		err = os.WriteFile(filePath, []byte(selectedVersion.Definition), 0o755)
 		cobra.CheckErr(err)
 		pterm.Info.Printf("Schema downloaded: %s_%s.cue\n", name, version)
 		return nil

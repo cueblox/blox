@@ -49,6 +49,7 @@ func (d *DataSet) GetDataMapCue() string {
 		dataPathRoot, d.metadata.Plural, d.cuePath.String(), d.name,
 	)
 }
+
 func (d *DataSet) CueDataPath() cue.Path {
 	return cue.ParsePath(fmt.Sprintf("%s.%s", dataPathRoot, d.metadata.Plural))
 }

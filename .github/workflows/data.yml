@@ -3,8 +3,8 @@ on:
   push:
     paths:
       - .github/**
-      - dogfood/**
-
+      - dogfood/data/**
+      - dogfood/schemata/**
 jobs:
   build:
     runs-on: ubuntu-latest

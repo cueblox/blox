@@ -15,7 +15,6 @@ const base = `{
 
 func TestGetString(t *testing.T) {
 	runtime, err := NewConfig(base)
-
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}

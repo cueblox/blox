@@ -33,7 +33,6 @@ func ToYAML(raw string) (string, error) {
 				content.WriteString("\n")
 			}
 		}
-
 	}
 	return content.String(), err
 }
