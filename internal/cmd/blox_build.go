@@ -241,6 +241,8 @@ func parseRemotes(value cue.Value) error {
 	}
 	for iter.Next() {
 		val := iter.Value()
+
+		//nolint
 		name, err := val.FieldByName("name", false)
 		if err != nil {
 			return err
@@ -249,6 +251,7 @@ func parseRemotes(value cue.Value) error {
 		if err != nil {
 			return err
 		}
+		//nolint
 		version, err := val.FieldByName("version", false)
 		if err != nil {
 			return err
@@ -257,6 +260,7 @@ func parseRemotes(value cue.Value) error {
 		if err != nil {
 			return err
 		}
+		//nolint
 		repository, err := val.FieldByName("repository", false)
 		if err != nil {
 			return err
