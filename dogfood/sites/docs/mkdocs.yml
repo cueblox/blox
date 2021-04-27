@@ -12,6 +12,7 @@ nav:
   - "Walkthrough":
       - "Creating Your Blox": creating-your-blox/init.md
       - "Defining Your First Schema": creating-your-blox/first-schema.md
+      - "Creating Data": creating-your-blox/first-data.md
   - "Tools":
       - "CLI": "blox.md"
       - "Extras": "extras.md"
