@@ -285,15 +285,28 @@ func processImages(cfg *blox.Config) error {
 	staticDir, err := cfg.GetString("static_dir")
 	if err != nil {
 		pterm.Info.Printf("no static directory present, skipping image linking")
+		return nil
 	}
-	cobra.CheckErr(err)
+
 	pterm.Info.Printf("processing images in %s\n", staticDir)
 	fi, err := os.Stat(staticDir)
-	cobra.CheckErr(err)
+	if errors.Is(err, os.ErrNotExist) {
+		pterm.Info.Println("no image directory found, skipping")
+		return nil
+	}
 	if !fi.IsDir() {
 		return errors.New("given static directory is not a directory")
 	}
 	imagesDirectory := filepath.Join(staticDir, "images")
+
+	fi, err = os.Stat(imagesDirectory)
+	if errors.Is(err, os.ErrNotExist) {
+		pterm.Info.Println("no image directory found, skipping")
+		return nil
+	}
+	if !fi.IsDir() {
+		return errors.New("given images directory is not a directory")
+	}
 	err = filepath.Walk(imagesDirectory,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
