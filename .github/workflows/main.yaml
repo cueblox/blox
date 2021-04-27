@@ -81,19 +81,16 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go-version }
-      -
-        name: Cache Go modules
+      - name: Cache Go modules
         uses: actions/cache@v1
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      -
-        name: Setup
+      - name: Setup
         run: make setup
-      -
-        name: Make build
+      - name: Make build
         run: make build         
 
       - name: Run GoReleaser
@@ -105,8 +102,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAP_WRITE_KEY: ${{ secrets.TAP_WRITE_KEY }}
-      -
-        name: Clear
+      - name: Clear
         run: |
           rm -f ${HOME}/.docker/config.json
 
