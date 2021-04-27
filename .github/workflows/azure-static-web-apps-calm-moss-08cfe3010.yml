@@ -1,13 +1,10 @@
-name: Deploy Web Site
+name: Deploy Docs Web Site
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - main
+    paths:
+      - .github/**
+      - dogfood/**
 
 jobs:
   build_and_deploy_job:

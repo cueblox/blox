@@ -37,7 +37,10 @@ func GetRepository() (*Repository, error) {
 		return nil, err
 	}
 	// load user config
-	cfg.LoadConfig("repository.cue")
+	err = cfg.LoadConfig("repository.cue")
+	if err != nil {
+		return nil, err
+	}
 
 	build_dir, err := cfg.GetString("output_dir")
 	pterm.Debug.Printf("\t\tBuild Directory: %s\n", build_dir)
@@ -166,6 +169,7 @@ func (r *Repository) load() error {
 
 	return err
 }
+
 func (r *Repository) writeConfig() error {
 	b := &Config{
 		RepositoryRoot:  r.Root,
@@ -181,7 +185,7 @@ func (r *Repository) writeConfig() error {
 		return err
 	}
 	configPath := path.Join(wd, "repository.cue")
-	return os.WriteFile(configPath, bb, 0755)
+	return os.WriteFile(configPath, bb, 0o755)
 }
 
 func (r *Repository) createRoot() error {
@@ -190,38 +194,35 @@ func (r *Repository) createRoot() error {
 		return err
 	}
 	repoPath := path.Join(wd, r.Root)
-	err = os.MkdirAll(repoPath, 0755)
+	err = os.MkdirAll(repoPath, 0o755)
 	return err
 }
 
 // AddSchema creates a new directory for a schema
 // and creates the first version of the schema.
 func (r *Repository) AddSchema(name string) error {
-
 	// create the schema directory
 	schemaPath := path.Join(r.Root, name)
-	err := os.MkdirAll(schemaPath, 0744)
+	err := os.MkdirAll(schemaPath, 0o744)
 	if err != nil {
 		return err
 	}
 
 	// create the first version
 	versionPath := path.Join(schemaPath, "v1")
-	err = os.MkdirAll(versionPath, 0744)
+	err = os.MkdirAll(versionPath, 0o744)
 	if err != nil {
 		return err
 	}
 
 	// write the schema
 	schemaFile := path.Join(versionPath, "schema.cue")
-	return os.WriteFile(schemaFile, schemaCue, 0755)
-
+	return os.WriteFile(schemaFile, schemaCue, 0o755)
 }
 
 // AddVersion creates a new version for the specified
 // schema
 func (r *Repository) AddVersion(schema string) error {
-
 	var sch *Schema
 	for _, s := range r.Schemas {
 		if s.Name == schema {
@@ -236,7 +237,7 @@ func (r *Repository) AddVersion(schema string) error {
 	pterm.Info.Printf("Schema %s has %d version(s)\n", sch.Name, versions)
 	nextVersion := versions + 1
 	nextVersionPath := path.Join(r.Root, sch.Name, fmt.Sprintf("v%d", nextVersion))
-	err := os.MkdirAll(nextVersionPath, 0755)
+	err := os.MkdirAll(nextVersionPath, 0o755)
 	if err != nil {
 		return err
 	}
@@ -254,17 +255,16 @@ func (r *Repository) Build() error {
 	buildDir := path.Join(r.Root, r.Output)
 	buildFile := path.Join(buildDir, "manifest.json")
 
-	err := os.MkdirAll(buildDir, 0755)
+	err := os.MkdirAll(buildDir, 0o755)
 	if err != nil {
 		return err
 	}
 
 	bb, err := json.Marshal(r)
-
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(buildFile, bb, 0755)
+	err = os.WriteFile(buildFile, bb, 0o755)
 	if err != nil {
 		return err
 	}

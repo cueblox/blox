@@ -21,9 +21,8 @@ import (
 // 	return c
 // }
 func TestNewRuntime(t *testing.T) {
-	//cfg := testConfig(t)
+	// cfg := testConfig(t)
 	runtime, err := NewEngine()
-
 	if err != nil {
 		fmt.Println(err)
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
@@ -41,7 +40,6 @@ func TestExtractSchemaMetadata(t *testing.T) {
 	}
 }`
 	runtime, err := NewEngine()
-
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
@@ -66,7 +64,6 @@ func TestExtractDataSetMetadata(t *testing.T) {
 	}
 }`
 	runtime, err := NewEngine()
-
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
@@ -108,7 +105,6 @@ func TestRegisterSchema(t *testing.T) {
 		}
 }`
 	runtime, err := NewEngine()
-
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
@@ -146,7 +142,6 @@ func TestGetDataSets(t *testing.T) {
 		}
 }`
 	runtime, err := NewEngine()
-
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
@@ -170,9 +165,11 @@ func TestGetDataSets(t *testing.T) {
 	assert.Equal(t, "#One", dataSet.name)
 
 	dataSet, err = runtime.GetDataSet("One")
+	assert.Equal(t, nil, err)
 	assert.Equal(t, "#One", dataSet.name)
 
 	dataSet, err = runtime.GetDataSet("Two")
+	assert.Equal(t, nil, err)
 	assert.Equal(t, "#Two", dataSet.name)
 }
 
@@ -202,7 +199,6 @@ func TestInsert(t *testing.T) {
 		}
 }`
 	runtime, err := NewEngine()
-
 	if err != nil {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
@@ -214,6 +210,7 @@ func TestInsert(t *testing.T) {
 
 	// Get DataSet so we can insert
 	dataSet, err := runtime.GetDataSet("#One")
+	assert.Equal(t, nil, err)
 	assert.Equal(t, "#One", dataSet.name)
 
 	recordOne := map[string]interface{}{"david": map[string]string{"name": "David"}}

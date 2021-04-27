@@ -56,6 +56,7 @@ func (r *Config) LoadConfigString(cueConfig string) error {
 
 	return nil
 }
+
 func (r *Config) GetString(key string) (string, error) {
 	keyValue := r.runtime.Database.LookupPath(cue.ParsePath(key))
 
@@ -67,7 +68,6 @@ func (r *Config) GetString(key string) (string, error) {
 }
 
 func (r *Config) GetList(key string) (cue.Value, error) {
-
 	keyValue := r.runtime.Database.LookupPath(cue.ParsePath(key))
 
 	if keyValue.Exists() {
@@ -83,7 +83,6 @@ func (r *Config) GetList(key string) (cue.Value, error) {
 
 func (r *Config) GetStringOr(key string, def string) string {
 	cueValue, err := r.GetString(key)
-
 	if err != nil {
 		return def
 	}
