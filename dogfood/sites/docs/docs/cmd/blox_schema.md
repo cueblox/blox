@@ -1,11 +1,11 @@
-## blox repo
+## blox schema
 
-Create & Manage Schema Repositories
+Create, Manage, and Version your Schemata
 
 ### Options
 
 ```
-  -h, --help   help for repo
+  -h, --help   help for schema
 ```
 
 ### Options inherited from parent commands
@@ -18,6 +18,7 @@ Create & Manage Schema Repositories
 ### SEE ALSO
 
 * [blox](/cmd/blox)	 - CueBlox is a suite of slightly opinionated tools for managing and sharing content repositories of YAML and Markdown documents.
-* [blox repo build](/cmd/blox_repo_build)	 - Build a Schema Repository
-* [blox repo init](/cmd/blox_repo_init)	 - Initialize a New Schema Repository
+* [blox schema list](/cmd/blox_schema_list)	 - List Schemata
+* [blox schema new](/cmd/blox_schema_new)	 - Create a New Schema
+* [blox schema version](/cmd/blox_schema_version)	 - Schema Version Management
 
