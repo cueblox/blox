@@ -12,4 +12,6 @@ The following recipes show some suggestions on ways to consume your CueBlox data
 * [Serve data over GraphQL](/recipes/graphql)
 
 
+## Patterns
 
+* [The MonoRepo](/recipes/monorepo)
