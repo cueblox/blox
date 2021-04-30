@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	tpl "text/template"
+	"time"
 
 	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
@@ -127,10 +128,27 @@ func newBloxRenderCmd() *bloxRenderCmd {
 			cobra.CheckErr(err)
 			var dataJson map[string]interface{}
 
+			funcMap := tpl.FuncMap{
+				// The name "title" is what the function will be called in the template text.
+				"rfcdate": func(t string) string {
+					tm, err := time.Parse("2006-01-02 15:04", t)
+					if err != nil {
+						return err.Error()
+					}
+					val := tm.Format(time.RFC1123)
+					return val
+				},
+				"now": func() string {
+					tm := time.Now()
+					val := tm.Format(time.RFC1123)
+					return val
+				},
+			}
+
 			err = json.Unmarshal(jso, &dataJson)
 			cobra.CheckErr(err)
 
-			t := tpl.Must(tpl.New(template).ParseFiles(paths...))
+			t := tpl.Must(tpl.New(template).Funcs(funcMap).ParseFiles(paths...))
 			if with != "" {
 				if each {
 					dataset, ok := dataJson[with].([]interface{})
