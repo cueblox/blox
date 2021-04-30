@@ -13,11 +13,29 @@ nav:
       - "Creating Your Blox": creating-your-blox/init.md
       - "Defining Your First Schema": creating-your-blox/first-schema.md
       - "Creating Data": creating-your-blox/first-data.md
-  - "Tools":
-      - "CLI": "blox.md"
-      - "Extras": "extras.md"
+  - "CLI":
+      - "blox": cmd/blox.md
+      - "blox init": cmd/blox_init.md
+      - "blox build": cmd/blox_build.md
+      - "blox new": cmd/blox_new.md
+      - "blox completion": cmd/blox_completion.md
+      - "blox render": cmd/blox_render.md
+      - "blox remote": cmd/blox_remote.md
+      - "blox remote get": cmd/blox_remote_get.md
+      - "blox remote list": cmd/blox_remote_list.md
+      - "blox repo": cmd/blox_repo.md
+      - "blox repo init": cmd/blox_repo_init.md
+      - "blox repo build": cmd/blox_repo_build.md
+      - "blox schema": cmd/blox_schema.md
+      - "blox schema new": cmd/blox_schema_new.md
+      - "blox schema list": cmd/blox_schema_list.md
+      - "blox schema version": cmd/blox_schema_version.md
+      - "blox schema version add": cmd/blox_schema_version_add.md
   - "Details":
       - "Foundations": "foundations.md"
+  - "Recipes":
+      - "Common Patterns": "recipes/index.md"
+
 theme:
   features:
     - navigation.sections
