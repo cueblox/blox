@@ -139,7 +139,6 @@ func newBloxRenderCmd() *bloxRenderCmd {
 					return val
 				},
 				"now": func() string {
-
 					tm := time.Now()
 					val := tm.Format(time.RFC1123)
 					return val
