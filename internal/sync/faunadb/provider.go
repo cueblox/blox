@@ -13,8 +13,7 @@ func init() {
 
 // FaunaProvider satisfies the sync.SyncProvider interface
 // returning a FaunaClient which implements sync.EngineProvider
-type FaunaProvider struct {
-}
+type FaunaProvider struct{}
 
 func (f *FaunaProvider) Initialize() (sync.EngineProvider, error) {
 	key := os.Getenv("FAUNA_KEY")
@@ -36,12 +35,10 @@ type FaunaClient struct {
 }
 
 func (c *FaunaClient) Sync() error {
-
 	return nil
 }
 
 func (c *FaunaClient) Help() string {
-
 	return `Create a database in FaunaDB, then create a database specific
 access key.  Export this key as FAUNA_KEY in your environment.`
 }

@@ -32,7 +32,6 @@ remote datastore.`,
 }
 
 func synchronizeDataset() error {
-
 	engine, err := sync.Open("faunadb")
 	cobra.CheckErr(err)
 	err = engine.Synchronize()

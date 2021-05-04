@@ -61,7 +61,6 @@ func Open(providerName string) (*SyncEngine, error) {
 	}
 	pterm.Info.Printf("Created Sync Provider for %s\n", provideri.Name())
 	return &SyncEngine{p: engine}, nil
-
 }
 
 type SyncEngine struct {

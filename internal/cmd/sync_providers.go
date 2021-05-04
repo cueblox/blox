@@ -28,7 +28,6 @@ func newSyncProvidersCmd() *syncProvidersCmd {
 }
 
 func listProviders() error {
-
 	var td pterm.TableData
 	header := []string{"Name"}
 	td = append(td, header)
