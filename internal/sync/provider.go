@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"sync"
@@ -19,7 +20,7 @@ type SyncProvider interface {
 }
 
 type EngineProvider interface {
-	Sync() error
+	Sync([]byte) error
 	Help() string
 }
 
@@ -67,10 +68,26 @@ type SyncEngine struct {
 	p EngineProvider
 }
 
-func (e *SyncEngine) Synchronize() error {
-	return e.p.Sync()
+func (e *SyncEngine) Synchronize(bb []byte) error {
+	return e.p.Sync(bb)
 }
 
 func (e *SyncEngine) Help() string {
 	return e.p.Help()
+}
+
+func MakeMap(bb []byte) (map[string]interface{}, error) {
+	var data = make(map[string]interface{})
+	err := json.Unmarshal(bb, &data)
+	return data, err
+
+}
+
+func GetTables(m map[string]interface{}) []string {
+
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }
