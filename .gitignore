@@ -26,3 +26,4 @@ coverage.out
 /blox
 testdata/acceptance/tmp/
 completions/
+.envrc

@@ -6,6 +6,7 @@ require (
 	cuelang.org/go v0.3.2
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/disintegration/imaging v1.6.2
+	github.com/fauna/faunadb-go/v4 v4.0.0 // indirect
 	github.com/goccy/go-yaml v1.8.9
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/gookit/color v1.4.2 // indirect
@@ -17,7 +18,6 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
-	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	golang.org/x/sys v0.0.0-20210426230700-d19ff857e887 // indirect
 	golang.org/x/term v0.0.0-20210422114643-f5beecf764ed // indirect
 	golang.org/x/text v0.3.6 // indirect
