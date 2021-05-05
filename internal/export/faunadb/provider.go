@@ -15,8 +15,8 @@ func init() {
 	export.Register("faunadb", &FaunaProvider{})
 }
 
-// FaunaProvider satisfies the sync.SyncProvider interface
-// returning a FaunaClient which implements sync.EngineProvider
+// FaunaProvider satisfies the export.ExportProvider interface
+// returning a FaunaClient which implements export.EngineProvider
 type FaunaProvider struct{}
 
 func (f *FaunaProvider) Initialize() (export.EngineProvider, error) {
@@ -33,7 +33,7 @@ func (f *FaunaProvider) Name() string {
 	return "FaunaDB"
 }
 
-// FaunaClient satisfies the sync.EngineProvider interface
+// FaunaClient satisfies the export.EngineProvider interface
 type FaunaClient struct {
 	key    string
 	client *f.FaunaClient
