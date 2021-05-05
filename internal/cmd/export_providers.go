@@ -1,23 +1,23 @@
 package cmd
 
 import (
-	"github.com/cueblox/blox/internal/sync"
+	"github.com/cueblox/blox/internal/export"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	_ "github.com/cueblox/blox/internal/sync/faunadb"
+	_ "github.com/cueblox/blox/internal/export/faunadb"
 )
 
-type syncProvidersCmd struct {
+type exportProvidersCmd struct {
 	cmd *cobra.Command
 }
 
-func newSyncProvidersCmd() *syncProvidersCmd {
-	root := &syncProvidersCmd{}
+func newExportProvidersCmd() *exportProvidersCmd {
+	root := &exportProvidersCmd{}
 	cmd := &cobra.Command{
 		Use:   "providers",
-		Short: "List available synchronization providers",
-		Long:  `List registered synchronization providers`,
+		Short: "List available export providers",
+		Long:  `List registered export providers`,
 		Run: func(cmd *cobra.Command, args []string) {
 			cobra.CheckErr(listProviders())
 		},
@@ -31,7 +31,7 @@ func listProviders() error {
 	var td pterm.TableData
 	header := []string{"Name"}
 	td = append(td, header)
-	for _, s := range sync.Providers() {
+	for _, s := range export.Providers() {
 		line := []string{s}
 		td = append(td, line)
 

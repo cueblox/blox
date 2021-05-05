@@ -8,24 +8,23 @@ import (
 
 	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
-	"github.com/cueblox/blox/internal/sync"
+	"github.com/cueblox/blox/internal/export"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	_ "github.com/cueblox/blox/internal/sync/faunadb"
+	_ "github.com/cueblox/blox/internal/export/faunadb"
 )
 
-type syncCmd struct {
+type exportCmd struct {
 	cmd *cobra.Command
 }
 
-func newSyncCmd() *syncCmd {
-	root := &syncCmd{}
+func newExportCmd() *exportCmd {
+	root := &exportCmd{}
 	cmd := &cobra.Command{
-		Use:   "sync",
-		Short: "Synchronize blox dataset",
-		Long: `The sync command allows you to synchronize your blox dataset with a
-remote datastore.`,
+		Use:   "export",
+		Short: "Export blox dataset",
+		Long:  `The sync command allows you to export your blox dataset using various providers.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			pterm.Info.Println("Building Dataset")
 			userConfig, err := ioutil.ReadFile("blox.cue")
@@ -105,7 +104,7 @@ remote datastore.`,
 		},
 	}
 	cmd.AddCommand(
-		newSyncProvidersCmd().cmd,
+		newExportProvidersCmd().cmd,
 	)
 	cmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
 
@@ -114,7 +113,7 @@ remote datastore.`,
 }
 
 func synchronizeDataset(jsn []byte) error {
-	engine, err := sync.Open("faunadb")
+	engine, err := export.Open("faunadb")
 	cobra.CheckErr(err)
 	err = engine.Synchronize(jsn)
 	if err != nil {

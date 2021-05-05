@@ -65,7 +65,7 @@ func newRootCmd(version string, exit func(int)) *rootCmd {
 		newBloxInitCmd().cmd,
 		newBloxNewCmd().cmd,
 		newBloxRenderCmd().cmd,
-		newSyncCmd().cmd,
+		newExportCmd().cmd,
 	)
 
 	root.cmd = cmd

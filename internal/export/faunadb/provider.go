@@ -6,20 +6,20 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cueblox/blox/internal/sync"
+	"github.com/cueblox/blox/internal/export"
 	f "github.com/fauna/faunadb-go/v4/faunadb"
 	"github.com/pterm/pterm"
 )
 
 func init() {
-	sync.Register("faunadb", &FaunaProvider{})
+	export.Register("faunadb", &FaunaProvider{})
 }
 
 // FaunaProvider satisfies the sync.SyncProvider interface
 // returning a FaunaClient which implements sync.EngineProvider
 type FaunaProvider struct{}
 
-func (f *FaunaProvider) Initialize() (sync.EngineProvider, error) {
+func (f *FaunaProvider) Initialize() (export.EngineProvider, error) {
 	key := os.Getenv("FAUNA_KEY")
 	c := &FaunaClient{}
 	if key == "" {
@@ -45,14 +45,14 @@ func (c *FaunaClient) ensureConnect() {
 	}
 }
 func (c *FaunaClient) Sync(bb []byte) error {
-	data, err := sync.MakeMap(bb)
+	data, err := export.MakeMap(bb)
 	if err != nil {
 		return err
 	}
 
 	// make sure we have a client
 	c.ensureConnect()
-	tables := sync.GetTables(data)
+	tables := export.GetTables(data)
 	// make sure tables exist
 	err = c.ensureTables(tables)
 	if err != nil {
@@ -101,9 +101,17 @@ func (c *FaunaClient) ensureTables(tables []string) error {
 func (c *FaunaClient) syncTable(table string, data []interface{}) error {
 	for index, record := range data {
 		fmt.Printf("%s: record %d\n", table, index)
+		values, ok := record.(map[string]interface{})
+		if !ok {
+			return errors.New("can't convert data")
+		}
+		id, ok := values["id"].(string)
+		if !ok {
+			return errors.New("can't assert ID")
+		}
 		_, err := c.client.Query(
 			f.Create(
-				f.Collection(table),
+				f.Ref(f.Collection(table), id),
 				f.Obj{"data": record},
 			),
 		)

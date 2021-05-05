@@ -1,4 +1,4 @@
-package sync
+package export
 
 import (
 	"encoding/json"
@@ -11,10 +11,10 @@ import (
 
 var (
 	providersMu sync.RWMutex
-	providers   = make(map[string]SyncProvider)
+	providers   = make(map[string]ExportProvider)
 )
 
-type SyncProvider interface {
+type ExportProvider interface {
 	Initialize() (EngineProvider, error)
 	Name() string
 }
@@ -24,7 +24,7 @@ type EngineProvider interface {
 	Help() string
 }
 
-func Register(name string, provider SyncProvider) {
+func Register(name string, provider ExportProvider) {
 	providersMu.Lock()
 	defer providersMu.Unlock()
 	if provider == nil {
@@ -48,31 +48,31 @@ func Providers() []string {
 	return list
 }
 
-func Open(providerName string) (*SyncEngine, error) {
+func Open(providerName string) (*ExportEngine, error) {
 	providersMu.RLock()
 	provideri, ok := providers[providerName]
 	providersMu.RUnlock()
 	if !ok {
-		return nil, fmt.Errorf("sync: unknown provider %q (forgotten import?)", providerName)
+		return nil, fmt.Errorf("export: unknown provider %q (forgotten import?)", providerName)
 	}
 
 	engine, err := provideri.Initialize()
 	if err != nil {
 		return nil, err
 	}
-	pterm.Info.Printf("Created Sync Provider for %s\n", provideri.Name())
-	return &SyncEngine{p: engine}, nil
+	pterm.Info.Printf("Created Export Provider for %s\n", provideri.Name())
+	return &ExportEngine{p: engine}, nil
 }
 
-type SyncEngine struct {
+type ExportEngine struct {
 	p EngineProvider
 }
 
-func (e *SyncEngine) Synchronize(bb []byte) error {
+func (e *ExportEngine) Synchronize(bb []byte) error {
 	return e.p.Sync(bb)
 }
 
-func (e *SyncEngine) Help() string {
+func (e *ExportEngine) Help() string {
 	return e.p.Help()
 }
 
