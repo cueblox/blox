@@ -44,6 +44,7 @@ func (c *FaunaClient) ensureConnect() {
 		c.client = f.NewFaunaClient(c.key)
 	}
 }
+
 func (c *FaunaClient) Sync(bb []byte) error {
 	data, err := export.MakeMap(bb)
 	if err != nil {
@@ -81,7 +82,6 @@ access key.  Export this key as FAUNA_KEY in your environment.`
 func (c *FaunaClient) checkOrCreateCollection(name string) error {
 	_, err := c.client.Query(f.CreateCollection(f.Obj{"name": name}))
 	return err
-
 }
 
 func (c *FaunaClient) ensureTables(tables []string) error {
@@ -95,7 +95,6 @@ func (c *FaunaClient) ensureTables(tables []string) error {
 		}
 	}
 	return nil
-
 }
 
 func (c *FaunaClient) syncTable(table string, data []interface{}) error {

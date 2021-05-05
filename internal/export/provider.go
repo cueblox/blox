@@ -77,14 +77,12 @@ func (e *ExportEngine) Help() string {
 }
 
 func MakeMap(bb []byte) (map[string]interface{}, error) {
-	var data = make(map[string]interface{})
+	data := make(map[string]interface{})
 	err := json.Unmarshal(bb, &data)
 	return data, err
-
 }
 
 func GetTables(m map[string]interface{}) []string {
-
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
