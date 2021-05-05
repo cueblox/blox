@@ -42,6 +42,7 @@ deps:
 	go get -u
 	go mod tidy
 	go mod verify
+	go get mvdan.cc/gofumpt
 .PHONY: deps
 
 serve:
