@@ -1,8 +1,8 @@
-## blox repo build
+# blox repo build
 
 Build a Schema Repository
 
-### Synopsis
+## Synopsis
 
 In order to consume your schema repository with the Blox CLI, you
 	need to build a manifest file and publish. This command provides the build output
@@ -12,20 +12,20 @@ In order to consume your schema repository with the Blox CLI, you
 blox repo build [flags]
 ```
 
-### Options
+## Options
 
 ```
   -h, --help   help for build
 ```
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 
 ```
       --debug   enable debug logging, overrides 'quiet' flag
       --quiet   disable logging
 ```
 
-### SEE ALSO
+## See also
 
 * [blox repo](/cmd/blox_repo)	 - Create & Manage Schema Repositories
 

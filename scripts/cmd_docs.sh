@@ -16,4 +16,4 @@ go run ./cmd/blox docs
 	-e 's/^### /## /g' \
 	-e 's/^#### /### /g' \
 	-e 's/^##### /#### /g' \
-	./dogfood/sites/docs/docs/docs/cmd/*.md
+	./dogfood/sites/docs/docs/cmd/*.md

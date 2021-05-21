@@ -1,8 +1,8 @@
-## blox schema list
+# blox schema list
 
 List Schemata
 
-### Synopsis
+## Synopsis
 
 List schemata that are published via this repository
 
@@ -10,20 +10,20 @@ List schemata that are published via this repository
 blox schema list [flags]
 ```
 
-### Options
+## Options
 
 ```
   -h, --help   help for list
 ```
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 
 ```
       --debug   enable debug logging, overrides 'quiet' flag
       --quiet   disable logging
 ```
 
-### SEE ALSO
+## See also
 
 * [blox schema](/cmd/blox_schema)	 - Create, Manage, and Version your Schemata
 
