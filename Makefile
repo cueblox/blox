@@ -36,6 +36,7 @@ ci: lint test
 
 build:
 	go build -o blox ./cmd/blox/main.go
+	./scripts/cmd_docs.sh
 .PHONY: build
 
 deps:

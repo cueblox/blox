@@ -1,8 +1,8 @@
-## blox init
+# blox init
 
 Create folders and configuration to maintain content with the blox toolset
 
-### Synopsis
+## Synopsis
 
 Create a group of folders to store your content. A directory for your data,
 	schemata, and build output will be created.
@@ -11,7 +11,7 @@ Create a group of folders to store your content. A directory for your data,
 blox init [flags]
 ```
 
-### Options
+## Options
 
 ```
   -b, --build string      where post-processed content will be stored (output json) (default "_build")
@@ -23,14 +23,14 @@ blox init [flags]
   -a, --static string     where the static originals will be found (default "static")
 ```
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 
 ```
       --debug   enable debug logging, overrides 'quiet' flag
       --quiet   disable logging
 ```
 
-### SEE ALSO
+## See also
 
 * [blox](/cmd/blox)	 - CueBlox is a suite of slightly opinionated tools for managing and sharing content repositories of YAML and Markdown documents.
 

@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"context"
+	"io/ioutil"
 
 	"cuelang.org/go/cue"
 	"github.com/cueblox/blox"
@@ -20,6 +22,13 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"gocloud.dev/blob"
+
+	// Import the blob packages we want to be able to open.
+	_ "gocloud.dev/blob/azureblob"
+	_ "gocloud.dev/blob/gcsblob"
+	_ "gocloud.dev/blob/s3blob"
 )
 
 type bloxBuildCmd struct {
@@ -37,7 +46,14 @@ func newBloxBuildCmd() *bloxBuildCmd {
 	of choice.
 	
 	Referential Integrity can be enforced with -i. This ensures that any fields
-	ending with _id are valid references to identifiers within the other content type.`,
+	ending with _id are valid references to identifiers within the other content type.
+	
+	The build process will create an 'image' record for images in your 'static_dir' if you use the -g or --images flag.
+	
+	Images will be pushed to blob storage if you use -s/--sync and set the appropriate environment variables. 
+	Currently only Azure blob storate is implemented. See https://gocloud.dev/howto/blob/#services for required 
+	environment variables and setup information.
+	`,
 		Run: func(cmd *cobra.Command, args []string) {
 			userConfig, err := ioutil.ReadFile("blox.cue")
 
@@ -66,10 +82,11 @@ func newBloxBuildCmd() *bloxBuildCmd {
 			if err == nil {
 				cobra.CheckErr(parseRemotes(remotes))
 			}
-
-			err = processImages(cfg)
-			if err != nil {
-				cobra.CheckErr(err)
+			if images {
+				err = processImages(cfg)
+				if err != nil {
+					cobra.CheckErr(err)
+				}
 			}
 			pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
 
@@ -123,12 +140,15 @@ func newBloxBuildCmd() *bloxBuildCmd {
 		},
 	}
 	cmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
-
+	cmd.Flags().BoolVarP(&images, "images", "g", false, "Create 'image' records for images in static directory")
+	cmd.Flags().BoolVarP(&cloud, "sync", "s", false, "Sync images to blob storage")
 	root.cmd = cmd
 	return root
 }
 
 var referentialIntegrity bool
+var images bool
+var cloud bool
 
 const DefaultConfigName = "blox.cue"
 
@@ -339,11 +359,41 @@ func processImages(cfg *blox.Config) error {
 					if err != nil {
 						return err
 					}
+					if cloud {
+						pterm.Info.Println("Synchronizing images to cloud provider")
+						bucketURL := os.Getenv("IMAGE_BUCKET")
+						if bucketURL == "" {
+							return errors.New("image sync enabled (-s,--sync), but no IMAGE_BUCKET environment variable set")
+						}
+
+						ctx := context.Background()
+						// Open a connection to the bucket.
+						b, err := blob.OpenBucket(ctx, bucketURL)
+						if err != nil {
+							return fmt.Errorf("failed to setup bucket: %s", err)
+						}
+						defer b.Close()
+
+						w, err := b.NewWriter(ctx, relpath, nil)
+						if err != nil {
+							return fmt.Errorf("cloud sync failed to obtain writer: %s", err)
+						}
+						_, err = w.Write(buf)
+						if err != nil {
+							return fmt.Errorf("cloud sync failed to write to bucket: %s", err)
+						}
+						if err = w.Close(); err != nil {
+							return fmt.Errorf("cloud sync failed to close: %s", err)
+						}
+					}
+
+					cdnEndpoint := os.Getenv("CDN_URL")
 
 					bi := &BloxImage{
 						FileName: relpath,
 						Height:   src.Bounds().Dy(),
 						Width:    src.Bounds().Dx(),
+						CDN:      cdnEndpoint,
 					}
 					bytes, err := yaml.Marshal(bi)
 					if err != nil {
@@ -388,4 +438,5 @@ type BloxImage struct {
 	FileName string `yaml:"file_name"`
 	Height   int    `yaml:"height"`
 	Width    int    `yaml:"width"`
+	CDN      string `yaml:"cdn"`
 }

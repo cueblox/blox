@@ -1,8 +1,8 @@
-## blox repo init
+# blox repo init
 
 Initialize a New Schema Repository
 
-### Synopsis
+## Synopsis
 
 Initializing a new schema repository creates the
 	configuration required to published your schemata.
@@ -11,7 +11,7 @@ Initializing a new schema repository creates the
 blox repo init [flags]
 ```
 
-### Options
+## Options
 
 ```
   -h, --help               help for init
@@ -20,14 +20,14 @@ blox repo init [flags]
   -r, --root string        directory to store the repository, relative to current directory (default "repository")
 ```
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 
 ```
       --debug   enable debug logging, overrides 'quiet' flag
       --quiet   disable logging
 ```
 
-### SEE ALSO
+## See also
 
 * [blox repo](/cmd/blox_repo)	 - Create & Manage Schema Repositories
 

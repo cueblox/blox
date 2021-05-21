@@ -1,8 +1,8 @@
-## blox render
+# blox render
 
 Render templates with compiled data
 
-### Synopsis
+## Synopsis
 
 Render templates with compiled data. 
 	Use the 'with' parameter to restrict the data set to a single content type.
@@ -12,7 +12,7 @@ Render templates with compiled data.
 blox render [flags]
 ```
 
-### Options
+## Options
 
 ```
   -e, --each              render template once per item
@@ -21,14 +21,14 @@ blox render [flags]
   -w, --with string       dataset to use
 ```
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 
 ```
       --debug   enable debug logging, overrides 'quiet' flag
       --quiet   disable logging
 ```
 
-### SEE ALSO
+## See also
 
 * [blox](/cmd/blox)	 - CueBlox is a suite of slightly opinionated tools for managing and sharing content repositories of YAML and Markdown documents.
 

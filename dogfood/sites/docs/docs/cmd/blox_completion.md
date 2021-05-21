@@ -1,26 +1,26 @@
-## blox completion
+# blox completion
 
 Prints shell autocompletion scripts for blox
 
-### Synopsis
+## Synopsis
 
 Allows you to setup your shell to completions blox commands and flags.
 
-#### Bash
+### Bash
 
 	$ source <(blox completion bash)
 
 To load completions for each session, execute once:
 
-##### Linux
+#### Linux
 
 	$ blox completion bash > /etc/bash_completion.d/blox
 
-##### MacOS
+#### MacOS
 
 	$ blox completion bash > /usr/local/etc/bash_completion.d/blox
 
-#### ZSH
+### ZSH
 
 If shell completion is not already enabled in your environment you will need to enable it.
 You can execute the following once:
@@ -33,7 +33,7 @@ To load completions for each session, execute once:
 
 You will need to start a new shell for this setup to take effect.
 
-#### Fish
+### Fish
 
 	$ blox completion fish | source
 
@@ -48,20 +48,20 @@ To load completions for each session, execute once:
 blox completion [bash|zsh|fish]
 ```
 
-### Options
+## Options
 
 ```
   -h, --help   help for completion
 ```
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 
 ```
       --debug   enable debug logging, overrides 'quiet' flag
       --quiet   disable logging
 ```
 
-### SEE ALSO
+## See also
 
 * [blox](/cmd/blox)	 - CueBlox is a suite of slightly opinionated tools for managing and sharing content repositories of YAML and Markdown documents.
 

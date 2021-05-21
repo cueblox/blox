@@ -1,8 +1,8 @@
-## blox
+# blox
 
 CueBlox is a suite of slightly opinionated tools for managing and sharing content repositories of YAML and Markdown documents.
 
-### Options
+## Options
 
 ```
       --debug   enable debug logging, overrides 'quiet' flag
@@ -10,7 +10,7 @@ CueBlox is a suite of slightly opinionated tools for managing and sharing conten
       --quiet   disable logging
 ```
 
-### SEE ALSO
+## See also
 
 * [blox build](/cmd/blox_build)	 - Validate & Build dataset
 * [blox completion](/cmd/blox_completion)	 - Prints shell autocompletion scripts for blox
