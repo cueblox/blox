@@ -1,16 +1,15 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-
-	"context"
-	"io/ioutil"
 
 	"cuelang.org/go/cue"
 	"github.com/cueblox/blox"
@@ -146,9 +145,11 @@ func newBloxBuildCmd() *bloxBuildCmd {
 	return root
 }
 
-var referentialIntegrity bool
-var images bool
-var cloud bool
+var (
+	referentialIntegrity bool
+	images               bool
+	cloud                bool
+)
 
 const DefaultConfigName = "blox.cue"
 
