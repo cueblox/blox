@@ -3,6 +3,7 @@ package faunadb
 import (
 	"errors"
 	"fmt"
+	"hash/adler32"
 	"os"
 	"strings"
 
@@ -81,7 +82,22 @@ access key.  Export this key as FAUNA_KEY in your environment.`
 
 func (c *FaunaClient) checkOrCreateCollection(name string) error {
 	_, err := c.client.Query(f.CreateCollection(f.Obj{"name": name}))
-	return err
+	if !strings.Contains(err.Error(), "Collection already exists") {
+		pterm.Error.Println(err)
+		return err
+	}
+	_, err = c.client.Query(
+		f.CreateIndex(
+			f.Obj{
+				"name":   name + "-index",
+				"source": f.Collection(name),
+			}))
+
+	if !strings.Contains(err.Error(), "Index already exists") {
+		pterm.Error.Println(err)
+		return err
+	}
+	return nil
 }
 
 func (c *FaunaClient) ensureTables(tables []string) error {
@@ -110,13 +126,33 @@ func (c *FaunaClient) syncTable(table string, data []interface{}) error {
 		}
 		_, err := c.client.Query(
 			f.Create(
-				f.Ref(f.Collection(table), id),
+				f.Ref(f.Collection(table), hashIdentity(id)),
 				f.Obj{"data": record},
 			),
 		)
 		if err != nil {
-			return err
+			if strings.Contains(err.Error(), "instance already exists") {
+				_, e := c.client.Query(
+					f.Update(
+						f.Ref(f.Collection(table), hashIdentity(id)),
+						f.Obj{"data": record},
+					),
+				)
+				if e != nil {
+					return e
+				}
+			} else {
+				return err
+			}
+
 		}
 	}
 	return nil
+}
+func hashIdentity(id string) uint32 {
+
+	h := adler32.New()
+	h.Write([]byte(id))
+	return h.Sum32()
+
 }

@@ -13,11 +13,14 @@ import (
 	"github.com/spf13/cobra"
 
 	_ "github.com/cueblox/blox/internal/export/faunadb"
+	_ "github.com/cueblox/blox/internal/export/sqlite"
 )
 
 type exportCmd struct {
 	cmd *cobra.Command
 }
+
+var provider string
 
 func newExportCmd() *exportCmd {
 	root := &exportCmd{}
@@ -107,14 +110,23 @@ func newExportCmd() *exportCmd {
 		newExportProvidersCmd().cmd,
 	)
 	cmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
-
+	cmd.Flags().StringVarP(&provider, "provider", "p", "sqlite", "Which provider to export")
 	root.cmd = cmd
 	return root
 }
 
 func synchronizeDataset(jsn []byte) error {
-	engine, err := export.Open("faunadb")
-	cobra.CheckErr(err)
+	var engine *export.ExportEngine
+	var err error
+	if provider == "sqlite" {
+		pterm.Info.Println("Using sqlite provider")
+		engine, err = export.Open("sqlite")
+		cobra.CheckErr(err)
+	} else {
+		pterm.Info.Println("Using faunadb provider")
+		engine, err = export.Open("faunadb")
+		cobra.CheckErr(err)
+	}
 	err = engine.Synchronize(jsn)
 	if err != nil {
 		pterm.Error.Println(engine.Help())
