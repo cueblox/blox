@@ -248,6 +248,30 @@ func (r *Engine) ReferentialIntegrity() error {
 		}
 
 		for fields.Next() {
+			relationship := fields.Value().Attribute("relationship")
+
+			// If err is nil, that means we successfully found a relationship.
+			// Lets build the integrity schema then continue
+			if err = relationship.Err(); err == nil {
+				foreignTable, err := r.GetDataSet(strings.ToLower(relationship.Contents()))
+				if err != nil {
+					return err
+				}
+
+				optional := ""
+				if fields.IsOptional() {
+					optional = "?"
+				}
+
+				inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
+				if err != nil {
+					return err
+				}
+
+				r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
+				continue
+			}
+
 			if strings.HasSuffix(fields.Label(), "_id") {
 				foreignTable, err := r.GetDataSet(strings.TrimSuffix(fields.Label(), "_id"))
 				if err != nil {

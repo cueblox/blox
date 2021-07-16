@@ -1,7 +1,7 @@
 ---
 title: Hello World
 category_id: introduction
-profile_id: bketelsen
+author: bketelsen
 excerpt: Autem aliquam labore aspernatur accusantium harum facere.
 featured: true
 publish_date: "2021-03-19"

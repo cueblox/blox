@@ -21,7 +21,7 @@
 		body?:             string @template("My Awesome Article")
 		tags?: 			   [...string]
 		category_id?: 	   string
-		profile_id?:  	   string
+		author?:      	   string @relationship(Profile)
 	}
 
 }
