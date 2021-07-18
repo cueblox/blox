@@ -9,6 +9,7 @@ require (
 	github.com/goccy/go-yaml v1.8.9
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/gookit/color v1.4.2 // indirect
+	github.com/graphql-go/graphql v0.7.9 // indirect
 	github.com/h2non/filetype v1.1.1
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/otiai10/copy v1.5.0
