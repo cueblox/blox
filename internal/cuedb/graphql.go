@@ -40,7 +40,11 @@ func CueValueToGraphQlField(cueValue cue.Value) (map[string]*graphql.Field, erro
 				},
 			}
 
-		default:
+		case cue.BoolKind:
+		case cue.FloatKind:
+		case cue.IntKind:
+		case cue.NumberKind:
+		case cue.StringKind:
 			kind, err := CueValueToGraphQlType(fields.Value())
 			if err != nil {
 				return nil, err
@@ -70,6 +74,8 @@ func CueValueToGraphQlType(value cue.Value) (*graphql.Scalar, error) {
 		return graphql.Float, nil
 	case cue.IntKind:
 		return graphql.Int, nil
+	case cue.NumberKind:
+		return graphql.Float, nil
 	case cue.StringKind:
 		return graphql.String, nil
 	}

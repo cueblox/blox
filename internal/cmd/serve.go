@@ -12,6 +12,7 @@ import (
 
 	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 	"github.com/pterm/pterm"
@@ -109,9 +110,12 @@ func newBloxServeCmd() *bloxServeCmd {
 
 				graphqlFields := graphql.Fields{}
 				graphqlFields, err := cuedb.CueValueToGraphQlField(dataSet.GetSchemaCue())
+
 				if err != nil {
 					cobra.CheckErr(err)
 				}
+
+				spew.Dump(graphqlFields)
 
 				objType := graphql.NewObject(
 					graphql.ObjectConfig{
