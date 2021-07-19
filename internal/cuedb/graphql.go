@@ -1,12 +1,14 @@
 package cuedb
 
 import (
+	"fmt"
+
 	"cuelang.org/go/cue"
 	"github.com/graphql-go/graphql"
 )
 
 func CueValueToGraphQlField(cueValue cue.Value) (map[string]*graphql.Field, error) {
-	fields, err := cueValue.Fields()
+	fields, err := cueValue.Fields(cue.Optional(true))
 	if err != nil {
 		return nil, err
 	}
@@ -28,36 +30,49 @@ func CueValueToGraphQlField(cueValue cue.Value) (map[string]*graphql.Field, erro
 				})}
 
 		case cue.ListKind:
-			// listValues, err := fields.Value().
-			// if err != nil {
-			// 	return nil, err
-			// }
+			kind, err := CueValueToGraphQlType(fields.Value().LookupPath(cue.MakePath(cue.AnyIndex)))
+			if err != nil {
+				return nil, err
+			}
+			graphQlFields[fields.Label()] = &graphql.Field{
+				Type: &graphql.List{
+					OfType: kind,
+				},
+			}
 
-			// fmt.Printf("11: %v\n\n", listValues)
-			// fmt.Printf("11: %v\n\n", listValues.)
-			// // Useless
-			// fmt.Printf("12: %v\n\n", listValues.Value())
-			// fmt.Printf("13: %v\n\n", listValues.Label())
-			// fmt.Printf("14: %v\n\n", listValues.IsOptional())
-
-			// for listValues.Next() {
-			// 	fmt.Printf("\n\n2.x: %v\n", listValues.Value().IncompleteKind())
-			// }
-
-			// graphQlFields[fields.Label()] = graphql.Field{Type: &graphql.List{
-			// 	OfType: graphql.String,
-			// }}
-
-		case cue.BoolKind:
-			graphQlFields[fields.Label()] = &graphql.Field{Type: graphql.Boolean}
-
-		case cue.IntKind:
-			graphQlFields[fields.Label()] = &graphql.Field{Type: graphql.Int}
-
-		case cue.StringKind:
-			graphQlFields[fields.Label()] = &graphql.Field{Type: graphql.String}
+		default:
+			kind, err := CueValueToGraphQlType(fields.Value())
+			if err != nil {
+				return nil, err
+			}
+			if fields.IsOptional() {
+				graphQlFields[fields.Label()] = &graphql.Field{
+					Type: kind,
+				}
+			} else {
+				graphQlFields[fields.Label()] = &graphql.Field{
+					Type: &graphql.NonNull{
+						OfType: kind,
+					},
+				}
+			}
 		}
 	}
 
 	return graphQlFields, nil
+}
+
+func CueValueToGraphQlType(value cue.Value) (*graphql.Scalar, error) {
+	switch value.IncompleteKind() {
+	case cue.BoolKind:
+		return graphql.Boolean, nil
+	case cue.FloatKind:
+		return graphql.Float, nil
+	case cue.IntKind:
+		return graphql.Int, nil
+	case cue.StringKind:
+		return graphql.String, nil
+	}
+
+	return nil, fmt.Errorf("unhandled type: %v", value.IncompleteKind())
 }
