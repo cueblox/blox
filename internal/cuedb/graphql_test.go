@@ -31,7 +31,24 @@ func TestGraphqlGeneration(t *testing.T) {
 					"handle":  {Type: graphql.String},
 				},
 			})},
-		}}}
+		}},
+		{cueLiteral: "{ name: string, handles: { network: string, handle: string, sub: { a: int } } }", expected: map[string]graphql.Field{
+			"name": {Type: graphql.String},
+			"handles": {Type: graphql.NewObject(graphql.ObjectConfig{
+				Name: "handles",
+				Fields: map[string]graphql.Field{
+					"network": {Type: graphql.String},
+					"handle":  {Type: graphql.String},
+					"sub": {Type: graphql.NewObject(graphql.ObjectConfig{
+						Name: "sub",
+						Fields: map[string]graphql.Field{
+							"a": {Type: graphql.Int},
+						},
+					})},
+				},
+			})},
+		}},
+	}
 
 	var cueRuntime cue.Runtime
 

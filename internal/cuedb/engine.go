@@ -187,6 +187,7 @@ func (r *Engine) RegisterSchema(cueString string) error {
 
 		dataSet := DataSet{
 			schemaMetadata: schemaMetadata,
+			schema:         fields.Value(),
 			name:           fields.Label(),
 			metadata:       dataSetMetadata,
 			cuePath:        schemaPath,
@@ -228,6 +229,16 @@ func (r *Engine) Insert(dataSet DataSet, record map[string]interface{}) error {
 	}
 
 	return nil
+}
+
+func (r *Engine) GetAllData(dataSetName string) cue.Value {
+	d, err := r.GetDataSet(dataSetName)
+
+	if err != nil {
+		return cue.Value{}
+	}
+
+	return r.Database.LookupPath(d.CueDataPath())
 }
 
 // MarshalJSON returns the database encoded in JSON format

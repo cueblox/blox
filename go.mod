@@ -5,11 +5,13 @@ go 1.16
 require (
 	cuelang.org/go v0.3.2
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/disintegration/imaging v1.6.2
 	github.com/goccy/go-yaml v1.8.9
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/gookit/color v1.4.2 // indirect
 	github.com/graphql-go/graphql v0.7.9 // indirect
+	github.com/graphql-go/handler v0.2.3 // indirect
 	github.com/h2non/filetype v1.1.1
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/otiai10/copy v1.5.0
