@@ -154,6 +154,7 @@ func newBloxServeCmd() *bloxServeCmd {
 				graphqlObjects[dataSet.GetExternalName()] = cuedb.GraphQlObjectGlue{
 					Object:   objType,
 					Resolver: resolver,
+					Engine:   engine,
 				}
 
 				graphqlFields[dataSet.GetExternalName()] = &graphql.Field{

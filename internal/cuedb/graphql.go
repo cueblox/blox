@@ -2,6 +2,7 @@ package cuedb
 
 import (
 	"fmt"
+	"strings"
 
 	"cuelang.org/go/cue"
 	"github.com/graphql-go/graphql"
@@ -9,6 +10,7 @@ import (
 
 type GraphQlObjectGlue struct {
 	Object   *graphql.Object
+	Engine   *Engine
 	Resolver func(p graphql.ResolveParams) (interface{}, error)
 }
 
@@ -61,6 +63,36 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 
 				graphQlFields[fields.Label()] = &graphql.Field{
 					Type: existingObjects[relationship.Contents()].Object,
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						data := existingObjects[relationship.Contents()].Engine.GetAllData(fmt.Sprintf("#%s", relationship.Contents()))
+
+						fmt.Printf("Looking for a #%s\n", relationship.Contents())
+
+						records := make(map[string]interface{})
+						if err = data.Decode(&records); err != nil {
+							fmt.Printf("FAILED: %v\n", err)
+							return nil, err
+						}
+
+						source, ok := p.Source.(map[string]interface{})
+						fmt.Println("OK: ", source)
+						fmt.Println("Label should be", fields.Label())
+
+						if !ok {
+							return nil, nil
+						}
+
+						for recordID, record := range records {
+							// Can't use fields.Label() because the iterator has completed when the closure is called?
+							// Hardcoding to relationship name for time being.
+							// Help?
+							if string(recordID) == source[strings.ToLower(relationship.Contents())].(string) {
+								return record, nil
+							}
+						}
+
+						return nil, nil
+					},
 				}
 			} else if fields.IsOptional() {
 				graphQlFields[fields.Label()] = &graphql.Field{
