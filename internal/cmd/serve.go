@@ -8,11 +8,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/cueblox/blox"
 	"github.com/cueblox/blox/internal/cuedb"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 	"github.com/pterm/pterm"
@@ -101,68 +99,80 @@ func newBloxServeCmd() *bloxServeCmd {
 				pterm.Success.Println("Referential Integrity OK")
 			}
 
+			dag := engine.GetDataSetsDAG()
+			nodes, _ := dag.GetDescendants("root")
+
 			// GraphQL API
-			dataSets := engine.GetDataSets()
-			graphqlObjects := graphql.Fields{}
+			graphqlObjects := map[string]cuedb.GraphQlObjectGlue{}
+			graphqlFields := graphql.Fields{}
 
-			for _, dataSet := range dataSets {
-				fmt.Println("Setting up %v dataset", dataSet.GetExternalName())
+			for _, node := range nodes {
+				dataSet, _ := engine.GetDataSet(node.(*cuedb.DagNode).Name)
 
-				graphqlFields := graphql.Fields{}
-				graphqlFields, err := cuedb.CueValueToGraphQlField(dataSet.GetSchemaCue())
+				var objectFields graphql.Fields
+				objectFields, err := cuedb.CueValueToGraphQlField(graphqlObjects, dataSet.GetSchemaCue())
 
 				if err != nil {
 					cobra.CheckErr(err)
 				}
 
-				spew.Dump(graphqlFields)
-
 				objType := graphql.NewObject(
 					graphql.ObjectConfig{
 						Name:   dataSet.GetExternalName(),
-						Fields: graphqlFields,
+						Fields: objectFields,
 					},
 				)
 
-				graphqlObjects[strings.ToLower(dataSet.GetExternalName())] = &graphql.Field{
+				resolver := func(p graphql.ResolveParams) (interface{}, error) {
+					fmt.Println("Welcome to some resolver")
+
+					dataSetName := p.Info.ReturnType.Name()
+
+					id, ok := p.Args["id"].(string)
+					if ok {
+						fmt.Printf("Attempting to resolve a %s with %s\n", dataSetName, id)
+
+						data := engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
+
+						records := make(map[string]interface{})
+						if err = data.Decode(&records); err != nil {
+							fmt.Printf("FAILED: %v\n", err)
+							return nil, err
+						}
+
+						for recordID, record := range records {
+							if string(recordID) == id {
+								return record, nil
+							}
+						}
+					}
+
+					fmt.Println("NILNIL")
+					return nil, nil
+				}
+
+				graphqlObjects[dataSet.GetExternalName()] = cuedb.GraphQlObjectGlue{
+					Object:   objType,
+					Resolver: resolver,
+				}
+
+				graphqlFields[dataSet.GetExternalName()] = &graphql.Field{
+					Name: dataSet.GetExternalName(),
 					Type: objType,
 					Args: graphql.FieldConfigArgument{
 						"id": &graphql.ArgumentConfig{
 							Type: graphql.String,
 						},
 					},
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						id, ok := p.Args["id"].(string)
-
-						if ok {
-							dataSetName := p.Info.ReturnType.Name()
-
-							fmt.Println("Fetching data for %v", dataSetName)
-							data := engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
-
-							records := make(map[string]interface{})
-							if err = data.Decode(&records); err != nil {
-								fmt.Printf("FAILED: %v\n", err)
-								return nil, err
-							}
-
-							for recordID, record := range records {
-								if string(recordID) == id {
-									return record, nil
-								}
-							}
-						}
-
-						return nil, nil
-					},
+					Resolve: resolver,
 				}
 
-				graphqlObjects[fmt.Sprintf("all%vs", dataSet.GetExternalName())] = &graphql.Field{
+				graphqlFields[fmt.Sprintf("all%vs", dataSet.GetExternalName())] = &graphql.Field{
 					Type: graphql.NewList(objType),
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 						dataSetName := p.Info.ReturnType.Name()
 
-						fmt.Println("Fetching data for %v", dataSetName)
+						fmt.Printf("Fetching data for %v\n", dataSetName)
 						data := engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
 
 						records := make(map[string]interface{})
@@ -183,7 +193,7 @@ func newBloxServeCmd() *bloxServeCmd {
 			var queryType = graphql.NewObject(
 				graphql.ObjectConfig{
 					Name:   "Query",
-					Fields: graphqlObjects,
+					Fields: graphqlFields,
 				})
 
 			schema, err := graphql.NewSchema(

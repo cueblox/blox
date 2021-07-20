@@ -39,9 +39,9 @@ type DataSet struct {
 	schema         cue.Value
 	cuePath        cue.Path
 	metadata       DataSetMetadata
+	relationships  []string
 }
 
-// AddDataMap
 func (d *DataSet) GetDataMapCue() string {
 	return fmt.Sprintf(`{
 		%s: %s: _

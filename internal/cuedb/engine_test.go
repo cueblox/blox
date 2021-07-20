@@ -287,3 +287,29 @@ func TestGetInlinePath(t *testing.T) {
 
 	assert.Equal(t, dataSet.GetInlinePath(), "another: random: path: of: random: length")
 }
+
+func TestRelationshipParsing(t *testing.T) {
+	type test struct {
+		cueLiteral string
+		expected   []string
+	}
+
+	tests := []test{
+		{cueLiteral: "name: string, profile_id: string", expected: []string{"profile"}},
+		{cueLiteral: "name: string, profile_id: string @relationship(Person)", expected: []string{"person"}},
+		{cueLiteral: "name: string, profile_id: string, person: string @relationship(Person)", expected: []string{"profile", "person"}},
+	}
+
+	var cueRuntime cue.Runtime
+
+	for _, tc := range tests {
+		cueInstance, err := cueRuntime.Compile("", tc.cueLiteral)
+		assert.Equal(t, nil, err)
+
+		cueValue := cueInstance.Value()
+
+		relationships, err := getDataSetRelationships("", cueValue)
+		assert.Equal(t, nil, err)
+		assert.Equal(t, tc.expected, relationships)
+	}
+}

@@ -7,7 +7,14 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-func CueValueToGraphQlField(cueValue cue.Value) (map[string]*graphql.Field, error) {
+type GraphQlObjectGlue struct {
+	Object   *graphql.Object
+	Resolver func(p graphql.ResolveParams) (interface{}, error)
+}
+
+func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueValue cue.Value) (map[string]*graphql.Field, error) {
+	fmt.Println("Handling ", cueValue)
+
 	fields, err := cueValue.Fields(cue.Optional(true))
 	if err != nil {
 		return nil, err
@@ -18,7 +25,7 @@ func CueValueToGraphQlField(cueValue cue.Value) (map[string]*graphql.Field, erro
 	for fields.Next() {
 		switch fields.Value().IncompleteKind() {
 		case cue.StructKind:
-			subFields, err := CueValueToGraphQlField(fields.Value())
+			subFields, err := CueValueToGraphQlField(existingObjects, fields.Value())
 			if err != nil {
 				return nil, err
 			}
@@ -32,7 +39,9 @@ func CueValueToGraphQlField(cueValue cue.Value) (map[string]*graphql.Field, erro
 		case cue.ListKind:
 			kind, err := CueValueToGraphQlType(fields.Value().LookupPath(cue.MakePath(cue.AnyIndex)))
 			if err != nil {
-				return nil, err
+				// ignore lists for now
+				continue
+				// return nil, err
 			}
 			graphQlFields[fields.Label()] = &graphql.Field{
 				Type: &graphql.List{
@@ -40,16 +49,20 @@ func CueValueToGraphQlField(cueValue cue.Value) (map[string]*graphql.Field, erro
 				},
 			}
 
-		case cue.BoolKind:
-		case cue.FloatKind:
-		case cue.IntKind:
-		case cue.NumberKind:
-		case cue.StringKind:
+		case cue.BoolKind, cue.FloatKind, cue.IntKind, cue.NumberKind, cue.StringKind:
 			kind, err := CueValueToGraphQlType(fields.Value())
 			if err != nil {
 				return nil, err
 			}
-			if fields.IsOptional() {
+
+			relationship := fields.Value().Attribute("relationship")
+			if err = relationship.Err(); err == nil {
+				fmt.Println("Got a relationship, attaching ", relationship.Contents())
+
+				graphQlFields[fields.Label()] = &graphql.Field{
+					Type: existingObjects[relationship.Contents()].Object,
+				}
+			} else if fields.IsOptional() {
 				graphQlFields[fields.Label()] = &graphql.Field{
 					Type: kind,
 				}

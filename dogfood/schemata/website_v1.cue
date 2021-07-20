@@ -10,8 +10,8 @@
 			supportedExtensions: ["yaml", "yml"]
 		}
 
-		url:         string @template("https://google.com")
-		profile_id?: string
-		body?:       string
+		url:       string @template("https://google.com")
+		profile?:  string @relationship(Profile)
+		body?:     string
 	}
 }
