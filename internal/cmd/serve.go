@@ -229,17 +229,19 @@ func newBloxServeCmd() *bloxServeCmd {
 
 			http.Handle("/graphiql", h)
 
-			fmt.Println("Server is running on port 8080")
-			http.ListenAndServe(":8080", nil)
+			fmt.Printf("Server is running at %s\n", address)
+			http.ListenAndServe(address, nil)
 		},
 	}
 	cmd.Flags().BoolVarP(&static, "static", "s", true, "Serve static files")
+	cmd.Flags().StringVarP(&address, "address", "a", ":8080", "Listen address")
 
 	root.cmd = cmd
 	return root
 }
 
 var static bool
+var address string
 
 func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 	result := graphql.Do(graphql.Params{
