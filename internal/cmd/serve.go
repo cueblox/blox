@@ -99,6 +99,14 @@ func newBloxServeCmd() *bloxServeCmd {
 				pterm.Success.Println("Referential Integrity OK")
 			}
 
+			if static {
+				staticDir, err := cfg.GetString("static_dir")
+				fmt.Println("Serving static files from", staticDir)
+
+				cobra.CheckErr(err)
+				http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(".", staticDir)))))
+			}
+
 			dag := engine.GetDataSetsDAG()
 			nodes, _ := dag.GetDescendants("root")
 
@@ -213,9 +221,10 @@ func newBloxServeCmd() *bloxServeCmd {
 			})
 
 			h := handler.New(&handler.Config{
-				Schema:   &schema,
-				Pretty:   true,
-				GraphiQL: true,
+				Schema:     &schema,
+				Pretty:     true,
+				GraphiQL:   false,
+				Playground: true,
 			})
 
 			http.Handle("/graphiql", h)
@@ -224,10 +233,13 @@ func newBloxServeCmd() *bloxServeCmd {
 			http.ListenAndServe(":8080", nil)
 		},
 	}
+	cmd.Flags().BoolVarP(&static, "static", "s", true, "Serve static files")
 
 	root.cmd = cmd
 	return root
 }
+
+var static bool
 
 func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 	result := graphql.Do(graphql.Params{
