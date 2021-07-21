@@ -124,7 +124,6 @@ func (r *Engine) GetDataSetsDAG() *dag.DAG {
 
 	for _, k := range keys {
 		dataSet := datasets[k]
-		fmt.Println("DAG ", dataSet.ID())
 
 		// AddVertex returns a string ID. We don't need to worry
 		// about it, because the method checks for an ID() method
@@ -132,7 +131,7 @@ func (r *Engine) GetDataSetsDAG() *dag.DAG {
 		d := DagNode{Name: dataSet.ID()}
 		_, err := graph.AddVertex(&d)
 		if err != nil {
-			fmt.Printf("Failed to add vertex: %v", err)
+			pterm.Warning.Printf("failed to add vertex: %v", err)
 			continue
 		}
 

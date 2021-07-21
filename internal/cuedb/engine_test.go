@@ -24,7 +24,6 @@ func TestNewRuntime(t *testing.T) {
 	// cfg := testConfig(t)
 	runtime, err := NewEngine()
 	if err != nil {
-		fmt.Println(err)
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
 

@@ -1,7 +1,6 @@
 package markdown
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -23,7 +22,6 @@ body: |
 		t.Error(err)
 	}
 	if output != expected {
-		fmt.Println(output)
 		t.Error("output doesn't match expected")
 	}
 }

@@ -102,7 +102,7 @@ func newBloxServeCmd() *bloxServeCmd {
 
 			if static {
 				staticDir, err := cfg.GetString("static_dir")
-				fmt.Println("Serving static files from", staticDir)
+				pterm.Info.Println("Serving static files from", staticDir)
 
 				cobra.CheckErr(err)
 				http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(".", staticDir)))))
@@ -123,21 +123,16 @@ func newBloxServeCmd() *bloxServeCmd {
 
 			for _, k := range keys {
 				node := nodes[k]
-				fmt.Println(k,
-					node.(*cuedb.DagNode).Name)
 
 				chNode, _, err := dag.DescendantsWalker(k)
 				cobra.CheckErr(err)
-				fmt.Println("walking", len(chNode))
+
 				for nd := range chNode {
-					fmt.Println("node: ", nd)
 					n, err := dag.GetVertex(nd)
 					cobra.CheckErr(err)
 					if dg, ok := n.(*cuedb.DagNode); ok {
 						_, ok := vertexComplete[dg.Name]
 						if !ok {
-							pterm.Debug.Printf("walk: %s", dg.Name)
-
 							dataSet, _ := engine.GetDataSet(dg.Name)
 
 							var objectFields graphql.Fields
@@ -155,19 +150,15 @@ func newBloxServeCmd() *bloxServeCmd {
 							)
 
 							resolver := func(p graphql.ResolveParams) (interface{}, error) {
-								fmt.Println("Welcome to some resolver")
 
 								dataSetName := p.Info.ReturnType.Name()
 
 								id, ok := p.Args["id"].(string)
 								if ok {
-									fmt.Printf("Attempting to resolve a %s with %s\n", dataSetName, id)
-
 									data := engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
 
 									records := make(map[string]interface{})
 									if err = data.Decode(&records); err != nil {
-										fmt.Printf("FAILED: %v\n", err)
 										return nil, err
 									}
 
@@ -178,7 +169,6 @@ func newBloxServeCmd() *bloxServeCmd {
 									}
 								}
 
-								fmt.Println("NILNIL")
 								return nil, nil
 							}
 
@@ -204,7 +194,6 @@ func newBloxServeCmd() *bloxServeCmd {
 								Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 									dataSetName := p.Info.ReturnType.Name()
 
-									fmt.Printf("Fetching data for %v\n", dataSetName)
 									data := engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
 
 									records := make(map[string]interface{})
@@ -214,7 +203,6 @@ func newBloxServeCmd() *bloxServeCmd {
 
 									values := []interface{}{}
 									for _, value := range records {
-										fmt.Println(value)
 										values = append(values, value)
 									}
 
@@ -243,19 +231,14 @@ func newBloxServeCmd() *bloxServeCmd {
 					)
 
 					resolver := func(p graphql.ResolveParams) (interface{}, error) {
-						fmt.Println("Welcome to some resolver")
-
 						dataSetName := p.Info.ReturnType.Name()
 
 						id, ok := p.Args["id"].(string)
 						if ok {
-							fmt.Printf("Attempting to resolve a %s with %s\n", dataSetName, id)
-
 							data := engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
 
 							records := make(map[string]interface{})
 							if err = data.Decode(&records); err != nil {
-								fmt.Printf("FAILED: %v\n", err)
 								return nil, err
 							}
 
@@ -265,8 +248,6 @@ func newBloxServeCmd() *bloxServeCmd {
 								}
 							}
 						}
-
-						fmt.Println("NILNIL")
 						return nil, nil
 					}
 
@@ -292,7 +273,6 @@ func newBloxServeCmd() *bloxServeCmd {
 						Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 							dataSetName := p.Info.ReturnType.Name()
 
-							fmt.Printf("Fetching data for %v\n", dataSetName)
 							data := engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
 
 							records := make(map[string]interface{})
@@ -302,7 +282,6 @@ func newBloxServeCmd() *bloxServeCmd {
 
 							values := []interface{}{}
 							for _, value := range records {
-								fmt.Println(value)
 								values = append(values, value)
 							}
 
@@ -340,9 +319,9 @@ func newBloxServeCmd() *bloxServeCmd {
 				Playground: true,
 			})
 
-			http.Handle("/graphiql", h)
+			http.Handle("/ui", h)
 
-			fmt.Printf("Server is running at %s\n", address)
+			pterm.Info.Printf("Server is running at %s\n", address)
 			http.ListenAndServe(address, nil)
 		},
 	}
@@ -361,8 +340,10 @@ func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 		Schema:        schema,
 		RequestString: query,
 	})
+
 	if len(result.Errors) > 0 {
-		fmt.Printf("errors: %v", result.Errors)
+		pterm.Error.Printf("errors: %v\n", result.Errors)
 	}
+
 	return result
 }
