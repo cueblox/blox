@@ -2,7 +2,7 @@
 title: Managing Content
 excerpt: Manage your content
 publish_date: "2021-03-19"
-section_id: manage-content
+section: manage-content
 weight: 0
 ---
 

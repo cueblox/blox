@@ -2,7 +2,7 @@
 title: Introduction
 excerpt: What is CueBlox
 publish_date: "2021-03-19"
-section_id: introduction
+section: introduction
 weight: 1
 ---
 

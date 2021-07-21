@@ -2,6 +2,7 @@ package cuedb
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"cuelang.org/go/cue"
@@ -113,8 +114,18 @@ func (r *Engine) GetDataSetsDAG() *dag.DAG {
 	graph := dag.NewDAG()
 
 	graph.AddVertex(&DagNode{Name: "root"})
+	datasets := r.GetDataSets()
 
-	for _, dataSet := range r.GetDataSets() {
+	keys := make([]string, 0, len(datasets))
+	for k := range datasets {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		dataSet := datasets[k]
+		fmt.Println("DAG ", dataSet.ID())
+
 		// AddVertex returns a string ID. We don't need to worry
 		// about it, because the method checks for an ID() method
 		// on the struct, which we have.
@@ -128,7 +139,8 @@ func (r *Engine) GetDataSetsDAG() *dag.DAG {
 		graph.AddEdge("root", d.ID())
 	}
 
-	for _, dataSet := range r.GetDataSets() {
+	for _, k := range keys {
+		dataSet := datasets[k]
 		for _, relationship := range dataSet.relationships {
 			edge, _ := r.GetDataSet(relationship)
 			graph.AddEdge(dataSet.ID(), edge.ID())
