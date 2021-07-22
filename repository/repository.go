@@ -447,47 +447,6 @@ func (s *Service) prepGraphQL() error {
 
 }
 
-func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := s.build()
-	if err != nil {
-		pterm.Error.Println("Error building dataset", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	err = s.prepGraphQL()
-	if err != nil {
-		pterm.Error.Println("Error preparing graphql engine", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	staticDir, err := s.Cfg.GetString("static_dir")
-	if err == nil {
-		pterm.Info.Println("Serving static files from", staticDir)
-		http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(".", staticDir)))))
-	}
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		result := s.executeQuery(r.URL.Query().Get("query"))
-		err := json.NewEncoder(w).Encode(result)
-		if err != nil {
-			pterm.Warning.Printf("failed to encode: %v", err)
-		}
-	})
-
-	h := handler.New(&handler.Config{
-		Schema:     s.schema,
-		Pretty:     true,
-		GraphiQL:   false,
-		Playground: true,
-	})
-
-	http.Handle("/ui", h)
-	address := ":8080"
-	pterm.Info.Printf("Server is running at %s\n", address)
-	err = http.ListenAndServe(address, nil)
-
-}
-
 // GQLHandlerFunc returns a stand alone graphql handler for use
 // in netlify/aws/azure serverless scenarios
 func (s *Service) GQLHandlerFunc() (http.HandlerFunc, error) {
