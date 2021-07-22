@@ -22,6 +22,7 @@
 		tags?: 			   [...string]
 		category?: 	   string @relationship(Category)
 		profile?:  	   string @relationship(Profile)
+
 	}
 
 }
