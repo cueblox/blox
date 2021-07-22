@@ -67,7 +67,7 @@ func TestGraphqlGeneration(t *testing.T) {
 
 		cueValue := cueInstance.Value()
 
-		graphqlObjects := make(map[string]*graphql.Object)
+		graphqlObjects := make(map[string]GraphQlObjectGlue)
 
 		graphQlObject, err := CueValueToGraphQlField(graphqlObjects, cueValue)
 		assert.Equal(t, nil, err)

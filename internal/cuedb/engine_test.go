@@ -294,9 +294,9 @@ func TestRelationshipParsing(t *testing.T) {
 	}
 
 	tests := []test{
-		{cueLiteral: "name: string, profile_id: string", expected: []string{"profile"}},
-		{cueLiteral: "name: string, profile_id: string @relationship(Person)", expected: []string{"person"}},
-		{cueLiteral: "name: string, profile_id: string, person: string @relationship(Person)", expected: []string{"profile", "person"}},
+		{cueLiteral: "name: string, profile: string", expected: []string{}},
+		{cueLiteral: "name: string, profile: string @relationship(Person)", expected: []string{"Person"}},
+		{cueLiteral: "name: string, profile: string, person: string @relationship(Person)", expected: []string{"Person"}},
 	}
 
 	var cueRuntime cue.Runtime

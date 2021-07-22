@@ -22,10 +22,6 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 
 	graphQlFields := make(map[string]*graphql.Field)
 
-	graphQlFields["id"] = &graphql.Field{
-		Type: graphql.String,
-	}
-
 	for fields.Next() {
 		switch fields.Value().IncompleteKind() {
 		case cue.StructKind:

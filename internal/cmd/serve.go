@@ -223,6 +223,13 @@ func newBloxServeCmd() *bloxServeCmd {
 						cobra.CheckErr(err)
 					}
 
+					// Inject ID field into each object
+					objectFields["id"] = &graphql.Field{
+						Type: &graphql.NonNull{
+							OfType: graphql.String,
+						},
+					}
+
 					objType := graphql.NewObject(
 						graphql.ObjectConfig{
 							Name:   dataSet.GetExternalName(),
