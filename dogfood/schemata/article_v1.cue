@@ -15,13 +15,14 @@
 		featured:          bool | *false
 		draft:             bool | *false
 		publish_date:      string @template("2020-01-01")
-		image_id?:         string
+		image?:         string @relationship(Image)
 		last_edit_date?:   string
 		edit_description?: string
 		body?:             string @template("My Awesome Article")
 		tags?: 			   [...string]
-		category_id?: 	   string
-		author?:      	   string @relationship(Profile)
+		category?: 	   string @relationship(Category)
+		profile?:  	   string @relationship(Profile)
+
 	}
 
 }

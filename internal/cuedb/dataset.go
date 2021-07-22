@@ -2,6 +2,7 @@ package cuedb
 
 import (
 	"fmt"
+	"strings"
 
 	"cuelang.org/go/cue"
 )
@@ -35,11 +36,12 @@ type DataSetMetadata struct {
 type DataSet struct {
 	name           string
 	schemaMetadata SchemaMetadata
+	schema         cue.Value
 	cuePath        cue.Path
 	metadata       DataSetMetadata
+	relationships  []string
 }
 
-// AddDataMap
 func (d *DataSet) GetDataMapCue() string {
 	return fmt.Sprintf(`{
 		%s: %s: _
@@ -48,6 +50,14 @@ func (d *DataSet) GetDataMapCue() string {
 		d.GetInlinePath(), d.name,
 		dataPathRoot, d.metadata.Plural, d.cuePath.String(), d.name,
 	)
+}
+
+func (d *DataSet) GetExternalName() string {
+	return strings.Replace(d.name, "#", "", 1)
+}
+
+func (d *DataSet) GetSchemaCue() cue.Value {
+	return d.schema
 }
 
 func (d *DataSet) CueDataPath() cue.Path {

@@ -24,7 +24,6 @@ func TestNewRuntime(t *testing.T) {
 	// cfg := testConfig(t)
 	runtime, err := NewEngine()
 	if err != nil {
-		fmt.Println(err)
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
 
@@ -286,4 +285,30 @@ func TestGetInlinePath(t *testing.T) {
 	}
 
 	assert.Equal(t, dataSet.GetInlinePath(), "another: random: path: of: random: length")
+}
+
+func TestRelationshipParsing(t *testing.T) {
+	type test struct {
+		cueLiteral string
+		expected   []string
+	}
+
+	tests := []test{
+		{cueLiteral: "name: string, profile: string", expected: []string{}},
+		{cueLiteral: "name: string, profile: string @relationship(Person)", expected: []string{"Person"}},
+		{cueLiteral: "name: string, profile: string, person: string @relationship(Person)", expected: []string{"Person"}},
+	}
+
+	var cueRuntime cue.Runtime
+
+	for _, tc := range tests {
+		cueInstance, err := cueRuntime.Compile("", tc.cueLiteral)
+		assert.Equal(t, nil, err)
+
+		cueValue := cueInstance.Value()
+
+		relationships, err := getDataSetRelationships("", cueValue)
+		assert.Equal(t, nil, err)
+		assert.Equal(t, tc.expected, relationships)
+	}
 }

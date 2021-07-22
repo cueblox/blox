@@ -2,11 +2,13 @@ package cuedb
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"cuelang.org/go/cue"
 	"github.com/cueblox/blox"
 	"github.com/hashicorp/go-multierror"
+	"github.com/heimdalr/dag"
 	"github.com/pterm/pterm"
 )
 
@@ -100,6 +102,64 @@ func (r *Engine) GetDataSets() map[string]DataSet {
 	return r.dataSets
 }
 
+type DagNode struct {
+	Name string
+}
+
+func (d *DagNode) ID() string {
+	return d.Name
+}
+
+func (r *Engine) GetDataSetsDAG() *dag.DAG {
+	graph := dag.NewDAG()
+
+	_, err := graph.AddVertex(&DagNode{Name: "root"})
+	if err != nil {
+		pterm.Warning.Printf("failed to add vertex: %v", err)
+	}
+	datasets := r.GetDataSets()
+
+	keys := make([]string, 0, len(datasets))
+	for k := range datasets {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		dataSet := datasets[k]
+
+		// AddVertex returns a string ID. We don't need to worry
+		// about it, because the method checks for an ID() method
+		// on the struct, which we have.
+		d := DagNode{Name: dataSet.ID()}
+		_, err := graph.AddVertex(&d)
+		if err != nil {
+			pterm.Warning.Printf("failed to add vertex: %v", err)
+			continue
+		}
+
+		err = graph.AddEdge("root", d.ID())
+		if err != nil {
+			pterm.Warning.Printf("failed to add edge: %v", err)
+			continue
+		}
+	}
+
+	for _, k := range keys {
+		dataSet := datasets[k]
+		for _, relationship := range dataSet.relationships {
+			edge, _ := r.GetDataSet(relationship)
+			err := graph.AddEdge(dataSet.ID(), edge.ID())
+			if err != nil {
+				pterm.Warning.Printf("failed to add edge: %v", err)
+				continue
+			}
+		}
+	}
+
+	return graph
+}
+
 func (r *Engine) GetDataSet(name string) (DataSet, error) {
 	cueName := strings.ToLower(name)
 	if !strings.HasPrefix(cueName, "#") {
@@ -115,6 +175,10 @@ func (r *Engine) GetDataSet(name string) (DataSet, error) {
 
 func (d *DataSet) ID() string {
 	return strings.ToLower(d.name)
+}
+
+func (d *DataSet) String() string {
+	return d.ID()
 }
 
 func (d *DataSet) GetDataDirectory() string {
@@ -185,9 +249,17 @@ func (r *Engine) RegisterSchema(cueString string) error {
 		}
 		pterm.Debug.Printf("\t\t\t%s\n", fields.Value())
 
+		// Find relationships
+		relationships, err := getDataSetRelationships(fields.Label(), fields.Value())
+		if err != nil {
+			return err
+		}
+
 		dataSet := DataSet{
 			schemaMetadata: schemaMetadata,
+			schema:         fields.Value(),
 			name:           fields.Label(),
+			relationships:  relationships,
 			metadata:       dataSetMetadata,
 			cuePath:        schemaPath,
 		}
@@ -230,9 +302,41 @@ func (r *Engine) Insert(dataSet DataSet, record map[string]interface{}) error {
 	return nil
 }
 
+func (r *Engine) GetAllData(dataSetName string) cue.Value {
+	d, err := r.GetDataSet(dataSetName)
+	if err != nil {
+		return cue.Value{}
+	}
+
+	return r.Database.LookupPath(d.CueDataPath())
+}
+
 // MarshalJSON returns the database encoded in JSON format
 func (r *Engine) MarshalJSON() ([]byte, error) {
 	return r.Database.LookupPath(cue.ParsePath(dataPathRoot)).MarshalJSON()
+}
+
+func getDataSetRelationships(label string, schema cue.Value) ([]string, error) {
+	fields, err := schema.Fields(cue.All())
+	if err != nil {
+		return []string{}, err
+	}
+
+	relationships := []string{}
+
+	for fields.Next() {
+		relationship := fields.Value().Attribute("relationship")
+		if err = relationship.Err(); err == nil {
+			relationships = append(relationships, relationship.Contents())
+			continue
+		}
+
+		if strings.HasSuffix(fields.Label(), "_id") {
+			relationships = append(relationships, strings.TrimSuffix(fields.Label(), "_id"))
+		}
+	}
+
+	return relationships, nil
 }
 
 // ReferentialIntegrity checks the relationships between

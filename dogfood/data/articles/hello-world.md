@@ -1,7 +1,7 @@
 ---
 title: Hello World
-category_id: introduction
-author: bketelsen
+category: introduction
+profile: bketelsen
 excerpt: Autem aliquam labore aspernatur accusantium harum facere.
 featured: true
 publish_date: "2021-03-19"
@@ -10,7 +10,7 @@ edit_description: Hello HN, thanks for stopping by!
 tags:
   - one
   - two
-image_id: jpg/main-img-preview
+image: jpg/main-img-preview
 ---
 
 Placeat consequuntur ullam aut sapiente illo velit. Eius facere ut molestias totam laborum pariatur quam. Praesentium quo veritatis expedita animi.
