@@ -58,21 +58,19 @@ func newBloxBuildCmd() *bloxBuildCmd {
 
 			cobra.CheckErr(err)
 
-			/*
-				remotes, err := cfg.GetList("remotes")
-				if err == nil {
-					cobra.CheckErr(parseRemotes(remotes))
-				}
-				if images {
-					err = processImages(cfg)
-					if err != nil {
-						cobra.CheckErr(err)
-					}
-				}
-			*/
-
 			repo, err := repository.NewService(string(userConfig))
+			cobra.CheckErr(err)
 
+			remotes, err := repo.Cfg.GetList("remotes")
+			if err == nil {
+				cobra.CheckErr(parseRemotes(remotes))
+			}
+			if images {
+				err = processImages(repo.Cfg)
+				if err != nil {
+					cobra.CheckErr(err)
+				}
+			}
 			cobra.CheckErr(err)
 			err = repo.Build(referentialIntegrity)
 			cobra.CheckErr(err)
