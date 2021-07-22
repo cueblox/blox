@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -77,16 +78,15 @@ func newBloxBuildCmd() *bloxBuildCmd {
 			cobra.CheckErr(err)
 			bb, err := repo.RenderJSON()
 			cobra.CheckErr(err)
-			fmt.Println(string(bb))
-			/*buildDir, err := cfg.GetString("build_dir")
+			buildDir, err := repo.Cfg.GetString("build_dir")
 			cobra.CheckErr(err)
 			cobra.CheckErr(os.MkdirAll(buildDir, 0o755))
 
 			filename := "data.json"
 			filePath := path.Join(buildDir, filename)
-			cobra.CheckErr(os.WriteFile(filePath, jso, 0o755))
+			cobra.CheckErr(os.WriteFile(filePath, bb, 0o755))
 			pterm.Success.Printf("Data blox written to '%s'\n", filePath)
-			*/
+
 		},
 	}
 	cmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
