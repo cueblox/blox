@@ -113,7 +113,10 @@ func (d *DagNode) ID() string {
 func (r *Engine) GetDataSetsDAG() *dag.DAG {
 	graph := dag.NewDAG()
 
-	graph.AddVertex(&DagNode{Name: "root"})
+	_, err := graph.AddVertex(&DagNode{Name: "root"})
+	if err != nil {
+		pterm.Warning.Printf("failed to add vertex: %v", err)
+	}
 	datasets := r.GetDataSets()
 
 	keys := make([]string, 0, len(datasets))
@@ -135,14 +138,22 @@ func (r *Engine) GetDataSetsDAG() *dag.DAG {
 			continue
 		}
 
-		graph.AddEdge("root", d.ID())
+		err = graph.AddEdge("root", d.ID())
+		if err != nil {
+			pterm.Warning.Printf("failed to add edge: %v", err)
+			continue
+		}
 	}
 
 	for _, k := range keys {
 		dataSet := datasets[k]
 		for _, relationship := range dataSet.relationships {
 			edge, _ := r.GetDataSet(relationship)
-			graph.AddEdge(dataSet.ID(), edge.ID())
+			err := graph.AddEdge(dataSet.ID(), edge.ID())
+			if err != nil {
+				pterm.Warning.Printf("failed to add edge: %v", err)
+				continue
+			}
 		}
 	}
 

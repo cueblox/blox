@@ -316,7 +316,10 @@ func newBloxServeCmd() *bloxServeCmd {
 
 			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				result := executeQuery(r.URL.Query().Get("query"), schema)
-				json.NewEncoder(w).Encode(result)
+				err := json.NewEncoder(w).Encode(result)
+				if err != nil {
+					pterm.Warning.Printf("failed to encode: %v", err)
+				}
 			})
 
 			h := handler.New(&handler.Config{
@@ -329,7 +332,8 @@ func newBloxServeCmd() *bloxServeCmd {
 			http.Handle("/ui", h)
 
 			pterm.Info.Printf("Server is running at %s\n", address)
-			http.ListenAndServe(address, nil)
+			err = http.ListenAndServe(address, nil)
+			cobra.CheckErr(err)
 		},
 	}
 	cmd.Flags().BoolVarP(&static, "static", "s", true, "Serve static files")
