@@ -1,8 +1,13 @@
 package cmd
 
 import (
-	"fmt"
+	"encoding/json"
+	"errors"
 	"io/ioutil"
+	"os"
+	"path"
+	tpl "text/template"
+	"time"
 
 	"github.com/cueblox/blox/repository"
 	"github.com/pterm/pterm"
@@ -22,47 +27,33 @@ func newBloxRenderCmd() *bloxRenderCmd {
 	Use the 'with' parameter to restrict the data set to a single content type.
 	Use the 'each' parameter to execute the template once for each item.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			// begin cut and paste from blox_build
 			userConfig, err := ioutil.ReadFile("blox.cue")
 
 			pterm.Debug.Printf("loading user config")
 
 			cobra.CheckErr(err)
 
-			/*
-				remotes, err := cfg.GetList("remotes")
-				if err == nil {
-					cobra.CheckErr(parseRemotes(remotes))
-				}
-				if images {
-					err = processImages(cfg)
-					if err != nil {
-						cobra.CheckErr(err)
-					}
-				}
-			*/
-
 			repo, err := repository.NewService(string(userConfig))
+			cobra.CheckErr(err)
 
+			remotes, err := repo.Cfg.GetList("remotes")
+			if err == nil {
+				cobra.CheckErr(parseRemotes(remotes))
+			}
+			if images {
+				err = processImages(repo.Cfg)
+				if err != nil {
+					cobra.CheckErr(err)
+				}
+			}
 			cobra.CheckErr(err)
 			err = repo.Build(referentialIntegrity)
 			cobra.CheckErr(err)
 			bb, err := repo.RenderJSON()
 			cobra.CheckErr(err)
-			fmt.Println(string(bb))
-			/*buildDir, err := cfg.GetString("build_dir")
-			cobra.CheckErr(err)
-			cobra.CheckErr(os.MkdirAll(buildDir, 0o755))
-
-			filename := "data.json"
-			filePath := path.Join(buildDir, filename)
-			cobra.CheckErr(os.WriteFile(filePath, jso, 0o755))
-			pterm.Success.Printf("Data blox written to '%s'\n", filePath)
-
-			// end cut and paste from blox_build
 
 			// Load Schemas!
-			templateDir, err := cfg.GetString("template_dir")
+			templateDir, err := repo.Cfg.GetString("template_dir")
 			cobra.CheckErr(err)
 			pterm.Info.Printf("Using templates from %s\n", templateDir)
 			if template == "" {
@@ -95,7 +86,7 @@ func newBloxRenderCmd() *bloxRenderCmd {
 				},
 			}
 
-			err = json.Unmarshal(jso, &dataJson)
+			err = json.Unmarshal(bb, &dataJson)
 			cobra.CheckErr(err)
 
 			t := tpl.Must(tpl.New(template).Funcs(funcMap).ParseFiles(paths...))
@@ -116,7 +107,7 @@ func newBloxRenderCmd() *bloxRenderCmd {
 				err = t.Execute(os.Stdout, dataJson)
 			}
 			cobra.CheckErr(err)
-			*/
+
 		},
 	}
 	cmd.Flags().StringVarP(&template, "template", "t", "", "template to render")
