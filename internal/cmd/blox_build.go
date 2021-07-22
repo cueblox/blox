@@ -57,7 +57,7 @@ func newBloxBuildCmd() *bloxBuildCmd {
 
 			cobra.CheckErr(err)
 
-			repo, err := repository.NewService(string(userConfig))
+			repo, err := repository.NewService(string(userConfig), referentialIntegrity)
 			cobra.CheckErr(err)
 
 			remotes, err := repo.Cfg.GetList("remotes")
@@ -70,9 +70,7 @@ func newBloxBuildCmd() *bloxBuildCmd {
 					cobra.CheckErr(err)
 				}
 			}
-			cobra.CheckErr(err)
-			err = repo.Build(referentialIntegrity)
-			cobra.CheckErr(err)
+
 			err = repo.RenderAndSave()
 			cobra.CheckErr(err)
 

@@ -45,11 +45,9 @@ func newBloxServeCmd() *bloxServeCmd {
 				}
 			*/
 
-			repo, err := repository.NewService(string(userConfig))
+			repo, err := repository.NewService(string(userConfig), referentialIntegrity)
+			cobra.CheckErr(err)
 
-			cobra.CheckErr(err)
-			err = repo.Build(referentialIntegrity)
-			cobra.CheckErr(err)
 			bb, err := repo.RenderJSON()
 			cobra.CheckErr(err)
 			fmt.Println(string(bb))

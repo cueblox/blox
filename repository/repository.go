@@ -21,9 +21,10 @@ import (
 type Service struct {
 	engine *cuedb.Engine
 	Cfg    *blox.Config
+	ri     bool
 }
 
-func NewService(bloxConfig string) (*Service, error) {
+func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) {
 	cfg, err := blox.NewConfig(BaseConfig)
 	if err != nil {
 		return nil, err
@@ -71,6 +72,7 @@ func NewService(bloxConfig string) (*Service, error) {
 	return &Service{
 		engine: engine,
 		Cfg:    cfg,
+		ri:     referentialIntegrity,
 	}, nil
 }
 
@@ -90,6 +92,10 @@ const BaseConfig = `{
     }`
 
 func (s *Service) RenderJSON() ([]byte, error) {
+	err := s.build()
+	if err != nil {
+		return nil, err
+	}
 	pterm.Debug.Println("Building output data blox")
 	output, err := s.engine.GetOutput()
 	if err != nil {
@@ -101,6 +107,11 @@ func (s *Service) RenderJSON() ([]byte, error) {
 }
 
 func (s *Service) RenderAndSave() error {
+	err := s.build()
+	if err != nil {
+		return err
+	}
+
 	bb, err := s.RenderJSON()
 	if err != nil {
 		return err
@@ -123,7 +134,7 @@ func (s *Service) RenderAndSave() error {
 	return nil
 }
 
-func (s *Service) Build(checkReferentialIntegrity bool) error {
+func (s *Service) build() error {
 	var errors error
 
 	for _, dataSet := range s.engine.GetDataSets() {
@@ -201,7 +212,7 @@ func (s *Service) Build(checkReferentialIntegrity bool) error {
 		}
 	}
 
-	if checkReferentialIntegrity {
+	if s.ri {
 		err := s.engine.ReferentialIntegrity()
 		if err != nil {
 			errors = multierror.Append(err)
