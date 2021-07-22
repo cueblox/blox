@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -97,6 +98,29 @@ func (s *Service) RenderJSON() ([]byte, error) {
 
 	pterm.Debug.Println("Rendering data blox to JSON")
 	return output.MarshalJSON()
+}
+
+func (s *Service) RenderAndSave() error {
+	bb, err := s.RenderJSON()
+	if err != nil {
+		return err
+	}
+	buildDir, err := s.Cfg.GetString("build_dir")
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(buildDir, 0o755)
+	if err != nil {
+		return err
+	}
+	filename := "data.json"
+	filePath := path.Join(buildDir, filename)
+	err = os.WriteFile(filePath, bb, 0o755)
+	if err != nil {
+		return err
+	}
+	pterm.Success.Printf("Data blox written to '%s'\n", filePath)
+	return nil
 }
 
 func (s *Service) Build(checkReferentialIntegrity bool) error {
