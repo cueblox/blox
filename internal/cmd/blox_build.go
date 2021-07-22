@@ -4,21 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
 	"cuelang.org/go/cue"
 	"github.com/cueblox/blox"
-	"github.com/cueblox/blox/internal/cuedb"
-	"github.com/cueblox/blox/internal/encoding/markdown"
+	"github.com/cueblox/blox/repository"
+
 	"github.com/disintegration/imaging"
 	"github.com/goccy/go-yaml"
 	"github.com/h2non/filetype"
-	"github.com/hashicorp/go-multierror"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -60,75 +57,28 @@ func newBloxBuildCmd() *bloxBuildCmd {
 
 			cobra.CheckErr(err)
 
-			engine, err := cuedb.NewEngine()
-
-			pterm.Debug.Printf("new engine")
-			cobra.CheckErr(err)
-
-			cfg, err := blox.NewConfig(BaseConfig)
-
-			pterm.Debug.Printf("newConfig")
-			cobra.CheckErr(err)
-
-			err = cfg.LoadConfigString(string(userConfig))
-			cobra.CheckErr(err)
-
-			// Load Schemas!
-			schemataDir, err := cfg.GetString("schemata_dir")
-			cobra.CheckErr(err)
-
-			remotes, err := cfg.GetList("remotes")
-			if err == nil {
-				cobra.CheckErr(parseRemotes(remotes))
-			}
-			if images {
-				err = processImages(cfg)
-				if err != nil {
-					cobra.CheckErr(err)
+			/*
+				remotes, err := cfg.GetList("remotes")
+				if err == nil {
+					cobra.CheckErr(parseRemotes(remotes))
 				}
-			}
-			pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
-
-			err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-
-				if !d.IsDir() {
-					bb, err := os.ReadFile(path)
+				if images {
+					err = processImages(cfg)
 					if err != nil {
-						return err
-					}
-
-					pterm.Debug.Printf("\t\tAttempting to register schema: %s\n", path)
-					err = engine.RegisterSchema(string(bb))
-					if err != nil {
-						return err
+						cobra.CheckErr(err)
 					}
 				}
+			*/
 
-				return nil
-			})
+			repo, err := repository.NewService(string(userConfig))
+
 			cobra.CheckErr(err)
-
-			pterm.Debug.Println("\t\tBuilding DataSets")
-			cobra.CheckErr(buildDataSets(engine, cfg))
-
-			if referentialIntegrity {
-				pterm.Info.Println("Verifying Referential Integrity")
-				cobra.CheckErr(engine.ReferentialIntegrity())
-				pterm.Success.Println("Referential Integrity OK")
-			}
-
-			pterm.Debug.Println("Building output data blox")
-			output, err := engine.GetOutput()
+			err = repo.Build(referentialIntegrity)
 			cobra.CheckErr(err)
-
-			pterm.Debug.Println("Rendering data blox to JSON")
-			jso, err := output.MarshalJSON()
+			bb, err := repo.RenderJSON()
 			cobra.CheckErr(err)
-
-			buildDir, err := cfg.GetString("build_dir")
+			fmt.Println(string(bb))
+			/*buildDir, err := cfg.GetString("build_dir")
 			cobra.CheckErr(err)
 			cobra.CheckErr(os.MkdirAll(buildDir, 0o755))
 
@@ -136,6 +86,7 @@ func newBloxBuildCmd() *bloxBuildCmd {
 			filePath := path.Join(buildDir, filename)
 			cobra.CheckErr(os.WriteFile(filePath, jso, 0o755))
 			pterm.Success.Printf("Data blox written to '%s'\n", filePath)
+			*/
 		},
 	}
 	cmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")
@@ -167,93 +118,6 @@ const BaseConfig = `{
 	remotes: [ ...#Remote ]
 
 }`
-
-func buildDataSets(engine *cuedb.Engine, cfg *blox.Config) error {
-	var errors error
-
-	for _, dataSet := range engine.GetDataSets() {
-		pterm.Debug.Printf("\t\tBuilding Dataset: %s\n", dataSet.ID())
-
-		// We're using the Or variant of GetString because we know this call can't
-		// fail, as the config isn't valid without.
-		dataSetDirectory := fmt.Sprintf("%s/%s", cfg.GetStringOr("data_dir", ""), dataSet.GetDataDirectory())
-
-		err := os.MkdirAll(dataSetDirectory, 0o755)
-		if err != nil {
-			errors = multierror.Append(err)
-			continue
-		}
-
-		err = filepath.Walk(dataSetDirectory,
-			func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-
-				if info.IsDir() {
-					return err
-				}
-
-				ext := strings.TrimPrefix(filepath.Ext(path), ".")
-
-				if !dataSet.IsSupportedExtension(ext) {
-					return nil
-				}
-				relative, err := filepath.Rel(dataSetDirectory, path)
-				if err != nil {
-					return err
-				}
-				slug := strings.TrimSuffix(relative, "."+ext)
-				pterm.Debug.Println(slug)
-				bytes, err := ioutil.ReadFile(path)
-				if err != nil {
-					return multierror.Append(err)
-				}
-
-				// Loaders to get to YAML
-				// We should offer various, simple for now with markdown
-				mdStr := ""
-				if ext == "md" || ext == "mdx" {
-					mdStr, err = markdown.ToYAML(string(bytes))
-					if err != nil {
-						return err
-					}
-
-					bytes = []byte(mdStr)
-				}
-
-				istruct := make(map[string]interface{})
-
-				err = yaml.Unmarshal(bytes, &istruct)
-				if err != nil {
-					return multierror.Append(err)
-				}
-
-				record := make(map[string]interface{})
-				record[slug] = istruct
-
-				err = engine.Insert(dataSet, record)
-				if err != nil {
-					return multierror.Append(err)
-				}
-
-				return err
-			},
-		)
-
-		if err != nil {
-			errors = multierror.Append(err)
-		}
-	}
-
-	if errors != nil {
-		pterm.Error.Println("Validation Failed")
-		return errors
-	}
-
-	pterm.Success.Println("Validation Complete")
-	return nil
-}
 
 func parseRemotes(value cue.Value) error {
 	iter, err := value.List()

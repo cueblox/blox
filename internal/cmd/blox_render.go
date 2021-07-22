@@ -1,18 +1,10 @@
 package cmd
 
 import (
-	"encoding/json"
-	"errors"
-	"io/fs"
+	"fmt"
 	"io/ioutil"
-	"os"
-	"path"
-	"path/filepath"
-	tpl "text/template"
-	"time"
 
-	"github.com/cueblox/blox"
-	"github.com/cueblox/blox/internal/cuedb"
+	"github.com/cueblox/blox/repository"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -37,70 +29,28 @@ func newBloxRenderCmd() *bloxRenderCmd {
 
 			cobra.CheckErr(err)
 
-			engine, err := cuedb.NewEngine()
-
-			pterm.Debug.Printf("new engine")
-			cobra.CheckErr(err)
-
-			cfg, err := blox.NewConfig(BaseConfig)
-
-			pterm.Debug.Printf("newConfig")
-			cobra.CheckErr(err)
-
-			err = cfg.LoadConfigString(string(userConfig))
-			cobra.CheckErr(err)
-
-			// Load Schemas!
-			schemataDir, err := cfg.GetString("schemata_dir")
-			cobra.CheckErr(err)
-
-			remotes, err := cfg.GetList("remotes")
-			if err == nil {
-				cobra.CheckErr(parseRemotes(remotes))
-			}
-
-			pterm.Debug.Printf("\t\tUsing schemata from: %s\n", schemataDir)
-
-			err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return err
+			/*
+				remotes, err := cfg.GetList("remotes")
+				if err == nil {
+					cobra.CheckErr(parseRemotes(remotes))
 				}
-
-				if !d.IsDir() {
-					bb, err := os.ReadFile(path)
+				if images {
+					err = processImages(cfg)
 					if err != nil {
-						return err
-					}
-
-					pterm.Debug.Printf("\t\tAttempting to register schema: %s\n", path)
-					err = engine.RegisterSchema(string(bb))
-					if err != nil {
-						return err
+						cobra.CheckErr(err)
 					}
 				}
+			*/
 
-				return nil
-			})
+			repo, err := repository.NewService(string(userConfig))
+
 			cobra.CheckErr(err)
-
-			pterm.Debug.Println("\t\tBuilding DataSets")
-			cobra.CheckErr(buildDataSets(engine, cfg))
-
-			if referentialIntegrity {
-				pterm.Info.Println("Verifying Referential Integrity")
-				cobra.CheckErr(engine.ReferentialIntegrity())
-				pterm.Success.Println("Referential Integrity OK")
-			}
-
-			pterm.Debug.Println("Building output data blox")
-			output, err := engine.GetOutput()
+			err = repo.Build(referentialIntegrity)
 			cobra.CheckErr(err)
-
-			pterm.Debug.Println("Rendering data blox to JSON")
-			jso, err := output.MarshalJSON()
+			bb, err := repo.RenderJSON()
 			cobra.CheckErr(err)
-
-			buildDir, err := cfg.GetString("build_dir")
+			fmt.Println(string(bb))
+			/*buildDir, err := cfg.GetString("build_dir")
 			cobra.CheckErr(err)
 			cobra.CheckErr(os.MkdirAll(buildDir, 0o755))
 
@@ -166,6 +116,7 @@ func newBloxRenderCmd() *bloxRenderCmd {
 				err = t.Execute(os.Stdout, dataJson)
 			}
 			cobra.CheckErr(err)
+			*/
 		},
 	}
 	cmd.Flags().StringVarP(&template, "template", "t", "", "template to render")
