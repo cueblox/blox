@@ -150,7 +150,6 @@ func newBloxServeCmd() *bloxServeCmd {
 							)
 
 							resolver := func(p graphql.ResolveParams) (interface{}, error) {
-
 								dataSetName := p.Info.ReturnType.Name()
 
 								id, ok := p.Args["id"].(string)
@@ -207,7 +206,8 @@ func newBloxServeCmd() *bloxServeCmd {
 									}
 
 									return values, nil
-								}}
+								},
+							}
 							vertexComplete[dg.Name] = true
 						}
 					}
@@ -293,12 +293,13 @@ func newBloxServeCmd() *bloxServeCmd {
 							}
 
 							return values, nil
-						}}
+						},
+					}
 				}
 
 			}
 
-			var queryType = graphql.NewObject(
+			queryType := graphql.NewObject(
 				graphql.ObjectConfig{
 					Name:   "Query",
 					Fields: graphqlFields,
@@ -309,7 +310,6 @@ func newBloxServeCmd() *bloxServeCmd {
 					Query: queryType,
 				},
 			)
-
 			if err != nil {
 				cobra.CheckErr(err)
 			}
@@ -339,8 +339,10 @@ func newBloxServeCmd() *bloxServeCmd {
 	return root
 }
 
-var static bool
-var address string
+var (
+	static  bool
+	address string
+)
 
 func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 	result := graphql.Do(graphql.Params{

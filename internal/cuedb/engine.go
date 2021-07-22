@@ -293,7 +293,6 @@ func (r *Engine) Insert(dataSet DataSet, record map[string]interface{}) error {
 
 func (r *Engine) GetAllData(dataSetName string) cue.Value {
 	d, err := r.GetDataSet(dataSetName)
-
 	if err != nil {
 		return cue.Value{}
 	}

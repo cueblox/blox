@@ -34,7 +34,8 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 				Type: graphql.NewObject(graphql.ObjectConfig{
 					Name:   fields.Label(),
 					Fields: subFields,
-				})}
+				}),
+			}
 
 		case cue.ListKind:
 			kind, err := CueValueToGraphQlType(fields.Value().LookupPath(cue.MakePath(cue.AnyIndex)))

@@ -25,4 +25,5 @@ require (
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	gonum.org/v1/gonum v0.9.3
+	mvdan.cc/gofumpt v0.1.1 // indirect
 )
