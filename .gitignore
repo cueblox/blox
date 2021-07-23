@@ -2,7 +2,6 @@
 /bin/
 /test/tests.*
 /test/coverage.*
-/repository/
 !/dogfood/repository/
 !/internal/repository/
 /repository.yaml
