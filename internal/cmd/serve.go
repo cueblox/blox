@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/cueblox/blox/repository"
 	"github.com/pterm/pterm"
@@ -46,10 +46,16 @@ func newBloxServeCmd() *bloxServeCmd {
 
 			repo, err := repository.NewService(string(userConfig), referentialIntegrity)
 			cobra.CheckErr(err)
-
-			bb, err := repo.RenderJSON()
+			hf, err := repo.GQLHandlerFunc()
 			cobra.CheckErr(err)
-			fmt.Println(string(bb))
+			http.HandleFunc("/", hf)
+
+			h, err := repo.GQLPlaygroundHandler()
+			cobra.CheckErr(err)
+			http.Handle("/ui", h)
+
+			pterm.Info.Printf("Server is running at %s\n", address)
+			http.ListenAndServe(address, nil)
 		},
 	}
 	cmd.Flags().BoolVarP(&static, "static", "s", true, "Serve static files")

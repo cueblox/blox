@@ -277,6 +277,7 @@ func (s *Service) prepGraphQL() error {
 					if err != nil {
 						return err
 					}
+					vertexComplete[dg.Name] = true
 				}
 			}
 		}
@@ -287,6 +288,7 @@ func (s *Service) prepGraphQL() error {
 			if err != nil {
 				return err
 			}
+			vertexComplete[node.(*cuedb.DagNode).Name] = true
 		}
 
 	}
