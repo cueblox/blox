@@ -31,19 +31,6 @@ func newBloxServeCmd() *bloxServeCmd {
 
 			cobra.CheckErr(err)
 
-			/*
-				remotes, err := cfg.GetList("remotes")
-				if err == nil {
-					cobra.CheckErr(parseRemotes(remotes))
-				}
-				if images {
-					err = processImages(cfg)
-					if err != nil {
-						cobra.CheckErr(err)
-					}
-				}
-			*/
-
 			repo, err := repository.NewService(string(userConfig), referentialIntegrity)
 			cobra.CheckErr(err)
 			hf, err := repo.GQLHandlerFunc()
