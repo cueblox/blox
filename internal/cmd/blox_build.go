@@ -73,7 +73,6 @@ func newBloxBuildCmd() *bloxBuildCmd {
 
 			err = repo.RenderAndSave()
 			cobra.CheckErr(err)
-
 		},
 	}
 	cmd.Flags().BoolVarP(&referentialIntegrity, "referential-integrity", "i", false, "Verify referential integrity")

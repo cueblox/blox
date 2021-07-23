@@ -50,7 +50,6 @@ func newBloxServeCmd() *bloxServeCmd {
 			bb, err := repo.RenderJSON()
 			cobra.CheckErr(err)
 			fmt.Println(string(bb))
-
 		},
 	}
 	cmd.Flags().BoolVarP(&static, "static", "s", true, "Serve static files")

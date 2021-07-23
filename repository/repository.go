@@ -29,6 +29,7 @@ type Service struct {
 	Cfg    *blox.Config
 	ri     bool
 	schema *graphql.Schema
+	built  bool
 }
 
 func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) {
@@ -232,11 +233,18 @@ func (s *Service) build() error {
 	}
 
 	pterm.Success.Println("Validation Complete")
+	s.built = true
 	return nil
 }
 
 func (s *Service) prepGraphQL() error {
+	if !s.built {
+		err := s.build()
+		if err != nil {
+			return err
+		}
 
+	}
 	dag := s.engine.GetDataSetsDAG()
 	nodes, _ := dag.GetDescendants("root")
 
@@ -250,179 +258,34 @@ func (s *Service) prepGraphQL() error {
 	sort.Strings(keys)
 	vertexComplete := map[string]bool{}
 
+	// iterate through all the root nodes
 	for _, k := range keys {
 		node := nodes[k]
 
 		chNode, _, err := dag.DescendantsWalker(k)
 		cobra.CheckErr(err)
 
+		// first iterate through all the children
+		// so dependencies are registered
 		for nd := range chNode {
 			n, err := dag.GetVertex(nd)
 			cobra.CheckErr(err)
 			if dg, ok := n.(*cuedb.DagNode); ok {
 				_, ok := vertexComplete[dg.Name]
 				if !ok {
-					dataSet, _ := s.engine.GetDataSet(dg.Name)
-
-					var objectFields graphql.Fields
-					objectFields, err = cuedb.CueValueToGraphQlField(graphqlObjects, dataSet.GetSchemaCue())
-
+					err := s.translateNode(n, graphqlObjects, graphqlFields)
 					if err != nil {
-						cobra.CheckErr(err)
+						return err
 					}
-
-					objType := graphql.NewObject(
-						graphql.ObjectConfig{
-							Name:   dataSet.GetExternalName(),
-							Fields: objectFields,
-						},
-					)
-
-					resolver := func(p graphql.ResolveParams) (interface{}, error) {
-						dataSetName := p.Info.ReturnType.Name()
-
-						id, ok := p.Args["id"].(string)
-						if ok {
-							data := s.engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
-
-							records := make(map[string]interface{})
-							if err = data.Decode(&records); err != nil {
-								return nil, err
-							}
-
-							for recordID, record := range records {
-								if string(recordID) == id {
-									return record, nil
-								}
-							}
-						}
-
-						return nil, nil
-					}
-
-					graphqlObjects[dataSet.GetExternalName()] = cuedb.GraphQlObjectGlue{
-						Object:   objType,
-						Resolver: resolver,
-						Engine:   s.engine,
-					}
-
-					graphqlFields[dataSet.GetExternalName()] = &graphql.Field{
-						Name: dataSet.GetExternalName(),
-						Type: objType,
-						Args: graphql.FieldConfigArgument{
-							"id": &graphql.ArgumentConfig{
-								Type: graphql.String,
-							},
-						},
-						Resolve: resolver,
-					}
-
-					graphqlFields[fmt.Sprintf("all%vs", dataSet.GetExternalName())] = &graphql.Field{
-						Type: graphql.NewList(objType),
-						Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-							dataSetName := p.Info.ReturnType.Name()
-
-							data := s.engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
-
-							records := make(map[string]interface{})
-							if err = data.Decode(&records); err != nil {
-								return nil, err
-							}
-
-							values := []interface{}{}
-							for _, value := range records {
-								values = append(values, value)
-							}
-
-							return values, nil
-						},
-					}
-					vertexComplete[dg.Name] = true
 				}
 			}
 		}
+		// now process the parent node
 		_, ok := vertexComplete[node.(*cuedb.DagNode).Name]
 		if !ok {
-			dataSet, _ := s.engine.GetDataSet(node.(*cuedb.DagNode).Name)
-
-			var objectFields graphql.Fields
-			objectFields, err = cuedb.CueValueToGraphQlField(graphqlObjects, dataSet.GetSchemaCue())
-
+			err := s.translateNode(node, graphqlObjects, graphqlFields)
 			if err != nil {
-				cobra.CheckErr(err)
-			}
-
-			// Inject ID field into each object
-			objectFields["id"] = &graphql.Field{
-				Type: &graphql.NonNull{
-					OfType: graphql.String,
-				},
-			}
-
-			objType := graphql.NewObject(
-				graphql.ObjectConfig{
-					Name:   dataSet.GetExternalName(),
-					Fields: objectFields,
-				},
-			)
-
-			resolver := func(p graphql.ResolveParams) (interface{}, error) {
-				dataSetName := p.Info.ReturnType.Name()
-
-				id, ok := p.Args["id"].(string)
-				if ok {
-					data := s.engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
-
-					records := make(map[string]interface{})
-					if err = data.Decode(&records); err != nil {
-						return nil, err
-					}
-
-					for recordID, record := range records {
-						if string(recordID) == id {
-							return record, nil
-						}
-					}
-				}
-				return nil, nil
-			}
-
-			graphqlObjects[dataSet.GetExternalName()] = cuedb.GraphQlObjectGlue{
-				Object:   objType,
-				Resolver: resolver,
-				Engine:   s.engine,
-			}
-
-			graphqlFields[dataSet.GetExternalName()] = &graphql.Field{
-				Name: dataSet.GetExternalName(),
-				Type: objType,
-				Args: graphql.FieldConfigArgument{
-					"id": &graphql.ArgumentConfig{
-						Type: graphql.String,
-					},
-				},
-				Resolve: resolver,
-			}
-
-			graphqlFields[fmt.Sprintf("all%vs", dataSet.GetExternalName())] = &graphql.Field{
-				Type: graphql.NewList(objType),
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					dataSetName := p.Info.ReturnType.Name()
-
-					data := s.engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
-
-					records := make(map[string]interface{})
-					if err = data.Decode(&records); err != nil {
-						return nil, err
-					}
-
-					values := []interface{}{}
-					for _, value := range records {
-						values = append(values, value)
-					}
-
-					return values, nil
-				},
+				return err
 			}
 		}
 
@@ -444,7 +307,90 @@ func (s *Service) prepGraphQL() error {
 	}
 	s.schema = &schema
 	return nil
+}
 
+func (s *Service) translateNode(node interface{}, graphqlObjects map[string]cuedb.GraphQlObjectGlue, graphqlFields map[string]*graphql.Field) error {
+	dataSet, _ := s.engine.GetDataSet(node.(*cuedb.DagNode).Name)
+
+	var objectFields graphql.Fields
+	objectFields, err := cuedb.CueValueToGraphQlField(graphqlObjects, dataSet.GetSchemaCue())
+	if err != nil {
+		cobra.CheckErr(err)
+	}
+
+	// Inject ID field into each object
+	objectFields["id"] = &graphql.Field{
+		Type: &graphql.NonNull{
+			OfType: graphql.String,
+		},
+	}
+
+	objType := graphql.NewObject(
+		graphql.ObjectConfig{
+			Name:   dataSet.GetExternalName(),
+			Fields: objectFields,
+		},
+	)
+
+	resolver := func(p graphql.ResolveParams) (interface{}, error) {
+		dataSetName := p.Info.ReturnType.Name()
+
+		id, ok := p.Args["id"].(string)
+		if ok {
+			data := s.engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
+
+			records := make(map[string]interface{})
+			if err = data.Decode(&records); err != nil {
+				return nil, err
+			}
+
+			for recordID, record := range records {
+				if string(recordID) == id {
+					return record, nil
+				}
+			}
+		}
+		return nil, nil
+	}
+
+	graphqlObjects[dataSet.GetExternalName()] = cuedb.GraphQlObjectGlue{
+		Object:   objType,
+		Resolver: resolver,
+		Engine:   s.engine,
+	}
+
+	graphqlFields[dataSet.GetExternalName()] = &graphql.Field{
+		Name: dataSet.GetExternalName(),
+		Type: objType,
+		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type: graphql.String,
+			},
+		},
+		Resolve: resolver,
+	}
+
+	graphqlFields[fmt.Sprintf("all%vs", dataSet.GetExternalName())] = &graphql.Field{
+		Type: graphql.NewList(objType),
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			dataSetName := p.Info.ReturnType.Name()
+
+			data := s.engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
+
+			records := make(map[string]interface{})
+			if err = data.Decode(&records); err != nil {
+				return nil, err
+			}
+
+			values := []interface{}{}
+			for _, value := range records {
+				values = append(values, value)
+			}
+
+			return values, nil
+		},
+	}
+	return nil
 }
 
 // GQLHandlerFunc returns a stand alone graphql handler for use
@@ -465,7 +411,6 @@ func (s *Service) GQLHandlerFunc() (http.HandlerFunc, error) {
 		}
 	}
 	return hf, nil
-
 }
 
 // GQLPlaygroundHandler returns a stand alone graphql playground handler for use

@@ -105,7 +105,6 @@ func newBloxRenderCmd() *bloxRenderCmd {
 				err = t.Execute(os.Stdout, dataJson)
 			}
 			cobra.CheckErr(err)
-
 		},
 	}
 	cmd.Flags().StringVarP(&template, "template", "t", "", "template to render")
