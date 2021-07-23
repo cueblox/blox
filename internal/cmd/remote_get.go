@@ -41,6 +41,7 @@ func newRemoteGetCmd() *remoteGetCmd {
 
 // ensureRemote downloads a remote schema at a specific
 // version if it doesn't exist locally
+// TODO: Duplicated in content package. Consolidate
 func ensureRemote(name, version, repo string) error {
 	// load config
 	userConfig, err := ioutil.ReadFile("blox.cue")
