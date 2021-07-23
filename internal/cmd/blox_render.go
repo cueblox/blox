@@ -36,17 +36,6 @@ func newBloxRenderCmd() *bloxRenderCmd {
 			repo, err := repository.NewService(string(userConfig), referentialIntegrity)
 			cobra.CheckErr(err)
 
-			remotes, err := repo.Cfg.GetList("remotes")
-			if err == nil {
-				cobra.CheckErr(parseRemotes(remotes))
-			}
-			if images {
-				err = processImages(repo.Cfg)
-				if err != nil {
-					cobra.CheckErr(err)
-				}
-			}
-
 			bb, err := repo.RenderJSON()
 			cobra.CheckErr(err)
 

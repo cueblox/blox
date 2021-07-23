@@ -2,6 +2,7 @@ package repository
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -13,12 +14,15 @@ import (
 	"strings"
 
 	"github.com/cueblox/blox"
+	"github.com/disintegration/imaging"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
+	"github.com/h2non/filetype"
 	"github.com/spf13/cobra"
 
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/encoding/markdown"
+	"github.com/cueblox/blox/internal/repository"
 	"github.com/goccy/go-yaml"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pterm/pterm"
@@ -52,7 +56,6 @@ func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) 
 	if err != nil {
 		return nil, err
 	}
-
 	err = filepath.WalkDir(schemataDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -144,6 +147,15 @@ func (s *Service) RenderAndSave() error {
 
 func (s *Service) build() error {
 	var errors error
+
+	err := s.parseRemotes()
+	if err != nil {
+		return err
+	}
+	err = s.processImages()
+	if err != nil {
+		return err
+	}
 
 	for _, dataSet := range s.engine.GetDataSets() {
 		pterm.Debug.Printf("\t\tBuilding Dataset: %s\n", dataSet.ID())
@@ -445,4 +457,251 @@ func (s *Service) executeQuery(query string) *graphql.Result {
 	}
 
 	return result
+}
+
+func (s *Service) parseRemotes() error {
+	remotes, err := s.Cfg.GetList("remotes")
+	if err != nil {
+		return err
+	}
+	iter, err := remotes.List()
+	if err != nil {
+		return err
+	}
+	for iter.Next() {
+		val := iter.Value()
+
+		//nolint
+		name, err := val.FieldByName("name", false)
+		if err != nil {
+			return err
+		}
+		n, err := name.Value.String()
+		if err != nil {
+			return err
+		}
+		//nolint
+		version, err := val.FieldByName("version", false)
+		if err != nil {
+			return err
+		}
+		v, err := version.Value.String()
+		if err != nil {
+			return err
+		}
+		//nolint
+		repository, err := val.FieldByName("repository", false)
+		if err != nil {
+			return err
+		}
+		r, err := repository.Value.String()
+		if err != nil {
+			return err
+		}
+		err = s.ensureRemote(n, v, r)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// processImages scans the static dir for images
+// when it finds an image, it reads the image metadata
+// and saves a corresponding YAML file describing the image
+// in the 'images' data directory.
+func (s *Service) processImages() error {
+	staticDir, err := s.Cfg.GetString("static_dir")
+	if err != nil {
+		pterm.Info.Printf("no static directory present, skipping image linking")
+		return nil
+	}
+
+	pterm.Info.Printf("processing images in %s\n", staticDir)
+	fi, err := os.Stat(staticDir)
+	if errors.Is(err, os.ErrNotExist) {
+		pterm.Info.Println("no image directory found, skipping")
+		return nil
+	}
+	if !fi.IsDir() {
+		return errors.New("given static directory is not a directory")
+	}
+	imagesDirectory := filepath.Join(staticDir, "images")
+
+	fi, err = os.Stat(imagesDirectory)
+	if errors.Is(err, os.ErrNotExist) {
+		pterm.Info.Println("no image directory found, skipping")
+		return nil
+	}
+	if !fi.IsDir() {
+		return errors.New("given images directory is not a directory")
+	}
+	err = filepath.Walk(imagesDirectory,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			pterm.Debug.Printf("\t\tProcessing %s\n", path)
+			if !info.IsDir() {
+				buf, err := ioutil.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				if filetype.IsImage(buf) {
+
+					src, err := imaging.Open(path)
+					if err != nil {
+						return err
+					}
+
+					relpath, err := filepath.Rel(staticDir, path)
+					if err != nil {
+						return err
+					}
+					pterm.Debug.Printf("\t\tFile is an image: %s\n", relpath)
+					kind, err := filetype.Match(buf)
+					if err != nil {
+						return err
+					}
+					pterm.Debug.Printf("\t\tFile type: %s. MIME: %s\n", kind.Extension, kind.MIME.Value)
+					if err != nil {
+						return err
+					}
+					/*	if cloud {
+							pterm.Info.Println("Synchronizing images to cloud provider")
+							bucketURL := os.Getenv("IMAGE_BUCKET")
+							if bucketURL == "" {
+								return errors.New("image sync enabled (-s,--sync), but no IMAGE_BUCKET environment variable set")
+							}
+
+							ctx := context.Background()
+							// Open a connection to the bucket.
+							b, err := blob.OpenBucket(ctx, bucketURL)
+							if err != nil {
+								return fmt.Errorf("failed to setup bucket: %s", err)
+							}
+							defer b.Close()
+
+							w, err := b.NewWriter(ctx, relpath, nil)
+							if err != nil {
+								return fmt.Errorf("cloud sync failed to obtain writer: %s", err)
+							}
+							_, err = w.Write(buf)
+							if err != nil {
+								return fmt.Errorf("cloud sync failed to write to bucket: %s", err)
+							}
+							if err = w.Close(); err != nil {
+								return fmt.Errorf("cloud sync failed to close: %s", err)
+							}
+						}
+					*/
+					cdnEndpoint := os.Getenv("CDN_URL")
+
+					bi := &BloxImage{
+						FileName: relpath,
+						Height:   src.Bounds().Dy(),
+						Width:    src.Bounds().Dx(),
+						CDN:      cdnEndpoint,
+					}
+					bytes, err := yaml.Marshal(bi)
+					if err != nil {
+						return err
+					}
+					dataDir, err := s.Cfg.GetString("data_dir")
+					if err != nil {
+						return err
+					}
+
+					ext := strings.TrimPrefix(filepath.Ext(relpath), ".")
+					slug := strings.TrimSuffix(relpath, "."+ext)
+
+					outputPath := filepath.Join(dataDir, slug+".yaml")
+					err = os.MkdirAll(filepath.Dir(outputPath), 0o755)
+					if err != nil {
+						pterm.Error.Println(err)
+						return err
+					}
+					// only write the yaml file if it doesn't exist.
+					// don't overwrite existing records.
+					_, err = os.Stat(outputPath)
+					if err != nil && errors.Is(err, os.ErrNotExist) {
+						err = os.WriteFile(outputPath, bytes, 0o755)
+						if err != nil {
+							pterm.Error.Println(err)
+							return err
+						}
+					}
+				} else {
+					pterm.Debug.Printf("File is not an image: %s\n", path)
+				}
+			}
+
+			return nil
+		})
+	return err
+}
+
+// ensureRemote downloads a remote schema at a specific
+// version if it doesn't exist locally
+func (s *Service) ensureRemote(name, version, repo string) error {
+	// Load Schemas!
+	schemataDir, err := s.Cfg.GetString("schemata_dir")
+	if err != nil {
+		return err
+	}
+
+	schemaFilePath := path.Join(schemataDir, fmt.Sprintf("%s_%s.cue", name, version))
+	_, err = os.Stat(schemaFilePath)
+	if os.IsNotExist(err) {
+		pterm.Info.Printf("Schema does not exist locally: %s_%s.cue\n", name, version)
+		manifest := fmt.Sprintf("https://%s/manifest.json", repo)
+		res, err := http.Get(manifest)
+		if err != nil {
+			return err
+		}
+
+		var repos repository.Repository
+		err = json.NewDecoder(res.Body).Decode(&repos)
+		if err != nil {
+			return err
+		}
+
+		var selectedVersion *repository.Version
+		for _, s := range repos.Schemas {
+			if s.Name == name {
+				for _, v := range s.Versions {
+					if v.Name == version {
+						selectedVersion = v
+						pterm.Debug.Println(v.Name, v.Schema, v.Definition)
+					}
+				}
+			}
+		}
+
+		// make schemata directory
+		err = os.MkdirAll(schemataDir, 0o755)
+		if err != nil {
+			return err
+		}
+
+		// TODO: don't overwrite each time
+		filename := fmt.Sprintf("%s_%s.cue", name, version)
+		filePath := path.Join(schemataDir, filename)
+		err = os.WriteFile(filePath, []byte(selectedVersion.Definition), 0o755)
+		if err != nil {
+			return err
+		}
+		pterm.Info.Printf("Schema downloaded: %s_%s.cue\n", name, version)
+		return nil
+	}
+	pterm.Info.Println("Schema already exists locally, skipping download.")
+	return nil
+}
+
+type BloxImage struct {
+	FileName string `yaml:"file_name"`
+	Height   int    `yaml:"height"`
+	Width    int    `yaml:"width"`
+	CDN      string `yaml:"cdn"`
 }
