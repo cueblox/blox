@@ -55,7 +55,7 @@ func newBloxServeCmd() *bloxServeCmd {
 			http.Handle("/ui", h)
 
 			pterm.Info.Printf("Server is running at %s\n", address)
-			http.ListenAndServe(address, nil)
+			cobra.CheckErr(http.ListenAndServe(address, nil))
 		},
 	}
 	cmd.Flags().BoolVarP(&static, "static", "s", true, "Serve static files")
