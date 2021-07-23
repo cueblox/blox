@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/cueblox/blox/repository"
+	"github.com/cueblox/blox/content"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -31,7 +31,7 @@ func newBloxServeCmd() *bloxServeCmd {
 
 			cobra.CheckErr(err)
 
-			repo, err := repository.NewService(string(userConfig), referentialIntegrity)
+			repo, err := content.NewService(string(userConfig), referentialIntegrity)
 			cobra.CheckErr(err)
 			hf, err := repo.GQLHandlerFunc()
 			cobra.CheckErr(err)

@@ -3,8 +3,7 @@ package cmd
 import (
 	"io/ioutil"
 
-	"github.com/cueblox/blox/repository"
-
+	"github.com/cueblox/blox/content"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -44,7 +43,7 @@ func newBloxBuildCmd() *bloxBuildCmd {
 
 			cobra.CheckErr(err)
 
-			repo, err := repository.NewService(string(userConfig), referentialIntegrity)
+			repo, err := content.NewService(string(userConfig), referentialIntegrity)
 			cobra.CheckErr(err)
 
 			err = repo.RenderAndSave()
