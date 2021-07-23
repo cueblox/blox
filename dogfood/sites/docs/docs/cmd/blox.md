@@ -20,4 +20,5 @@ CueBlox is a suite of slightly opinionated tools for managing and sharing conten
 * [blox render](/cmd/blox_render)	 - Render templates with compiled data
 * [blox repo](/cmd/blox_repo)	 - Create & Manage Schema Repositories
 * [blox schema](/cmd/blox_schema)	 - Create, Manage, and Version your Schemata
+* [blox serve](/cmd/blox_serve)	 - Serve a GraphQL API
 

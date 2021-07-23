@@ -3,15 +3,11 @@ package cmd
 import (
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 
 	"github.com/cueblox/blox/content"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	// Import the blob packages we want to be able to open.
-	_ "gocloud.dev/blob/azureblob"
-	_ "gocloud.dev/blob/gcsblob"
-	_ "gocloud.dev/blob/s3blob"
 )
 
 type bloxServeCmd struct {
@@ -33,6 +29,15 @@ func newBloxServeCmd() *bloxServeCmd {
 
 			repo, err := content.NewService(string(userConfig), referentialIntegrity)
 			cobra.CheckErr(err)
+
+			if static {
+				staticDir, err := repo.Cfg.GetString("static_dir")
+				pterm.Info.Printf("Serving static files from %s\n", staticDir)
+
+				cobra.CheckErr(err)
+				http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(".", staticDir)))))
+			}
+
 			hf, err := repo.GQLHandlerFunc()
 			cobra.CheckErr(err)
 			http.HandleFunc("/", hf)
