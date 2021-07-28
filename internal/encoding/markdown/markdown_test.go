@@ -1,6 +1,7 @@
 package markdown
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -9,12 +10,18 @@ func TestFormat(t *testing.T) {
 key1: value
 key2: value2
 ---
+---
+revealKey: value
+---
 My Body
 ---
 Body Line 2`
 	expected := `key1: value
 key2: value2
 body: |
+  ---
+  revealKey: value
+  ---
   My Body
   ---
   Body Line 2
@@ -24,6 +31,8 @@ body: |
 		t.Error(err)
 	}
 	if output != expected {
+		fmt.Println(expected)
+		fmt.Println(output)
 		t.Error("output doesn't match expected")
 	}
 }
