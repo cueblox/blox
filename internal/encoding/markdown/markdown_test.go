@@ -10,11 +10,13 @@ key1: value
 key2: value2
 ---
 My Body
+---
 Body Line 2`
 	expected := `key1: value
 key2: value2
 body: |
   My Body
+  ---
   Body Line 2
 `
 	output, err := ToYAML(in)
