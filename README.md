@@ -1,6 +1,6 @@
 # Blox
 
-Blox is the CLI for working with [CueBlox](https://cueblox.com). (doesn't exist yet)
+Blox is the CLI for working with [CueBlox](https://cueblox.com).
 
 ## What is Blox?
 
