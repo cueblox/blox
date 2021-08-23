@@ -115,7 +115,7 @@ func (r *Engine) GetDataSetsDAG() *dag.DAG {
 
 	_, err := graph.AddVertex(&DagNode{Name: "root"})
 	if err != nil {
-		pterm.Warning.Printf("failed to add vertex: %v", err)
+		pterm.Warning.Printf("failed to add vertex: %v\n", err)
 	}
 	datasets := r.GetDataSets()
 
@@ -134,13 +134,13 @@ func (r *Engine) GetDataSetsDAG() *dag.DAG {
 		d := DagNode{Name: dataSet.ID()}
 		_, err := graph.AddVertex(&d)
 		if err != nil {
-			pterm.Warning.Printf("failed to add vertex: %v", err)
+			pterm.Warning.Printf("failed to add vertex: %v\n", err)
 			continue
 		}
 
 		err = graph.AddEdge("root", d.ID())
 		if err != nil {
-			pterm.Warning.Printf("failed to add edge: %v", err)
+			pterm.Warning.Printf("failed to add edge: %v\n", err)
 			continue
 		}
 	}
@@ -151,7 +151,7 @@ func (r *Engine) GetDataSetsDAG() *dag.DAG {
 			edge, _ := r.GetDataSet(relationship)
 			err := graph.AddEdge(dataSet.ID(), edge.ID())
 			if err != nil {
-				pterm.Warning.Printf("failed to add edge: %v", err)
+				pterm.Warning.Printf("failed to add edge: %v\n", err)
 				continue
 			}
 		}
