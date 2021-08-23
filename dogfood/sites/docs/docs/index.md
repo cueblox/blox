@@ -98,4 +98,4 @@ CueBlox was built for lazy people. If it can be generated, we generate it. If it
 
 ## Use third party tools to make your data easily accessible
 
-CueBlox `build` command provides a JSON file that can be published as a release artifact, that works extremely well with GraphQL and REST based API providers. In fact, this [website is built](https://github.com/cueblox/blox/dogfood/) on this feature.
+CueBlox `build` command provides a JSON file that can be published as a release artifact, that works extremely well with GraphQL and REST based API providers. In fact, this [website is built](https://github.com/cueblox/blox/tree/main/dogfood) on this feature.
