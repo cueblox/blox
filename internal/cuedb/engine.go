@@ -173,6 +173,18 @@ func (r *Engine) GetDataSet(name string) (DataSet, error) {
 	return DataSet{}, fmt.Errorf("couldn't find DataSet with name %s", name)
 }
 
+// GetDataSetByID returns a DataSet by its plural name.
+func (r *Engine) GetDataSetByPlural(plural string) (DataSet, error) {
+
+	for _, dataSet := range r.dataSets {
+		if dataSet.metadata.Plural == strings.ToLower(plural) {
+			return dataSet, nil
+		}
+	}
+
+	return DataSet{}, fmt.Errorf("couldn't find DataSet with name %s", plural)
+}
+
 func (d *DataSet) ID() string {
 	return strings.ToLower(d.name)
 }
