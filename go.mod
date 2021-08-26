@@ -3,7 +3,7 @@ module github.com/cueblox/blox
 go 1.16
 
 require (
-	cuelang.org/go v0.3.2
+	cuelang.org/go v0.4.0
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/disintegration/imaging v1.6.2
 	github.com/goccy/go-yaml v1.8.9
