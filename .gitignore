@@ -26,3 +26,4 @@ coverage.out
 testdata/acceptance/tmp/
 completions/
 .envrc
+images_impl

@@ -17,6 +17,7 @@
 		caption?:			string
 		attribution?:		string
 		attribution_link?:	string
+		cdn?: 				string
 	}
 
 }
