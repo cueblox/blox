@@ -108,9 +108,11 @@ const BaseConfig = `{
     }`
 
 func (s *Service) RenderJSON() ([]byte, error) {
-	err := s.build()
-	if err != nil {
-		return nil, err
+	if !s.built {
+		err := s.build()
+		if err != nil {
+			return nil, err
+		}
 	}
 	pterm.Debug.Println("Building output data blox")
 	output, err := s.engine.GetOutput()
@@ -123,9 +125,11 @@ func (s *Service) RenderJSON() ([]byte, error) {
 }
 
 func (s *Service) RenderAndSave() error {
-	err := s.build()
-	if err != nil {
-		return err
+	if !s.built {
+		err := s.build()
+		if err != nil {
+			return err
+		}
 	}
 
 	bb, err := s.RenderJSON()
