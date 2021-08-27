@@ -9,11 +9,11 @@ import (
 
 	"github.com/cueblox/blox/plugins"
 	"github.com/disintegration/imaging"
+	"github.com/goccy/go-yaml"
 	"github.com/h2non/filetype"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/pterm/pterm"
-	"gopkg.in/yaml.v2"
 )
 
 // Here is a real implementation of Greeter
