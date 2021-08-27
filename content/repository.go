@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"sort"
@@ -23,8 +25,11 @@ import (
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/encoding/markdown"
 	"github.com/cueblox/blox/internal/repository"
+	"github.com/cueblox/blox/plugins"
 	"github.com/goccy/go-yaml"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/go-plugin"
 	"github.com/pterm/pterm"
 )
 
@@ -552,7 +557,7 @@ func (s *Service) parseRemotes() error {
 // when it finds an image, it reads the image metadata
 // and saves a corresponding YAML file describing the image
 // in the 'images' data directory.
-func (s *Service) processImages() error {
+func (s *Service) oldProcessImages() error {
 	staticDir, err := s.Cfg.GetString("static_dir")
 	if err != nil {
 		pterm.Info.Printf("no static directory present, skipping image linking")
@@ -684,6 +689,46 @@ func (s *Service) processImages() error {
 	return err
 }
 
+// processImages scans the static dir for images
+// when it finds an image, it reads the image metadata
+// and saves a corresponding YAML file describing the image
+// in the 'images' data directory.
+func (s *Service) processImages() error {
+	pterm.Info.Println("calling the plugin")
+	// Create an hclog.Logger
+	logger := hclog.New(&hclog.LoggerOptions{
+		Name:   "plugin",
+		Output: os.Stdout,
+		Level:  hclog.Debug,
+	})
+
+	// We're a host! Start by launching the plugin process.
+	client := plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: handshakeConfig,
+		Plugins:         pluginMap,
+		Cmd:             exec.Command("../images_impl"),
+		Logger:          logger,
+	})
+	defer client.Kill()
+
+	// Connect via RPC
+	rpcClient, err := client.Client()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Request the plugin
+	raw, err := rpcClient.Dispense("images")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// We should have a Greeter now! This feels like a normal interface
+	// implementation but is in fact over an RPC connection.
+	imgs := raw.(plugins.Prebuild)
+	return imgs.Process()
+}
+
 // ensureRemote downloads a remote schema at a specific
 // version if it doesn't exist locally
 func (s *Service) ensureRemote(name, version, repo string) error {
@@ -746,4 +791,19 @@ type BloxImage struct {
 	Height   int    `yaml:"height"`
 	Width    int    `yaml:"width"`
 	CDN      string `yaml:"cdn"`
+}
+
+// handshakeConfigs are used to just do a basic handshake between
+// a plugin and host. If the handshake fails, a user friendly error is shown.
+// This prevents users from executing bad plugins or executing a plugin
+// directory. It is a UX feature, not a security feature.
+var handshakeConfig = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "BLOX_PLUGIN",
+	MagicCookieValue: "image",
+}
+
+// pluginMap is the map of plugins we can dispense.
+var pluginMap = map[string]plugin.Plugin{
+	"images": &plugins.PrebuildPlugin{},
 }
