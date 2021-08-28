@@ -620,7 +620,7 @@ func (s *Service) callPlugin(name, executable string) error {
 	// We're a host! Start by launching the plugin process.
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: shared.PrebuildHandshakeConfig,
-		Plugins:         pluginMap,
+		Plugins:         prePluginMap,
 		Cmd:             exec.Command(executable),
 		Logger:          logger,
 	})
@@ -699,13 +699,6 @@ func (s *Service) ensureRemote(name, version, repo string) error {
 	}
 	pterm.Info.Println("Schema already exists locally, skipping download.")
 	return nil
-}
-
-type BloxImage struct {
-	FileName string `yaml:"file_name"`
-	Height   int    `yaml:"height"`
-	Width    int    `yaml:"width"`
-	CDN      string `yaml:"cdn"`
 }
 
 // pluginMap is the map of plugins we can dispense.
