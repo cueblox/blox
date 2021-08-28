@@ -72,7 +72,7 @@ func (s *Service) callPostPlugin(name, executable string) error {
 	// We're a host! Start by launching the plugin process.
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: shared.PostbuildHandshakeConfig,
-		Plugins:         prePluginMap,
+		Plugins:         postPluginMap,
 		Cmd:             exec.Command(executablePath),
 		Logger:          logger,
 	})
