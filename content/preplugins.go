@@ -63,11 +63,17 @@ func (s *Service) callPrePlugin(name, executable string) error {
 		Level:  hclog.Info,
 	})
 
+	executablePath, err := exec.LookPath(executable)
+	if err != nil {
+		pterm.Error.Println("plugin not found in path", executable)
+		log.Fatal(err)
+	}
+	pterm.Info.Println("found plugin at path", executable, executablePath)
 	// We're a host! Start by launching the plugin process.
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: shared.PrebuildHandshakeConfig,
 		Plugins:         prePluginMap,
-		Cmd:             exec.Command(executable),
+		Cmd:             exec.Command(executablePath),
 		Logger:          logger,
 	})
 	defer client.Kill()
@@ -84,7 +90,7 @@ func (s *Service) callPrePlugin(name, executable string) error {
 		log.Fatal(err)
 	}
 
-	// We should have a Greeter now! This feels like a normal interface
+	// We should have a Prebuild plugin now! This feels like a normal interface
 	// implementation but is in fact over an RPC connection.
 	preplug := raw.(plugins.Prebuild)
 	return preplug.Process(s.rawConfig)
