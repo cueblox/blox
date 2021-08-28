@@ -210,6 +210,10 @@ func (s *Service) build() error {
 
 	pterm.Success.Println("Validation Complete")
 	s.built = true
+	err = s.runPostPlugins()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
