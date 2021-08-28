@@ -64,12 +64,16 @@ func (s *Service) callPostPlugin(name, executable string) error {
 		Output: os.Stdout,
 		Level:  hclog.Info,
 	})
-
+	executablePath, err := exec.LookPath(executable)
+	if err != nil {
+		pterm.Error.Println("plugin not found in path", executable)
+		log.Fatal(err)
+	}
 	// We're a host! Start by launching the plugin process.
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: shared.PostbuildHandshakeConfig,
 		Plugins:         prePluginMap,
-		Cmd:             exec.Command(executable),
+		Cmd:             exec.Command(executablePath),
 		Logger:          logger,
 	})
 	defer client.Kill()
@@ -86,7 +90,7 @@ func (s *Service) callPostPlugin(name, executable string) error {
 		log.Fatal(err)
 	}
 
-	// We should have a Greeter now! This feels like a normal interface
+	// We should have a Postbuild plugin now! This feels like a normal interface
 	// implementation but is in fact over an RPC connection.
 	postplug := raw.(plugins.Postbuild)
 	return postplug.Process(s.rawConfig)

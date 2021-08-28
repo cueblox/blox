@@ -5,6 +5,6 @@
   static_dir: "static"
   prebuild: [ {
     name: "images"
-    executable: "../images_impl"
+    executable: "images_impl"
   }]
 }
