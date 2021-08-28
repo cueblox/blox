@@ -5,27 +5,19 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/cueblox/blox"
 	"github.com/graphql-go/graphql"
-	"github.com/graphql-go/handler"
-	"github.com/spf13/cobra"
 
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/encoding/markdown"
 	"github.com/cueblox/blox/internal/repository"
-	"github.com/cueblox/blox/plugins"
-	"github.com/cueblox/blox/plugins/shared"
 	"github.com/goccy/go-yaml"
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/go-plugin"
 	"github.com/pterm/pterm"
@@ -41,6 +33,7 @@ type Service struct {
 }
 
 var prePluginMap map[string]plugin.Plugin
+var postPluginMap map[string]plugin.Plugin
 
 func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) {
 	cfg, err := blox.NewConfig(BaseConfig)
@@ -86,6 +79,7 @@ func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) 
 		return nil, err
 	}
 	prePluginMap = make(map[string]plugin.Plugin)
+	postPluginMap = make(map[string]plugin.Plugin)
 	return &Service{
 		engine:    engine,
 		Cfg:       cfg,
@@ -113,53 +107,6 @@ const BaseConfig = `{
 	prebuild: [...#Plugin]
 	postbuild: [...#Plugin]
 }`
-
-func (s *Service) RenderJSON() ([]byte, error) {
-	if !s.built {
-		err := s.build()
-		if err != nil {
-			return nil, err
-		}
-	}
-	pterm.Debug.Println("Building output data blox")
-	output, err := s.engine.GetOutput()
-	if err != nil {
-		return nil, err
-	}
-
-	pterm.Debug.Println("Rendering data blox to JSON")
-	return output.MarshalJSON()
-}
-
-func (s *Service) RenderAndSave() error {
-	if !s.built {
-		err := s.build()
-		if err != nil {
-			return err
-		}
-	}
-
-	bb, err := s.RenderJSON()
-	if err != nil {
-		return err
-	}
-	buildDir, err := s.Cfg.GetString("build_dir")
-	if err != nil {
-		return err
-	}
-	err = os.MkdirAll(buildDir, 0o755)
-	if err != nil {
-		return err
-	}
-	filename := "data.json"
-	filePath := path.Join(buildDir, filename)
-	err = os.WriteFile(filePath, bb, 0o755)
-	if err != nil {
-		return err
-	}
-	pterm.Success.Printf("Data blox written to '%s'\n", filePath)
-	return nil
-}
 
 func (s *Service) build() error {
 	var errors error
@@ -266,301 +213,6 @@ func (s *Service) build() error {
 	return nil
 }
 
-func (s *Service) runPrePlugins() error {
-
-	pre, err := s.Cfg.GetList("prebuild")
-	if err != nil {
-		return err
-	}
-	iter, err := pre.List()
-	if err != nil {
-		return err
-	}
-	for iter.Next() {
-		val := iter.Value()
-
-		//nolint
-		name, err := val.FieldByName("name", false)
-		if err != nil {
-			return err
-		}
-		n, err := name.Value.String()
-		if err != nil {
-			return err
-		}
-		//nolint
-		exec, err := val.FieldByName("executable", false)
-		if err != nil {
-			return err
-		}
-		e, err := exec.Value.String()
-		if err != nil {
-			return err
-		}
-		prePluginMap[n] = &plugins.PrebuildPlugin{}
-		pterm.Info.Println("Calling Plugin", n, e)
-		err = s.callPlugin(n, e)
-		if err != nil {
-			return err
-		}
-
-	}
-	return nil
-
-}
-
-// RestHandlerFunc returns a handler function that will render
-// the dataset specified as the last path parameter.
-func (s *Service) RestHandlerFunc() (http.HandlerFunc, error) {
-	if !s.built {
-		err := s.build()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	hf := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		w.Header().Set("Access-Control-Allow-Methods", "GET")
-
-		path := strings.TrimPrefix(r.URL.Path, "/")
-		parts := strings.Split(path, "/")
-		pterm.Debug.Println(parts, len(parts))
-		if len(parts) == 0 {
-			pterm.Warning.Println("No dataset specified")
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		dataset := parts[len(parts)-1]
-
-		ds, err := s.engine.GetDataSetByPlural(dataset)
-		if err != nil {
-			pterm.Warning.Println("Requested dataset not found", parts, len(parts))
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		data := s.engine.GetAllData(ds.GetExternalName())
-		err = json.NewEncoder(w).Encode(data)
-		if err != nil {
-			pterm.Warning.Printf("failed to encode: %v", err)
-		}
-	}
-	return hf, nil
-}
-
-func (s *Service) prepGraphQL() error {
-	if !s.built {
-		err := s.build()
-		if err != nil {
-			return err
-		}
-
-	}
-	dag := s.engine.GetDataSetsDAG()
-	nodes, _ := dag.GetDescendants("root")
-
-	// GraphQL API
-	graphqlObjects := map[string]cuedb.GraphQlObjectGlue{}
-	graphqlFields := graphql.Fields{}
-	keys := make([]string, 0, len(nodes))
-	for k := range nodes {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	vertexComplete := map[string]bool{}
-
-	// iterate through all the root nodes
-	for _, k := range keys {
-		node := nodes[k]
-
-		chNode, _, err := dag.DescendantsWalker(k)
-		cobra.CheckErr(err)
-
-		// first iterate through all the children
-		// so dependencies are registered
-		for nd := range chNode {
-			n, err := dag.GetVertex(nd)
-			cobra.CheckErr(err)
-			if dg, ok := n.(*cuedb.DagNode); ok {
-				_, ok := vertexComplete[dg.Name]
-				if !ok {
-					err := s.translateNode(n, graphqlObjects, graphqlFields)
-					if err != nil {
-						return err
-					}
-					vertexComplete[dg.Name] = true
-				}
-			}
-		}
-		// now process the parent node
-		_, ok := vertexComplete[node.(*cuedb.DagNode).Name]
-		if !ok {
-			err := s.translateNode(node, graphqlObjects, graphqlFields)
-			if err != nil {
-				return err
-			}
-			vertexComplete[node.(*cuedb.DagNode).Name] = true
-		}
-
-	}
-
-	queryType := graphql.NewObject(
-		graphql.ObjectConfig{
-			Name:   "Query",
-			Fields: graphqlFields,
-		})
-
-	schema, err := graphql.NewSchema(
-		graphql.SchemaConfig{
-			Query: queryType,
-		},
-	)
-	if err != nil {
-		return err
-	}
-	s.schema = &schema
-	return nil
-}
-
-func (s *Service) translateNode(node interface{}, graphqlObjects map[string]cuedb.GraphQlObjectGlue, graphqlFields map[string]*graphql.Field) error {
-	dataSet, _ := s.engine.GetDataSet(node.(*cuedb.DagNode).Name)
-
-	var objectFields graphql.Fields
-	objectFields, err := cuedb.CueValueToGraphQlField(graphqlObjects, dataSet.GetSchemaCue())
-	if err != nil {
-		cobra.CheckErr(err)
-	}
-
-	// Inject ID field into each object
-	objectFields["id"] = &graphql.Field{
-		Type: &graphql.NonNull{
-			OfType: graphql.String,
-		},
-	}
-
-	objType := graphql.NewObject(
-		graphql.ObjectConfig{
-			Name:   dataSet.GetExternalName(),
-			Fields: objectFields,
-		},
-	)
-
-	resolver := func(p graphql.ResolveParams) (interface{}, error) {
-		dataSetName := p.Info.ReturnType.Name()
-
-		id, ok := p.Args["id"].(string)
-		if ok {
-			data := s.engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
-
-			records := make(map[string]interface{})
-			if err = data.Decode(&records); err != nil {
-				return nil, err
-			}
-
-			for recordID, record := range records {
-				if string(recordID) == id {
-					return record, nil
-				}
-			}
-		}
-		return nil, nil
-	}
-
-	graphqlObjects[dataSet.GetExternalName()] = cuedb.GraphQlObjectGlue{
-		Object:   objType,
-		Resolver: resolver,
-		Engine:   s.engine,
-	}
-
-	graphqlFields[dataSet.GetExternalName()] = &graphql.Field{
-		Name: dataSet.GetExternalName(),
-		Type: objType,
-		Args: graphql.FieldConfigArgument{
-			"id": &graphql.ArgumentConfig{
-				Type: graphql.String,
-			},
-		},
-		Resolve: resolver,
-	}
-
-	graphqlFields[fmt.Sprintf("all%vs", dataSet.GetExternalName())] = &graphql.Field{
-		Type: graphql.NewList(objType),
-		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			dataSetName := p.Info.ReturnType.Name()
-
-			data := s.engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
-
-			records := make(map[string]interface{})
-			if err = data.Decode(&records); err != nil {
-				return nil, err
-			}
-
-			values := []interface{}{}
-			for _, value := range records {
-				values = append(values, value)
-			}
-
-			return values, nil
-		},
-	}
-	return nil
-}
-
-// GQLHandlerFunc returns a stand alone graphql handler for use
-// in netlify/aws/azure serverless scenarios
-func (s *Service) GQLHandlerFunc() (http.HandlerFunc, error) {
-	if s.schema == nil {
-		err := s.prepGraphQL()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	hf := func(w http.ResponseWriter, r *http.Request) {
-		result := s.executeQuery(r.URL.Query().Get("query"))
-		err := json.NewEncoder(w).Encode(result)
-		if err != nil {
-			pterm.Warning.Printf("failed to encode: %v", err)
-		}
-	}
-	return hf, nil
-}
-
-// GQLPlaygroundHandler returns a stand alone graphql playground handler for use
-// in netlify/aws/azure serverless scenarios
-func (s *Service) GQLPlaygroundHandler() (http.Handler, error) {
-	if s.schema == nil {
-		err := s.prepGraphQL()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	h := handler.New(&handler.Config{
-		Schema:     s.schema,
-		Pretty:     true,
-		GraphiQL:   false,
-		Playground: true,
-	})
-	return h, nil
-}
-
-func (s *Service) executeQuery(query string) *graphql.Result {
-	result := graphql.Do(graphql.Params{
-		Schema:        *s.schema,
-		RequestString: query,
-	})
-
-	if len(result.Errors) > 0 {
-		pterm.Error.Printf("errors: %v\n", result.Errors)
-	}
-
-	return result
-}
-
 func (s *Service) parseRemotes() error {
 	remotes, err := s.Cfg.GetList("remotes")
 	if err != nil {
@@ -606,42 +258,6 @@ func (s *Service) parseRemotes() error {
 		}
 	}
 	return nil
-}
-
-func (s *Service) callPlugin(name, executable string) error {
-	pterm.Info.Println("calling the plugin")
-	// Create an hclog.Logger
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name:   "plugin",
-		Output: os.Stdout,
-		Level:  hclog.Info,
-	})
-
-	// We're a host! Start by launching the plugin process.
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: shared.PrebuildHandshakeConfig,
-		Plugins:         prePluginMap,
-		Cmd:             exec.Command(executable),
-		Logger:          logger,
-	})
-	defer client.Kill()
-
-	// Connect via RPC
-	rpcClient, err := client.Client()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Request the plugin
-	raw, err := rpcClient.Dispense(name)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// We should have a Greeter now! This feels like a normal interface
-	// implementation but is in fact over an RPC connection.
-	imgs := raw.(plugins.Prebuild)
-	return imgs.Process(s.rawConfig)
 }
 
 // ensureRemote downloads a remote schema at a specific
@@ -699,9 +315,4 @@ func (s *Service) ensureRemote(name, version, repo string) error {
 	}
 	pterm.Info.Println("Schema already exists locally, skipping download.")
 	return nil
-}
-
-// pluginMap is the map of plugins we can dispense.
-var pluginMap = map[string]plugin.Plugin{
-	"images": &plugins.PrebuildPlugin{},
 }
