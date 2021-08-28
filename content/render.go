@@ -1,6 +1,8 @@
 package content
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 
@@ -50,6 +52,61 @@ func (s *Service) RenderAndSave() error {
 	if err != nil {
 		return err
 	}
+
+	var dataList map[string][]map[string]interface{}
+
+	err = json.Unmarshal(bb, &dataList)
+	if err != nil {
+		return err
+	}
+
+	for k := range dataList {
+		fmt.Println(k)
+		set := dataList[k]
+		ss, err := json.Marshal(set)
+		if err != nil {
+			return err
+		}
+		filename := k + ".json"
+		filePath := path.Join(buildDir, filename)
+
+		// write the array
+		err = os.WriteFile(filePath, ss, 0o755)
+		if err != nil {
+			return err
+		}
+		dirpath := path.Join(buildDir, k)
+		err = os.MkdirAll(dirpath, 0o755)
+		if err != nil {
+			if err != os.ErrExist {
+				return err
+			}
+		}
+		for j := range set {
+			slug := set[j]["id"].(string)
+			fmt.Println(slug)
+			// write each item
+			filename := slug + ".json"
+			filePath := path.Join(dirpath, filename)
+			derp := path.Dir(filePath)
+			err = os.MkdirAll(derp, 0o755)
+			if err != nil {
+				if err != os.ErrExist {
+					return err
+				}
+			}
+			ss, err := json.Marshal(set[j])
+			if err != nil {
+				return err
+			}
+			err = os.WriteFile(filePath, ss, 0o755)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
 	pterm.Success.Printf("Data blox written to '%s'\n", filePath)
 	return nil
 }
