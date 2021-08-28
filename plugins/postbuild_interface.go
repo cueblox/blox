@@ -8,15 +8,15 @@ import (
 
 // Postbuild is the interface that we're exposing as a plugin.
 type Postbuild interface {
-	Process() error
+	Process(bloxConfig string) error
 }
 
 // Here is an implementation that talks over RPC
 type PostbuildRPC struct{ client *rpc.Client }
 
-func (g *PostbuildRPC) Process() error {
+func (g *PostbuildRPC) Process(bloxConfig string) error {
 	var resp error
-	err := g.client.Call("Plugin.Process", new(interface{}), &resp)
+	err := g.client.Call("Plugin.Process", bloxConfig, &resp)
 	if err != nil {
 		// You usually want your interfaces to return errors. If they don't,
 		// there isn't much other choice here.
@@ -33,8 +33,8 @@ type PostbuildRPCServer struct {
 	Impl Postbuild
 }
 
-func (s *PostbuildRPCServer) Process(args interface{}, resp *error) error {
-	*resp = s.Impl.Process()
+func (s *PostbuildRPCServer) Process(bloxConfig string, resp *error) error {
+	*resp = s.Impl.Process(bloxConfig)
 	return nil
 }
 
@@ -54,7 +54,7 @@ type PostbuildPlugin struct {
 }
 
 func (p *PostbuildPlugin) Server(*plugin.MuxBroker) (interface{}, error) {
-	return &PostbuildRPCServer{Impl: p.Impl}, nil
+	return &PrebuildRPCServer{Impl: p.Impl}, nil
 }
 
 func (PostbuildPlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {

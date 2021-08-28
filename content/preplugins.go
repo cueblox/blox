@@ -34,6 +34,7 @@ func (s *Service) runPrePlugins() error {
 		if err != nil {
 			return err
 		}
+		pterm.Info.Println("Registering prebuild plugin", n)
 		//nolint
 		exec, err := val.FieldByName("executable", false)
 		if err != nil {
@@ -45,7 +46,7 @@ func (s *Service) runPrePlugins() error {
 		}
 		prePluginMap[n] = &plugins.PrebuildPlugin{}
 		pterm.Info.Println("Calling Plugin", n, e)
-		err = s.callPlugin(n, e)
+		err = s.callPrePlugin(n, e)
 		if err != nil {
 			return err
 		}
@@ -54,8 +55,7 @@ func (s *Service) runPrePlugins() error {
 	return nil
 
 }
-func (s *Service) callPlugin(name, executable string) error {
-	pterm.Info.Println("calling the plugin")
+func (s *Service) callPrePlugin(name, executable string) error {
 	// Create an hclog.Logger
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "plugin",
@@ -86,6 +86,6 @@ func (s *Service) callPlugin(name, executable string) error {
 
 	// We should have a Greeter now! This feels like a normal interface
 	// implementation but is in fact over an RPC connection.
-	imgs := raw.(plugins.Prebuild)
-	return imgs.Process(s.rawConfig)
+	preplug := raw.(plugins.Prebuild)
+	return preplug.Process(s.rawConfig)
 }
