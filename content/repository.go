@@ -2,7 +2,6 @@ package content
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -16,16 +15,15 @@ import (
 	"strings"
 
 	"github.com/cueblox/blox"
-	"github.com/disintegration/imaging"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
-	"github.com/h2non/filetype"
 	"github.com/spf13/cobra"
 
 	"github.com/cueblox/blox/internal/cuedb"
 	"github.com/cueblox/blox/internal/encoding/markdown"
 	"github.com/cueblox/blox/internal/repository"
 	"github.com/cueblox/blox/plugins"
+	"github.com/cueblox/blox/plugins/shared"
 	"github.com/goccy/go-yaml"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-multierror"
@@ -34,12 +32,15 @@ import (
 )
 
 type Service struct {
-	engine *cuedb.Engine
-	Cfg    *blox.Config
-	ri     bool
-	schema *graphql.Schema
-	built  bool
+	engine    *cuedb.Engine
+	Cfg       *blox.Config
+	rawConfig string
+	ri        bool
+	schema    *graphql.Schema
+	built     bool
 }
+
+var prePluginMap map[string]plugin.Plugin
 
 func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) {
 	cfg, err := blox.NewConfig(BaseConfig)
@@ -84,11 +85,12 @@ func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) 
 	if err != nil {
 		return nil, err
 	}
-
+	prePluginMap = make(map[string]plugin.Plugin)
 	return &Service{
-		engine: engine,
-		Cfg:    cfg,
-		ri:     referentialIntegrity,
+		engine:    engine,
+		Cfg:       cfg,
+		rawConfig: bloxConfig,
+		ri:        referentialIntegrity,
 	}, nil
 }
 
@@ -98,14 +100,19 @@ const BaseConfig = `{
 	    version: string
 	    repository: string
 	}
+	#Plugin: {
+		name: string
+		executable: string
+	}
 	build_dir:    string | *"_build"
 	data_dir:     string | *"data"
 	schemata_dir: string | *"schemata"
-	    static_dir: string | *"static"
-	    template_dir: string | *"templates"
-	    remotes: [ ...#Remote ]
-    
-    }`
+	static_dir: string | *"static"
+	template_dir: string | *"templates"
+	remotes: [ ...#Remote ]
+	prebuild: [...#Plugin]
+	postbuild: [...#Plugin]
+}`
 
 func (s *Service) RenderJSON() ([]byte, error) {
 	if !s.built {
@@ -161,7 +168,8 @@ func (s *Service) build() error {
 	if err != nil {
 		return err
 	}
-	err = s.processImages()
+
+	err = s.runPrePlugins()
 	if err != nil {
 		return err
 	}
@@ -256,6 +264,49 @@ func (s *Service) build() error {
 	pterm.Success.Println("Validation Complete")
 	s.built = true
 	return nil
+}
+
+func (s *Service) runPrePlugins() error {
+
+	pre, err := s.Cfg.GetList("prebuild")
+	if err != nil {
+		return err
+	}
+	iter, err := pre.List()
+	if err != nil {
+		return err
+	}
+	for iter.Next() {
+		val := iter.Value()
+
+		//nolint
+		name, err := val.FieldByName("name", false)
+		if err != nil {
+			return err
+		}
+		n, err := name.Value.String()
+		if err != nil {
+			return err
+		}
+		//nolint
+		exec, err := val.FieldByName("executable", false)
+		if err != nil {
+			return err
+		}
+		e, err := exec.Value.String()
+		if err != nil {
+			return err
+		}
+		prePluginMap[n] = &plugins.PrebuildPlugin{}
+		pterm.Info.Println("Calling Plugin", n, e)
+		err = s.callPlugin(n, e)
+		if err != nil {
+			return err
+		}
+
+	}
+	return nil
+
 }
 
 // RestHandlerFunc returns a handler function that will render
@@ -557,160 +608,20 @@ func (s *Service) parseRemotes() error {
 	return nil
 }
 
-// processImages scans the static dir for images
-// when it finds an image, it reads the image metadata
-// and saves a corresponding YAML file describing the image
-// in the 'images' data directory.
-func (s *Service) oldProcessImages() error {
-	staticDir, err := s.Cfg.GetString("static_dir")
-	if err != nil {
-		pterm.Info.Printf("no static directory present, skipping image linking")
-		return nil
-	}
-
-	pterm.Info.Printf("processing images in %s\n", staticDir)
-	fi, err := os.Stat(staticDir)
-	if errors.Is(err, os.ErrNotExist) {
-		pterm.Info.Println("no image directory found, skipping")
-		return nil
-	}
-	if !fi.IsDir() {
-		return errors.New("given static directory is not a directory")
-	}
-	imagesDirectory := filepath.Join(staticDir, "images")
-
-	fi, err = os.Stat(imagesDirectory)
-	if errors.Is(err, os.ErrNotExist) {
-		pterm.Info.Println("no image directory found, skipping")
-		return nil
-	}
-	if !fi.IsDir() {
-		return errors.New("given images directory is not a directory")
-	}
-	err = filepath.Walk(imagesDirectory,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			pterm.Debug.Printf("\t\tProcessing %s\n", path)
-			if !info.IsDir() {
-				buf, err := ioutil.ReadFile(path)
-				if err != nil {
-					return err
-				}
-				if filetype.IsImage(buf) {
-
-					src, err := imaging.Open(path)
-					if err != nil {
-						return err
-					}
-
-					relpath, err := filepath.Rel(staticDir, path)
-					if err != nil {
-						return err
-					}
-					pterm.Debug.Printf("\t\tFile is an image: %s\n", relpath)
-					kind, err := filetype.Match(buf)
-					if err != nil {
-						return err
-					}
-					pterm.Debug.Printf("\t\tFile type: %s. MIME: %s\n", kind.Extension, kind.MIME.Value)
-					if err != nil {
-						return err
-					}
-					/*	if cloud {
-							pterm.Info.Println("Synchronizing images to cloud provider")
-							bucketURL := os.Getenv("IMAGE_BUCKET")
-							if bucketURL == "" {
-								return errors.New("image sync enabled (-s,--sync), but no IMAGE_BUCKET environment variable set")
-							}
-
-							ctx := context.Background()
-							// Open a connection to the bucket.
-							b, err := blob.OpenBucket(ctx, bucketURL)
-							if err != nil {
-								return fmt.Errorf("failed to setup bucket: %s", err)
-							}
-							defer b.Close()
-
-							w, err := b.NewWriter(ctx, relpath, nil)
-							if err != nil {
-								return fmt.Errorf("cloud sync failed to obtain writer: %s", err)
-							}
-							_, err = w.Write(buf)
-							if err != nil {
-								return fmt.Errorf("cloud sync failed to write to bucket: %s", err)
-							}
-							if err = w.Close(); err != nil {
-								return fmt.Errorf("cloud sync failed to close: %s", err)
-							}
-						}
-					*/
-					cdnEndpoint := os.Getenv("CDN_URL")
-
-					bi := &BloxImage{
-						FileName: relpath,
-						Height:   src.Bounds().Dy(),
-						Width:    src.Bounds().Dx(),
-						CDN:      cdnEndpoint,
-					}
-					bytes, err := yaml.Marshal(bi)
-					if err != nil {
-						return err
-					}
-					dataDir, err := s.Cfg.GetString("data_dir")
-					if err != nil {
-						return err
-					}
-
-					ext := strings.TrimPrefix(filepath.Ext(relpath), ".")
-					slug := strings.TrimSuffix(relpath, "."+ext)
-
-					outputPath := filepath.Join(dataDir, slug+".yaml")
-					err = os.MkdirAll(filepath.Dir(outputPath), 0o755)
-					if err != nil {
-						pterm.Error.Println(err)
-						return err
-					}
-					// only write the yaml file if it doesn't exist.
-					// don't overwrite existing records.
-					_, err = os.Stat(outputPath)
-					if err != nil && errors.Is(err, os.ErrNotExist) {
-						err = os.WriteFile(outputPath, bytes, 0o755)
-						if err != nil {
-							pterm.Error.Println(err)
-							return err
-						}
-					}
-				} else {
-					pterm.Debug.Printf("File is not an image: %s\n", path)
-				}
-			}
-
-			return nil
-		})
-	return err
-}
-
-// processImages scans the static dir for images
-// when it finds an image, it reads the image metadata
-// and saves a corresponding YAML file describing the image
-// in the 'images' data directory.
-func (s *Service) processImages() error {
+func (s *Service) callPlugin(name, executable string) error {
 	pterm.Info.Println("calling the plugin")
 	// Create an hclog.Logger
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "plugin",
 		Output: os.Stdout,
-		Level:  hclog.Debug,
+		Level:  hclog.Info,
 	})
 
 	// We're a host! Start by launching the plugin process.
 	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
+		HandshakeConfig: shared.PrebuildHandshakeConfig,
 		Plugins:         pluginMap,
-		Cmd:             exec.Command("../images_impl"),
+		Cmd:             exec.Command(executable),
 		Logger:          logger,
 	})
 	defer client.Kill()
@@ -722,7 +633,7 @@ func (s *Service) processImages() error {
 	}
 
 	// Request the plugin
-	raw, err := rpcClient.Dispense("images")
+	raw, err := rpcClient.Dispense(name)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -730,7 +641,7 @@ func (s *Service) processImages() error {
 	// We should have a Greeter now! This feels like a normal interface
 	// implementation but is in fact over an RPC connection.
 	imgs := raw.(plugins.Prebuild)
-	return imgs.Process()
+	return imgs.Process(s.rawConfig)
 }
 
 // ensureRemote downloads a remote schema at a specific
@@ -795,16 +706,6 @@ type BloxImage struct {
 	Height   int    `yaml:"height"`
 	Width    int    `yaml:"width"`
 	CDN      string `yaml:"cdn"`
-}
-
-// handshakeConfigs are used to just do a basic handshake between
-// a plugin and host. If the handshake fails, a user friendly error is shown.
-// This prevents users from executing bad plugins or executing a plugin
-// directory. It is a UX feature, not a security feature.
-var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   "BLOX_PLUGIN",
-	MagicCookieValue: "image",
 }
 
 // pluginMap is the map of plugins we can dispense.

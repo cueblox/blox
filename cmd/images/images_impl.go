@@ -7,29 +7,44 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cueblox/blox"
+	"github.com/cueblox/blox/internal/repository"
 	"github.com/cueblox/blox/plugins"
+	"github.com/cueblox/blox/plugins/shared"
 	"github.com/disintegration/imaging"
 	"github.com/goccy/go-yaml"
 	"github.com/h2non/filetype"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	"github.com/pterm/pterm"
 )
 
 // Here is a real implementation of Greeter
 type ImageScanner struct {
 	logger hclog.Logger
+	cfg    *blox.Config
 }
 
-func (g *ImageScanner) Process() error {
-	pterm.Info.Println("PROCESS()")
+func (g *ImageScanner) Process(bloxConfig string) error {
 	g.logger.Debug("message from ImageScanner.Process")
-	return g.processImages()
+	cfg, err := blox.NewConfig(repository.BaseConfig)
+	if err != nil {
+		return err
+	}
+	g.cfg = cfg
+
+	err = g.cfg.LoadConfigString(bloxConfig)
+	if err != nil {
+		return err
+	}
+	staticDir, err := g.cfg.GetString("static_dir")
+	if err != nil {
+		g.logger.Info("no static directory present, skipping image linking")
+		return nil
+	}
+	return g.processImages(staticDir)
 }
 
-func (g *ImageScanner) processImages() error {
-	// hard coded, need to pass in config? read config?
-	staticDir := "static"
+func (g *ImageScanner) processImages(staticDir string) error {
 
 	g.logger.Debug("processing images", "dir", staticDir)
 	fi, err := os.Stat(staticDir)
@@ -130,7 +145,7 @@ func (g *ImageScanner) processImages() error {
 					outputPath := filepath.Join(dataDir, slug+".yaml")
 					err = os.MkdirAll(filepath.Dir(outputPath), 0o755)
 					if err != nil {
-						pterm.Error.Println(err)
+						g.logger.Error("failed to create directory", "path", outputPath)
 						return err
 					}
 					// only write the yaml file if it doesn't exist.
@@ -139,12 +154,12 @@ func (g *ImageScanner) processImages() error {
 					if err != nil && errors.Is(err, os.ErrNotExist) {
 						err = os.WriteFile(outputPath, bytes, 0o755)
 						if err != nil {
-							g.logger.Debug(err.Error())
+							g.logger.Error("failed to write yaml file", "error", err.Error())
 							return err
 						}
 					}
 				} else {
-					g.logger.Debug("File is not an image",
+					g.logger.Warn("File is not an image",
 						"path", path)
 				}
 			}
@@ -161,19 +176,9 @@ type BloxImage struct {
 	CDN      string `yaml:"cdn"`
 }
 
-// handshakeConfigs are used to just do a basic handshake between
-// a plugin and host. If the handshake fails, a user friendly error is shown.
-// This prevents users from executing bad plugins or executing a plugin
-// directory. It is a UX feature, not a security feature.
-var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   "BLOX_PLUGIN",
-	MagicCookieValue: "image",
-}
-
 func main() {
 	logger := hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Trace,
+		Level:      hclog.Info,
 		Output:     os.Stderr,
 		JSONFormat: true,
 	})
@@ -186,10 +191,10 @@ func main() {
 		"images": &plugins.PrebuildPlugin{Impl: imageScanner},
 	}
 
-	logger.Debug("message from plugin", "hello", "images")
+	logger.Info("initializing plugin", "name", "images_impl")
 
 	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: handshakeConfig,
+		HandshakeConfig: shared.PrebuildHandshakeConfig,
 		Plugins:         pluginMap,
 	})
 }

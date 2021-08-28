@@ -8,15 +8,15 @@ import (
 
 // Prebuild is the interface that we're exposing as a plugin.
 type Prebuild interface {
-	Process() error
+	Process(bloxConfig string) error
 }
 
 // Here is an implementation that talks over RPC
 type PrebuildRPC struct{ client *rpc.Client }
 
-func (g *PrebuildRPC) Process() error {
+func (g *PrebuildRPC) Process(bloxConfig string) error {
 	var resp error
-	err := g.client.Call("Plugin.Process", new(interface{}), &resp)
+	err := g.client.Call("Plugin.Process", bloxConfig, &resp)
 	if err != nil {
 		// You usually want your interfaces to return errors. If they don't,
 		// there isn't much other choice here.
@@ -33,8 +33,8 @@ type PrebuildRPCServer struct {
 	Impl Prebuild
 }
 
-func (s *PrebuildRPCServer) Process(args interface{}, resp *error) error {
-	*resp = s.Impl.Process()
+func (s *PrebuildRPCServer) Process(bloxConfig string, resp *error) error {
+	*resp = s.Impl.Process(bloxConfig)
 	return nil
 }
 
