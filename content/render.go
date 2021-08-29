@@ -2,7 +2,6 @@ package content
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path"
 
@@ -61,7 +60,6 @@ func (s *Service) RenderAndSave() error {
 	}
 
 	for k := range dataList {
-		fmt.Println(k)
 		set := dataList[k]
 		ss, err := json.Marshal(set)
 		if err != nil {
@@ -84,7 +82,6 @@ func (s *Service) RenderAndSave() error {
 		}
 		for j := range set {
 			slug := set[j]["id"].(string)
-			fmt.Println(slug)
 			// write each item
 			filename := slug + ".json"
 			filePath := path.Join(dirpath, filename)
