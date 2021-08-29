@@ -444,7 +444,7 @@ func (r *Engine) GetOutput() (cue.Value, error) {
 
 func (r *Engine) flatten(d DataSet) error {
 	for _, rel := range d.relationships {
-		d.
+
 		foreignTable, err := r.GetDataSet(strings.ToLower(rel))
 		if err != nil {
 			return err
@@ -452,10 +452,18 @@ func (r *Engine) flatten(d DataSet) error {
 		// Step 3. Get foreign key dataset data path
 		foreignDataPath := foreignTable.CueDataPath()
 		fmt.Println(foreignDataPath)
+		// RI version
 		inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
+		// output version
+		inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val}]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
 
+		// need data source from RI version
+		// output from output version
+		// but add the field as {relationship}_value or something similar
 
 		// Step 4. Augment first definition with new constraint
+
+		// step 5: recurse
 
 	}
 	return nil
