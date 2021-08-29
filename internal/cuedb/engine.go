@@ -429,7 +429,34 @@ func (r *Engine) GetOutput() (cue.Value, error) {
 		}
 
 		r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
-	}
 
+		// begin flattening
+		if true { // TODO: flag later
+			err := r.flatten(dataSet)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+		// end flattening
+	}
 	return r.Database.LookupPath(cue.ParsePath("output")), nil
+}
+
+func (r *Engine) flatten(d DataSet) error {
+	for _, rel := range d.relationships {
+		d.
+		foreignTable, err := r.GetDataSet(strings.ToLower(rel))
+		if err != nil {
+			return err
+		}
+		// Step 3. Get foreign key dataset data path
+		foreignDataPath := foreignTable.CueDataPath()
+		fmt.Println(foreignDataPath)
+		inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
+
+
+		// Step 4. Augment first definition with new constraint
+
+	}
+	return nil
 }
