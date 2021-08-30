@@ -431,17 +431,19 @@ func (r *Engine) GetOutput() (cue.Value, error) {
 		r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
 
 		// begin flattening
-		if true { // TODO: flag later
-			err := r.flatten(dataSet)
-			if err != nil {
-				fmt.Println(err)
+		/*	if true { // TODO: flag later
+				err := r.flatten(dataSet)
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
-		}
-		// end flattening
+			// end flattening
+		*/
 	}
 	return r.Database.LookupPath(cue.ParsePath("output")), nil
 }
 
+/*
 func (r *Engine) flatten(d DataSet) error {
 	for _, rel := range d.relationships {
 
@@ -468,3 +470,4 @@ func (r *Engine) flatten(d DataSet) error {
 	}
 	return nil
 }
+*/

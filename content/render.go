@@ -105,5 +105,11 @@ func (s *Service) RenderAndSave() error {
 	}
 
 	pterm.Success.Printf("Data blox written to '%s'\n", filePath)
+
+	pterm.Info.Println("Running Postbuild Plugins")
+	err = s.runPostPlugins()
+	if err != nil {
+		return err
+	}
 	return nil
 }

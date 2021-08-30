@@ -45,7 +45,7 @@ func (s *Service) runPostPlugins() error {
 		if err != nil {
 			return err
 		}
-		prePluginMap[n] = &plugins.PostbuildPlugin{}
+		postPluginMap[n] = &plugins.PostbuildPlugin{}
 		pterm.Info.Println("Calling Plugin", n, e)
 		err = s.callPostPlugin(n, e)
 		if err != nil {
@@ -69,6 +69,7 @@ func (s *Service) callPostPlugin(name, executable string) error {
 		pterm.Error.Println("plugin not found in path", executable)
 		log.Fatal(err)
 	}
+	pterm.Info.Println("found plugin at path", executable, executablePath)
 	// We're a host! Start by launching the plugin process.
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: shared.PostbuildHandshakeConfig,
@@ -79,12 +80,14 @@ func (s *Service) callPostPlugin(name, executable string) error {
 	defer client.Kill()
 
 	// Connect via RPC
+	log.Println("Connecting to client")
 	rpcClient, err := client.Client()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Request the plugin
+	log.Println("Getting Plugin")
 	raw, err := rpcClient.Dispense(name)
 	if err != nil {
 		log.Fatal(err)
@@ -93,5 +96,7 @@ func (s *Service) callPostPlugin(name, executable string) error {
 	// We should have a Postbuild plugin now! This feels like a normal interface
 	// implementation but is in fact over an RPC connection.
 	postplug := raw.(plugins.Postbuild)
+	log.Println("Making the call")
+	log.Println(s.rawConfig)
 	return postplug.Process(s.rawConfig)
 }
