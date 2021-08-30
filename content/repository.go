@@ -116,6 +116,7 @@ func (s *Service) build() error {
 		return err
 	}
 
+	pterm.Info.Println("Running Prebuild Plugins")
 	err = s.runPrePlugins()
 	if err != nil {
 		return err
@@ -210,10 +211,6 @@ func (s *Service) build() error {
 
 	pterm.Success.Println("Validation Complete")
 	s.built = true
-	err = s.runPostPlugins()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

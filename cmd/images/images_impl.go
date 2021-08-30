@@ -71,7 +71,7 @@ func (g *ImageScanner) processImages(staticDir string) error {
 				return err
 			}
 
-			g.logger.Debug("Processing", "path", path)
+			g.logger.Info("Processing", "path", path)
 			if !info.IsDir() {
 				buf, err := ioutil.ReadFile(path)
 				if err != nil {
