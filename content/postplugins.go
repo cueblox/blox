@@ -13,7 +13,6 @@ import (
 )
 
 func (s *Service) runPostPlugins() error {
-
 	post, err := s.Cfg.GetList("postbuild")
 	if err != nil {
 		return err
@@ -54,8 +53,8 @@ func (s *Service) runPostPlugins() error {
 
 	}
 	return nil
-
 }
+
 func (s *Service) callPostPlugin(name, executable string) error {
 	pterm.Info.Println("calling the plugin")
 	// Create an hclog.Logger

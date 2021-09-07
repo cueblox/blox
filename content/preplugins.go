@@ -13,7 +13,6 @@ import (
 )
 
 func (s *Service) runPrePlugins() error {
-
 	pre, err := s.Cfg.GetList("prebuild")
 	if err != nil {
 		return err
@@ -53,8 +52,8 @@ func (s *Service) runPrePlugins() error {
 
 	}
 	return nil
-
 }
+
 func (s *Service) callPrePlugin(name, executable string) error {
 	// Create an hclog.Logger
 	logger := hclog.New(&hclog.LoggerOptions{
