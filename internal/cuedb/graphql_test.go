@@ -3,7 +3,7 @@ package cuedb
 import (
 	"testing"
 
-	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/graphql-go/graphql"
 	"github.com/stretchr/testify/assert"
 )
@@ -59,13 +59,11 @@ func TestGraphqlGeneration(t *testing.T) {
 		}},
 	}
 
-	var cueRuntime cue.Runtime
+	cueContext := cuecontext.New()
 
 	for _, tc := range tests {
-		cueInstance, err := cueRuntime.Compile("", tc.cueLiteral)
-		assert.Equal(t, nil, err)
-
-		cueValue := cueInstance.Value()
+		cueValue := cueContext.CompileString(tc.cueLiteral)
+		assert.Equal(t, nil, cueValue.Err())
 
 		graphqlObjects := make(map[string]GraphQlObjectGlue)
 

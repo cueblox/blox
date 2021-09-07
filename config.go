@@ -42,15 +42,14 @@ func (r *Config) LoadConfig(path string) error {
 }
 
 func (r *Config) LoadConfigString(cueConfig string) error {
-	cueInstance, err := r.runtime.CueRuntime.Compile("", cueConfig)
-	if err != nil {
-		return err
+	cueValue := r.runtime.CueContext.CompileString(cueConfig)
+
+	if cueValue.Err() != nil {
+		return cueValue.Err()
 	}
 
-	cueValue := cueInstance.Value()
-
 	r.runtime.Database = r.runtime.Database.Unify(cueValue)
-	if err = r.runtime.Database.Validate(); err != nil {
+	if err := r.runtime.Database.Validate(); err != nil {
 		return err
 	}
 

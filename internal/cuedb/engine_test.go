@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,10 +44,10 @@ func TestExtractSchemaMetadata(t *testing.T) {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
 
-	cueInstance, err := runtime.CueRuntime.Compile("", schemaCue)
-	assert.Equal(t, nil, err)
+	cueValue := runtime.CueContext.CompileString(schemaCue)
+	assert.Equal(t, nil, cueValue.Err())
 
-	schemaMetdata, err := runtime.extractSchemaMetadata(cueInstance.Value())
+	schemaMetdata, err := runtime.extractSchemaMetadata(cueValue)
 	if err != nil {
 		t.Fatal("Failed to extract SchemaMetadata")
 	}
@@ -67,10 +68,10 @@ func TestExtractDataSetMetadata(t *testing.T) {
 		t.Fatal("Failed to create a NewRuntime, which should never happen")
 	}
 
-	cueInstance, err := runtime.CueRuntime.Compile("", dataSetCue)
-	assert.Equal(t, nil, err)
+	cueValue := runtime.CueContext.CompileString(dataSetCue)
+	assert.Equal(t, nil, cueValue.Err())
 
-	dataSetMetdata, err := runtime.extractDataSetMetadata(cueInstance.Value())
+	dataSetMetdata, err := runtime.extractDataSetMetadata(cueValue)
 	if err != nil {
 		t.Fatal("Failed to extract DataSetMetadata")
 	}
@@ -299,13 +300,11 @@ func TestRelationshipParsing(t *testing.T) {
 		{cueLiteral: "name: string, profile: string, person: string @relationship(Person)", expected: []string{"Person"}},
 	}
 
-	var cueRuntime cue.Runtime
+	cueContext := cuecontext.New()
 
 	for _, tc := range tests {
-		cueInstance, err := cueRuntime.Compile("", tc.cueLiteral)
-		assert.Equal(t, nil, err)
-
-		cueValue := cueInstance.Value()
+		cueValue := cueContext.CompileString(tc.cueLiteral)
+		assert.Equal(t, nil, cueValue.Err())
 
 		relationships, err := getDataSetRelationships("", cueValue)
 		assert.Equal(t, nil, err)

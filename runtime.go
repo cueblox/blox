@@ -2,25 +2,26 @@ package blox
 
 import (
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 )
 
 type Runtime struct {
-	CueRuntime *cue.Runtime
+	CueContext *cue.Context
 	Database   cue.Value
 }
 
 // NewRuntime creates a new runtime engine
 func NewRuntime() (*Runtime, error) {
-	var cueRuntime cue.Runtime
-	cueInstance, err := cueRuntime.Compile("", "")
+	cueContext := cuecontext.New()
+	cueValue := cueContext.CompileString("")
 
-	if nil != err {
-		return &Runtime{}, err
+	if cueValue.Err() != nil {
+		return nil, cueValue.Err()
 	}
 
 	runtime := &Runtime{
-		CueRuntime: &cueRuntime,
-		Database:   cueInstance.Value(),
+		CueContext: cueContext,
+		Database:   cueValue,
 	}
 
 	return runtime, nil
@@ -29,16 +30,16 @@ func NewRuntime() (*Runtime, error) {
 // NewRuntimeWithBase creates a new runtime engine
 // with the cue provided in `base` as the initial cue values
 func NewRuntimeWithBase(base string) (*Runtime, error) {
-	var cueRuntime cue.Runtime
-	cueInstance, err := cueRuntime.Compile("", base)
+	cueContext := cuecontext.New()
+	cueValue := cueContext.CompileString(base)
 
-	if nil != err {
-		return &Runtime{}, err
+	if cueValue.Err() != nil {
+		return nil, cueValue.Err()
 	}
 
 	runtime := &Runtime{
-		CueRuntime: &cueRuntime,
-		Database:   cueInstance.Value(),
+		CueContext: cueContext,
+		Database:   cueValue,
 	}
 
 	return runtime, nil

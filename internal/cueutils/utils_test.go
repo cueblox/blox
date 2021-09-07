@@ -6,6 +6,7 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/ast"
+	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/parser"
 	"github.com/stretchr/testify/assert"
 )
@@ -127,11 +128,9 @@ func TestCreateFromTemplate(t *testing.T) {
 		}
 	}`
 
-	var cueRuntime cue.Runtime
-	cueInstance, err := cueRuntime.Compile("", cueWithTemplateAttributes)
-	assert.Equal(t, nil, err)
-
-	cueValue := cueInstance.Value()
+	cueContext := cuecontext.New()
+	cueValue := cueContext.CompileString(cueWithTemplateAttributes)
+	assert.Equal(t, nil, cueValue.Err())
 
 	cueTemplate, err := CreateFromTemplate(cueValue, cueValue)
 	assert.Equal(t, nil, err)
