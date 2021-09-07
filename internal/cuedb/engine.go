@@ -175,7 +175,6 @@ func (r *Engine) GetDataSet(name string) (DataSet, error) {
 
 // GetDataSetByID returns a DataSet by its plural name.
 func (r *Engine) GetDataSetByPlural(plural string) (DataSet, error) {
-
 	for _, dataSet := range r.dataSets {
 		if dataSet.metadata.Plural == strings.ToLower(plural) {
 			return dataSet, nil
@@ -199,6 +198,10 @@ func (d *DataSet) GetDataDirectory() string {
 
 func (d *DataSet) GetDefinitionPath() cue.Path {
 	return cue.ParsePath(d.cuePath.String() + "." + d.name)
+}
+
+func (d *DataSet) GetDefinitionPath2() cue.Path {
+	return cue.ParsePath(d.cuePath.String() + ".#" + d.name)
 }
 
 // GetInlinePath returns an inline cue.Path that can be used within a Cue document
@@ -225,7 +228,7 @@ func (r *Engine) RegisterSchema(cueString string) error {
 	if err != nil {
 		return err
 	}
-	schemaPath := cue.ParsePath(fmt.Sprintf(`%s."%s"."%s"`, schemataPathRoot, schemaMetadata.Namespace, schemaMetadata.Name))
+	schemaPath := cue.ParsePath(fmt.Sprintf(`%s."%s"."#%s"`, schemataPathRoot, schemaMetadata.Namespace, schemaMetadata.Name))
 
 	// First, Unify whatever schemas the users want. We'll
 	// do our best to extract whatever information from
@@ -431,33 +434,90 @@ func (r *Engine) GetOutput() (cue.Value, error) {
 		r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
 
 		// begin flattening
-		/*	if true { // TODO: flag later
-				err := r.flatten(dataSet)
-				if err != nil {
-					fmt.Println(err)
-				}
+		/*
+			err = r.flatten(dataSet)
+			if err != nil {
+				fmt.Println(err)
 			}
-			// end flattening
 		*/
+		// end flattening
+
 	}
 	return r.Database.LookupPath(cue.ParsePath("output")), nil
 }
 
-/*
 func (r *Engine) flatten(d DataSet) error {
-	for _, rel := range d.relationships {
+	val := r.Database.LookupPath(d.GetDefinitionPath())
 
-		foreignTable, err := r.GetDataSet(strings.ToLower(rel))
-		if err != nil {
-			return err
+	fields, err := val.Fields(cue.All())
+	if err != nil {
+		return err
+	}
+
+	for fields.Next() {
+		relationship := fields.Value().Attribute("relationship")
+
+		if err = relationship.Err(); err == nil {
+			foreignTable, err := r.GetDataSet(strings.ToLower(relationship.Contents()))
+			if err != nil {
+				return err
+			}
+
+			foreignDataPath := foreignTable.CueDataPath()
+
+			fmt.Println(foreignDataPath)
+
+			// RI version
+			// newDefinition := d.GetSchemaCue()
+			fmt.Println(r.Database)
+			// schemata."namespace".Type
+			fmt.Printf("{data: _\n%s: flattened: data.%s[%s] }\n", d.GetInlinePath(), foreignTable.GetDataDirectory(), fields.Label())
+			inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: { %s: _, flattened: data.%s[%s] } }\n", d.GetInlinePath(), fields.Label(), foreignTable.GetDataDirectory(), fields.Label()))
+			if err != nil {
+				fmt.Println("HELP: Broken:", err)
+				return err
+			}
+
+			fmt.Println(inst.Value())
+			r.Database = r.Database.FillPath(d.GetDefinitionPath2(), inst.Value())
+			fmt.Println(r.Database)
+
+			// profile?:  string @relationship(Profile)
+
+			// inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\nflattened: data.%s[%s] }", foreignTable.name, rel))
+			// newDefinition = newDefinition.Unify(??)
+
+			// fmt.Println("CUE")
+			// fmt.Println(newDefinition)
+			// fmt.Println(fmt.Sprintf("{data: _\n%s: %s}", d.GetDefinitionPath(), newDefinition))
 		}
 		// Step 3. Get foreign key dataset data path
-		foreignDataPath := foreignTable.CueDataPath()
-		fmt.Println(foreignDataPath)
-		// RI version
-		inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
+
+		/**
+
+		data:
+			people:
+			rawkode:
+				name: David
+			bketelsen:
+				name: Brian
+			new_content:
+			type:
+				people: rawkode
+				people: data.people[rawkode]
+					  people: Unify()
+
+				**/
+
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	return err
+		// }
+
+		// r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
+
 		// output version
-		inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val}]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
+		// inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val}]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
 
 		// need data source from RI version
 		// output from output version
@@ -470,4 +530,3 @@ func (r *Engine) flatten(d DataSet) error {
 	}
 	return nil
 }
-*/

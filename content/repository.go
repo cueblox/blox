@@ -32,8 +32,10 @@ type Service struct {
 	built     bool
 }
 
-var prePluginMap map[string]plugin.Plugin
-var postPluginMap map[string]plugin.Plugin
+var (
+	prePluginMap  map[string]plugin.Plugin
+	postPluginMap map[string]plugin.Plugin
+)
 
 func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) {
 	cfg, err := blox.NewConfig(BaseConfig)
