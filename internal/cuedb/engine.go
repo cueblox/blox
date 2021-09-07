@@ -51,22 +51,22 @@ func (r *Engine) CountDataSets() int {
 }
 
 func (r *Engine) extractSchemaMetadata(schema cue.Value) (SchemaMetadata, error) {
-	cueInstance, err := r.CueRuntime.Compile("", SchemaMetadataCue)
-	if err != nil {
+	cueValue := r.CueContext.CompileString(SchemaMetadataCue)
+	if cueValue.Err() != nil {
 		pterm.Debug.Println("Failed to compile Cue")
-		return SchemaMetadata{}, err
+		return SchemaMetadata{}, cueValue.Err()
 	}
 
 	// Ensure we have all the required fields
-	versionedSchema := schema.Unify(cueInstance.Value())
-	if err = versionedSchema.Validate(); err != nil {
+	versionedSchema := schema.Unify(cueValue)
+	if err := versionedSchema.Validate(); err != nil {
 		return SchemaMetadata{}, err
 	}
 
 	schemaMetadata := SchemaMetadata{}
 	schemaValue := versionedSchema.LookupPath(cue.MakePath(cue.Hid(schemaField, "_")))
 
-	err = schemaValue.Decode(&schemaMetadata)
+	err := schemaValue.Decode(&schemaMetadata)
 	if err != nil {
 		return SchemaMetadata{}, err
 	}
@@ -75,22 +75,22 @@ func (r *Engine) extractSchemaMetadata(schema cue.Value) (SchemaMetadata, error)
 }
 
 func (r *Engine) extractDataSetMetadata(schema cue.Value) (DataSetMetadata, error) {
-	cueInstance, err := r.CueRuntime.Compile("", DataSetMetadataCue)
-	if err != nil {
+	cueValue := r.CueContext.CompileString(DataSetMetadataCue)
+	if cueValue.Err() != nil {
 		pterm.Debug.Println("Failed to compile Cue")
-		return DataSetMetadata{}, err
+		return DataSetMetadata{}, cueValue.Err()
 	}
 
 	// Ensure we have all the required fields
-	dataSetMetadataCueVal := schema.Unify(cueInstance.Value())
-	if err = dataSetMetadataCueVal.Validate(); err != nil {
+	dataSetMetadataCueVal := schema.Unify(cueValue)
+	if err := dataSetMetadataCueVal.Validate(); err != nil {
 		return DataSetMetadata{}, err
 	}
 
 	dataSetMetadata := DataSetMetadata{}
 	schemaValue := dataSetMetadataCueVal.LookupPath(cue.MakePath(cue.Hid(dataSetField, "_")))
 
-	err = schemaValue.Decode(&dataSetMetadata)
+	err := schemaValue.Decode(&dataSetMetadata)
 	if err != nil {
 		return DataSetMetadata{}, err
 	}
@@ -217,12 +217,10 @@ func (d *DataSet) GetInlinePath() string {
 }
 
 func (r *Engine) RegisterSchema(cueString string) error {
-	cueInstance, err := r.CueRuntime.Compile("", cueString)
-	if nil != err {
-		return err
+	cueValue := r.CueContext.CompileString(cueString)
+	if cueValue.Err() != nil {
+		return cueValue.Err()
 	}
-
-	cueValue := cueInstance.Value()
 
 	schemaMetadata, err := r.extractSchemaMetadata(cueValue)
 	if err != nil {
@@ -242,15 +240,14 @@ func (r *Engine) RegisterSchema(cueString string) error {
 	}
 
 	// Base Record Constraints
-	baseRecordInstance, err := r.CueRuntime.Compile("", RecordBaseCue)
-	if err != nil {
-		return err
+	baseRecordValue := r.CueContext.CompileString(RecordBaseCue)
+	if baseRecordValue.Err() != nil {
+		return baseRecordValue.Err()
 	}
-	baseRecordValue := baseRecordInstance.Value()
 
 	for fields.Next() {
 		pterm.Debug.Println("\t\t\tNext field")
-		if !fields.IsDefinition() {
+		if !fields.Selector().IsDefinition() {
 			// Only Definitions can be registered as DataSets
 			continue
 		}
@@ -291,12 +288,12 @@ func (r *Engine) RegisterSchema(cueString string) error {
 
 		r.dataSets[strings.ToLower(dataSet.name)] = dataSet
 
-		inst, err := r.CueRuntime.Compile("", dataSet.GetDataMapCue())
-		if err != nil {
-			return err
+		value := r.CueContext.CompileString(dataSet.GetDataMapCue())
+		if value.Err() != nil {
+			return value.Err()
 		}
 
-		r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
+		r.Database = r.Database.FillPath(cue.Path{}, value)
 
 		if err := r.Database.Validate(); nil != err {
 			return err
@@ -382,12 +379,12 @@ func (r *Engine) ReferentialIntegrity() error {
 					optional = "?"
 				}
 
-				inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
-				if err != nil {
-					return err
+				value := r.CueContext.CompileString(fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
+				if value.Err() != nil {
+					return value.Err()
 				}
 
-				r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
+				r.Database = r.Database.FillPath(cue.Path{}, value)
 				continue
 			}
 
@@ -402,12 +399,12 @@ func (r *Engine) ReferentialIntegrity() error {
 					optional = "?"
 				}
 
-				inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
-				if err != nil {
-					return err
+				value := r.CueContext.CompileString(fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
+				if value.Err() != nil {
+					return value.Err()
 				}
 
-				r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
+				r.Database = r.Database.FillPath(cue.Path{}, value)
 			}
 		}
 	}
@@ -426,12 +423,12 @@ func (r *Engine) GetOutput() (cue.Value, error) {
 	}
 
 	for _, dataSet := range r.GetDataSets() {
-		inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val}]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
-		if err != nil {
-			return cue.Value{}, err
+		value := r.CueContext.CompileString(fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val}]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
+		if value.Err() != nil {
+			return cue.Value{}, value.Err()
 		}
 
-		r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
+		r.Database = r.Database.FillPath(cue.Path{}, value)
 
 		// begin flattening
 		/*
@@ -446,87 +443,84 @@ func (r *Engine) GetOutput() (cue.Value, error) {
 	return r.Database.LookupPath(cue.ParsePath("output")), nil
 }
 
-func (r *Engine) flatten(d DataSet) error {
-	val := r.Database.LookupPath(d.GetDefinitionPath())
+// func (r *Engine) flatten(d DataSet) error {
+// 	val := r.Database.LookupPath(d.GetDefinitionPath())
 
-	fields, err := val.Fields(cue.All())
-	if err != nil {
-		return err
-	}
+// 	fields, err := val.Fields(cue.All())
+// 	if err != nil {
+// 		return err
+// 	}
 
-	for fields.Next() {
-		relationship := fields.Value().Attribute("relationship")
+// 	for fields.Next() {
+// 		relationship := fields.Value().Attribute("relationship")
 
-		if err = relationship.Err(); err == nil {
-			foreignTable, err := r.GetDataSet(strings.ToLower(relationship.Contents()))
-			if err != nil {
-				return err
-			}
+// 		if err = relationship.Err(); err == nil {
+// 			foreignTable, err := r.GetDataSet(strings.ToLower(relationship.Contents()))
+// 			if err != nil {
+// 				return err
+// 			}
 
-			foreignDataPath := foreignTable.CueDataPath()
+// 			foreignDataPath := foreignTable.CueDataPath()
 
-			fmt.Println(foreignDataPath)
+// 			fmt.Println(foreignDataPath)
 
-			// RI version
-			// newDefinition := d.GetSchemaCue()
-			fmt.Println(r.Database)
-			// schemata."namespace".Type
-			fmt.Printf("{data: _\n%s: flattened: data.%s[%s] }\n", d.GetInlinePath(), foreignTable.GetDataDirectory(), fields.Label())
-			inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\n%s: { %s: _, flattened: data.%s[%s] } }\n", d.GetInlinePath(), fields.Label(), foreignTable.GetDataDirectory(), fields.Label()))
-			if err != nil {
-				fmt.Println("HELP: Broken:", err)
-				return err
-			}
+// 			// RI version
+// 			// newDefinition := d.GetSchemaCue()
+// 			fmt.Println(r.Database)
+// 			// schemata."namespace".Type
+// 			fmt.Printf("{data: _\n%s: flattened: data.%s[%s] }\n", d.GetInlinePath(), foreignTable.GetDataDirectory(), fields.Label())
+// 			value := r.CueContext.CompileString(fmt.Sprintf("{data: _\n%s: { %s: _, flattened: data.%s[%s] } }\n", d.GetInlinePath(), fields.Label(), foreignTable.GetDataDirectory(), fields.Label()))
+// 			if value.Err() != nil {
+// 				return value.Err()
+// 			}
 
-			fmt.Println(inst.Value())
-			r.Database = r.Database.FillPath(d.GetDefinitionPath2(), inst.Value())
-			fmt.Println(r.Database)
+// 			r.Database = r.Database.FillPath(d.GetDefinitionPath2(), value)
 
-			// profile?:  string @relationship(Profile)
+// 			// profile?:  string @relationship(Profile)
 
-			// inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\nflattened: data.%s[%s] }", foreignTable.name, rel))
-			// newDefinition = newDefinition.Unify(??)
+// 			// inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{data: _\nflattened: data.%s[%s] }", foreignTable.name, rel))
+// 			// newDefinition = newDefinition.Unify(??)
 
-			// fmt.Println("CUE")
-			// fmt.Println(newDefinition)
-			// fmt.Println(fmt.Sprintf("{data: _\n%s: %s}", d.GetDefinitionPath(), newDefinition))
-		}
-		// Step 3. Get foreign key dataset data path
+// 			// fmt.Println("CUE")
+// 			// fmt.Println(newDefinition)
+// 			// fmt.Println(fmt.Sprintf("{data: _\n%s: %s}", d.GetDefinitionPath(), newDefinition))
+// 		}
+// 		// Step 3. Get foreign key dataset data path
 
-		/**
+// 		/**
 
-		data:
-			people:
-			rawkode:
-				name: David
-			bketelsen:
-				name: Brian
-			new_content:
-			type:
-				people: rawkode
-				people: data.people[rawkode]
-					  people: Unify()
+// 		data:
+// 			people:
+// 			rawkode:
+// 				name: David
+// 			bketelsen:
+// 				name: Brian
+// 			new_content:
+// 			type:
+// 				people: rawkode
+// 				people: data.people[rawkode]
+// 					  people: Unify()
 
-				**/
+// 				**/
 
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	return err
-		// }
+// 		// if err != nil {
+// 		// 	fmt.Println(err)
+// 		// 	return err
+// 		// }
 
-		// r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
+// 		// r.Database = r.Database.FillPath(cue.Path{}, inst.Value())
 
-		// output version
-		// inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val}]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
+// 		// output version
+// 		// inst, err := r.CueRuntime.Compile("", fmt.Sprintf("{%s: %s: _\noutput: %s: [ for key, val in %s.%s {val}]}", dataPathRoot, dataSet.metadata.Plural, dataSet.metadata.Plural, dataPathRoot, dataSet.metadata.Plural))
 
-		// need data source from RI version
-		// output from output version
-		// but add the field as {relationship}_value or something similar
+// 		// need data source from RI version
+// 		// output from output version
+// 		// but add the field as {relationship}_value or something similar
 
-		// Step 4. Augment first definition with new constraint
+// 		// Step 4. Augment first definition with new constraint
 
-		// step 5: recurse
+// 		// step 5: recurse
 
-	}
-	return nil
-}
+// 	}
+// 	return nil
+// }

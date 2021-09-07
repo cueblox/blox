@@ -78,8 +78,8 @@ func newBloxNewCmd() *bloxNewCmd {
 				return
 			}
 
-			templateInstance, err := engine.CueRuntime.Compile("", "")
-			cobra.CheckErr(err)
+			templateInstance := engine.CueContext.CompileString("")
+			cobra.CheckErr(templateInstance.Err())
 
 			dsp := dataSet.GetDefinitionPath()
 			dsv := engine.Runtime.Database.LookupPath(dsp)
