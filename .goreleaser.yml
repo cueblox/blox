@@ -75,7 +75,7 @@ brews:
       owner: cueblox
       name: homebrew-tap
       token: "{{ .Env.TAP_WRITE_KEY }}"
-    folder: formula
+    folder: Formula
 
     commit_author:
       name: CueBlox
