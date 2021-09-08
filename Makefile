@@ -39,6 +39,9 @@ build:
 	./scripts/cmd_docs.sh
 .PHONY: build
 
+install:
+	go install ./cmd/blox
+
 deps:
 	go get -u
 	go mod tidy
