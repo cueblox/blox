@@ -213,6 +213,7 @@ func (s *Service) build() error {
 
 	pterm.Success.Println("Validation Complete")
 	s.built = true
+
 	return nil
 }
 

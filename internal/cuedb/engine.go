@@ -325,7 +325,16 @@ func (r *Engine) GetAllData(dataSetName string) cue.Value {
 
 // MarshalJSON returns the database encoded in JSON format
 func (r *Engine) MarshalJSON() ([]byte, error) {
-	return r.Database.LookupPath(cue.ParsePath(dataPathRoot)).MarshalJSON()
+	v := r.Database.LookupPath(cue.ParsePath(dataPathRoot))
+	fmt.Println(v)
+	return v.MarshalJSON()
+}
+
+// MarshalJSON returns the database encoded in JSON format
+func (r *Engine) MarshalString() (string, error) {
+	v := r.Database.LookupPath(cue.ParsePath(dataPathRoot))
+	s := fmt.Sprintf("%v", v)
+	return s, nil
 }
 
 func getDataSetRelationships(label string, schema cue.Value) ([]string, error) {

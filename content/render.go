@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/pterm/pterm"
 )
@@ -42,6 +43,16 @@ func (s *Service) RenderAndSave() error {
 		return err
 	}
 	err = os.MkdirAll(buildDir, 0o755)
+	if err != nil {
+		return err
+	}
+	cval, err := s.engine.MarshalString()
+	if err != nil {
+		pterm.Error.Println("error getting cue output")
+		return err
+	}
+
+	err = os.WriteFile(filepath.Join(buildDir, "data.cue"), []byte(cval), 0o755)
 	if err != nil {
 		return err
 	}
