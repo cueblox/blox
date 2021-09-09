@@ -38,7 +38,7 @@ var (
 )
 
 func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) {
-	cfg, err := blox.NewConfig(BaseConfig)
+	cfg, err := blox.NewConfig(blox.BaseConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -89,26 +89,6 @@ func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) 
 		ri:        referentialIntegrity,
 	}, nil
 }
-
-const BaseConfig = `{
-	#Remote: {
-	    name: string
-	    version: string
-	    repository: string
-	}
-	#Plugin: {
-		name: string
-		executable: string
-	}
-	build_dir:    string | *"_build"
-	data_dir:     string | *"data"
-	schemata_dir: string | *"schemata"
-	static_dir: string | *"static"
-	template_dir: string | *"templates"
-	remotes: [ ...#Remote ]
-	prebuild: [...#Plugin]
-	postbuild: [...#Plugin]
-}`
 
 func (s *Service) build() error {
 	var errors error
