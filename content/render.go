@@ -51,6 +51,7 @@ func (s *Service) RenderAndSave() error {
 		pterm.Error.Println("error getting cue output")
 		return err
 	}
+	cval = "package blox\n" + cval
 
 	err = os.WriteFile(filepath.Join(buildDir, "data.cue"), []byte(cval), 0o755)
 	if err != nil {
