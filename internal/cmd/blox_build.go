@@ -44,9 +44,7 @@ ending with _id are valid references to identifiers within the other content typ
 	return root
 }
 
-var (
-	referentialIntegrity bool
-)
+var referentialIntegrity bool
 
 const DefaultConfigName = "blox.cue"
 
