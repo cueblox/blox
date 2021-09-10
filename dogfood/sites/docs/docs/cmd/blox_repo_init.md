@@ -5,7 +5,7 @@ Initialize a New Schema Repository
 ## Synopsis
 
 Initializing a new schema repository creates the
-	configuration required to published your schemata.
+configuration required to published your schemata.
 
 ```
 blox repo init [flags]

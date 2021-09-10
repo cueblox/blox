@@ -5,7 +5,7 @@ Create folders and configuration to maintain content with the blox toolset
 ## Synopsis
 
 Create a group of folders to store your content. A directory for your data,
-	schemata, and build output will be created.
+schemata, and build output will be created.
 
 ```
 blox init [flags]

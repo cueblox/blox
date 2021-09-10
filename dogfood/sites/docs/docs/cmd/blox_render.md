@@ -5,8 +5,8 @@ Render templates with compiled data
 ## Synopsis
 
 Render templates with compiled data. 
-	Use the 'with' parameter to restrict the data set to a single content type.
-	Use the 'each' parameter to execute the template once for each item.
+Use the 'with' parameter to restrict the data set to a single content type.
+Use the 'each' parameter to execute the template once for each item.
 
 ```
 blox render [flags]

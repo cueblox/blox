@@ -5,8 +5,8 @@ Create a new content file for the target dataset
 ## Synopsis
 
 This command will allow you to create new content based on the
-	template attributes within the schemata. By providing a dataset name and ID(slug)
-	for the new content, you can quickly scaffold new content with ease.
+template attributes within the schemata. By providing a dataset name and ID(slug)
+for the new content, you can quickly scaffold new content with ease.
 
 ```
 blox new [flags]
