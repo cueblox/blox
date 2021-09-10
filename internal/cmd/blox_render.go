@@ -24,8 +24,8 @@ func newBloxRenderCmd() *bloxRenderCmd {
 		Use:   "render",
 		Short: "Render templates with compiled data",
 		Long: `Render templates with compiled data. 
-	Use the 'with' parameter to restrict the data set to a single content type.
-	Use the 'each' parameter to execute the template once for each item.`,
+Use the 'with' parameter to restrict the data set to a single content type.
+Use the 'each' parameter to execute the template once for each item.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			userConfig, err := ioutil.ReadFile("blox.cue")
 
