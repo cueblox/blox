@@ -3,4 +3,6 @@
   schemata_dir: "schemata"
   template_dir: "data/tpl"
   static_dir: "static"
+  output_cue: true
+  output_recordsets: false
 }

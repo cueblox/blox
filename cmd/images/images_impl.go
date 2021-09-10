@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/cueblox/blox"
-	"github.com/cueblox/blox/content"
 	"github.com/cueblox/blox/plugins"
 	"github.com/cueblox/blox/plugins/shared"
 	"github.com/disintegration/imaging"
@@ -24,15 +23,15 @@ type ImageScanner struct {
 	cfg    *blox.Config
 }
 
-func (g *ImageScanner) Process(bloxConfig string) error {
+func (g *ImageScanner) Process(userConfig string) error {
 	g.logger.Debug("message from ImageScanner.Process")
-	cfg, err := blox.NewConfig(content.BaseConfig)
+	cfg, err := blox.NewConfig(blox.BaseConfig)
 	if err != nil {
 		return err
 	}
 	g.cfg = cfg
 
-	err = g.cfg.LoadConfigString(bloxConfig)
+	err = g.cfg.LoadConfigString(userConfig)
 	if err != nil {
 		return err
 	}

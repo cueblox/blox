@@ -44,21 +44,8 @@ ending with _id are valid references to identifiers within the other content typ
 	return root
 }
 
-var referentialIntegrity bool
-
-const DefaultConfigName = "blox.cue"
-
-const BaseConfig = `{
-    #Remote: {
-        name: string
-        version: string
-        repository: string
-    }
-    build_dir:    string | *"_build"
-    data_dir:     string | *"data"
-    schemata_dir: string | *"schemata"
-	static_dir: string | *"static"
-	template_dir: string | *"templates"
-	remotes: [ ...#Remote ]
-
-}`
+var (
+	referentialIntegrity bool
+	images               bool
+	cloud                bool
+)

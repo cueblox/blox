@@ -17,7 +17,7 @@ import (
 )
 
 //go:embed config.cue
-var BaseConfig string
+var BaseRepositoryConfig string
 
 // Repository is a group of schemas
 type Repository struct {
@@ -32,7 +32,7 @@ type Repository struct {
 // current directory
 func GetRepository() (*Repository, error) {
 	// initialize config engine with defaults
-	cfg, err := blox.NewConfig(BaseConfig)
+	cfg, err := blox.NewConfig(BaseRepositoryConfig)
 	if err != nil {
 		return nil, err
 	}

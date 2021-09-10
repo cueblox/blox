@@ -66,6 +66,16 @@ func (r *Config) GetString(key string) (string, error) {
 	return "", fmt.Errorf("couldn't find key '%s'", key)
 }
 
+func (r *Config) GetBool(key string) (bool, error) {
+	keyValue := r.runtime.Database.LookupPath(cue.ParsePath(key))
+
+	if keyValue.Exists() {
+		return keyValue.Bool()
+	}
+
+	return false, fmt.Errorf("couldn't find key '%s'", key)
+}
+
 func (r *Config) GetList(key string) (cue.Value, error) {
 	keyValue := r.runtime.Database.LookupPath(cue.ParsePath(key))
 
@@ -88,3 +98,27 @@ func (r *Config) GetStringOr(key string, def string) string {
 
 	return cueValue
 }
+
+const BaseConfig = `{
+	#Remote: {
+	    name: string
+	    version: string
+	    repository: string
+	}
+	#Plugin: {
+		name: string
+		executable: string
+	}
+	build_dir:    string | *"_build"
+	data_dir:     string | *"data"
+	schemata_dir: string | *"schemata"
+	static_dir: string | *"static"
+	template_dir: string | *"templates"
+	output_cue: bool | *false
+	output_recordsets: bool | *false
+	remotes: [ ...#Remote ]
+	prebuild: [...#Plugin]
+	postbuild: [...#Plugin]
+}`
+
+const DefaultConfigName = "blox.cue"

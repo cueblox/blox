@@ -36,7 +36,7 @@ for the new content, you can quickly scaffold new content with ease.`,
 			engine, err := cuedb.NewEngine()
 			cobra.CheckErr(err)
 
-			cfg, err := blox.NewConfig(BaseConfig)
+			cfg, err := blox.NewConfig(blox.BaseConfig)
 			cobra.CheckErr(err)
 
 			err = cfg.LoadConfigString(string(userConfig))
