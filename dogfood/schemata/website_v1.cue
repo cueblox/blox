@@ -1,6 +1,6 @@
 {
 	_schema: {
-		name:      "Profile"
+		name:      "Website"
 		namespace: "schemas.cueblox.com"
 	}
 

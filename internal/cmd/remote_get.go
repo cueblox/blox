@@ -47,7 +47,7 @@ func ensureRemote(name, version, repo string) error {
 	userConfig, err := ioutil.ReadFile("blox.cue")
 	cobra.CheckErr(err)
 
-	cfg, err := blox.NewConfig(BaseConfig)
+	cfg, err := blox.NewConfig(blox.BaseConfig)
 	cobra.CheckErr(err)
 
 	err = cfg.LoadConfigString(string(userConfig))
