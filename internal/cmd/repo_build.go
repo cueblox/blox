@@ -16,8 +16,8 @@ func newRepoBuildCmd() *repoBuildCmd {
 		Use:   "build",
 		Short: "Build a Schema Repository",
 		Long: `In order to consume your schema repository with the Blox CLI, you
-	need to build a manifest file and publish. This command provides the build output
-	that can be deployed to any static file hosting, or even GitHub raw content links.`,
+need to build a manifest file and publish. This command provides the build output
+that can be deployed to any static file hosting, or even GitHub raw content links.`,
 		Args: cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			repo, err := repository.GetRepository()

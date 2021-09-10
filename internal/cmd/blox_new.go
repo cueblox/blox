@@ -26,8 +26,8 @@ func newBloxNewCmd() *bloxNewCmd {
 		Use:   "new",
 		Short: "Create a new content file for the target dataset",
 		Long: `This command will allow you to create new content based on the
-	template attributes within the schemata. By providing a dataset name and ID(slug)
-	for the new content, you can quickly scaffold new content with ease.`,
+template attributes within the schemata. By providing a dataset name and ID(slug)
+for the new content, you can quickly scaffold new content with ease.`,
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			userConfig, err := ioutil.ReadFile("blox.cue")

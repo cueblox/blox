@@ -22,7 +22,7 @@ func newRepoInitCmd() *repoInitCmd {
 		Use:   "init",
 		Short: "Initialize a New Schema Repository",
 		Long: `Initializing a new schema repository creates the
-	configuration required to published your schemata.`,
+configuration required to published your schemata.`,
 		Args: cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			repo, err := repository.NewRepository(namespace, output, reporoot)
