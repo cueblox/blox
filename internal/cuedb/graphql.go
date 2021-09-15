@@ -38,16 +38,29 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 			}
 
 		case cue.ListKind:
-			kind, err := CueValueToGraphQlType(fields.Value().LookupPath(cue.MakePath(cue.AnyIndex)))
-			if err != nil {
-				// ignore lists for now
+			listOf := fields.Value().LookupPath(cue.MakePath(cue.AnyIndex))
+
+			kind, err := CueValueToGraphQlType(listOf)
+			if err == nil {
+				graphQlFields[fields.Label()] = &graphql.Field{
+					Type: &graphql.List{
+						OfType: kind,
+					},
+				}
 				continue
-				// return nil, err
 			}
+
+			// List of non-scalar types
+			subFields, err := CueValueToGraphQlField(existingObjects, listOf.Value())
+			if err != nil {
+				return nil, err
+			}
+
 			graphQlFields[fields.Label()] = &graphql.Field{
-				Type: &graphql.List{
-					OfType: kind,
-				},
+				Type: &graphql.List{OfType: graphql.NewObject(graphql.ObjectConfig{
+					Name:   fields.Label(),
+					Fields: subFields,
+				})},
 			}
 
 		case cue.BoolKind, cue.FloatKind, cue.IntKind, cue.NumberKind, cue.StringKind:
