@@ -19,8 +19,8 @@ func (s *Service) prepGraphQL() error {
 		if err != nil {
 			return err
 		}
-
 	}
+
 	dag := s.engine.GetDataSetsDAG()
 	nodes, _ := dag.GetDescendants("root")
 
@@ -92,7 +92,6 @@ func (s *Service) translateNode(node interface{}, graphqlObjects map[string]cued
 
 	var objectFields graphql.Fields
 	objectFields, err := cuedb.CueValueToGraphQlField(graphqlObjects, dataSet.GetSchemaCue())
-
 	if err != nil {
 		cobra.CheckErr(err)
 	}
