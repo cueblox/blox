@@ -92,6 +92,7 @@ func (s *Service) translateNode(node interface{}, graphqlObjects map[string]cued
 
 	var objectFields graphql.Fields
 	objectFields, err := cuedb.CueValueToGraphQlField(graphqlObjects, dataSet.GetSchemaCue())
+
 	if err != nil {
 		cobra.CheckErr(err)
 	}

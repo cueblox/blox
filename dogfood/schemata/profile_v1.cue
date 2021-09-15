@@ -17,7 +17,7 @@
 		title?:     string @template("Cue Slinger")
 		body?:      string @template("☕️ Required")
 		image?:  string
-		social_accounts?: [...#TwitterAccount | #GitHubAccount | #MiscellaneousAccount]
+		// social_accounts?: [...#TwitterAccount | #GitHubAccount | #MiscellaneousAccount]
 	}
 
 	#TwitterAccount: {
