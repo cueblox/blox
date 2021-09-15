@@ -57,7 +57,7 @@ func TestGraphqlGeneration(t *testing.T) {
 				},
 			})},
 		}},
-		{cueLiteral: "#Test: { t19: string}\n{ t17: string, t18: #Test }", expected: map[string]*graphql.Field{
+		{cueLiteral: "{ #Test: { t19: string}\nt17: string, t18: #Test }", expected: map[string]*graphql.Field{
 			"t17": {Type: &graphql.NonNull{OfType: graphql.String}},
 			"t18": {Type: graphql.NewObject(graphql.ObjectConfig{
 				Name: "t18",
@@ -66,7 +66,7 @@ func TestGraphqlGeneration(t *testing.T) {
 				},
 			})},
 		}},
-		{cueLiteral: "#Test: { t20: string}\n{ t21: string, t22: [ ... #Test ] }", expected: map[string]*graphql.Field{
+		{cueLiteral: "{ #Test: { t20: string}\n t21: string, t22: [ ... #Test ] }", expected: map[string]*graphql.Field{
 			"t21": {Type: &graphql.NonNull{OfType: graphql.String}},
 			"t22": {Type: &graphql.List{OfType: graphql.NewObject(graphql.ObjectConfig{
 				Name: "t22",

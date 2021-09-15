@@ -14,8 +14,8 @@ type GraphQlObjectGlue struct {
 	Resolver func(p graphql.ResolveParams) (interface{}, error)
 }
 
-func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueValue cue.Value) (map[string]*graphql.Field, error) {
-	fields, err := cueValue.Fields(cue.Optional(true))
+func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueValue cue.Value) (graphql.Fields, error) {
+	fields, err := cueValue.Fields(cue.All())
 	if err != nil {
 		return nil, err
 	}
@@ -23,6 +23,14 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 	graphQlFields := make(map[string]*graphql.Field)
 
 	for fields.Next() {
+		if strings.HasPrefix(fields.Label(), "_") {
+			continue
+		}
+
+		if fields.Selector().IsDefinition() {
+			continue
+		}
+
 		switch fields.Value().IncompleteKind() {
 		case cue.StructKind:
 			subFields, err := CueValueToGraphQlField(existingObjects, fields.Value())
@@ -43,6 +51,7 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 			kind, err := CueValueToGraphQlType(listOf)
 			if err == nil {
 				graphQlFields[fields.Label()] = &graphql.Field{
+					Name: fields.Label(),
 					Type: &graphql.List{
 						OfType: kind,
 					},
@@ -70,8 +79,11 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 			}
 
 			relationship := fields.Value().Attribute("relationship")
+			relationshipLabel := fields.Label()
+
 			if err = relationship.Err(); err == nil {
 				graphQlFields[fields.Label()] = &graphql.Field{
+					Name: fields.Label(),
 					Type: existingObjects[relationship.Contents()].Object,
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 						data := existingObjects[relationship.Contents()].Engine.GetAllData(fmt.Sprintf("#%s", relationship.Contents()))
@@ -88,7 +100,7 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 						}
 
 						for recordID, record := range records {
-							if string(recordID) == source[strings.ToLower(relationship.Contents())].(string) {
+							if string(recordID) == source[relationshipLabel].(string) {
 								return record, nil
 							}
 						}
@@ -98,10 +110,12 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 				}
 			} else if fields.IsOptional() {
 				graphQlFields[fields.Label()] = &graphql.Field{
+					Name: fields.Label(),
 					Type: kind,
 				}
 			} else {
 				graphQlFields[fields.Label()] = &graphql.Field{
+					Name: fields.Label(),
 					Type: &graphql.NonNull{
 						OfType: kind,
 					},
