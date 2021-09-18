@@ -65,11 +65,23 @@ func TestGraphqlGeneration(t *testing.T) {
 		{cueLiteral: "{ #Test: { t20: string}\n t21: string, t22: [ ... #Test ] }", expected: graphql.Fields{
 			"t21": {Type: &graphql.NonNull{OfType: graphql.String}},
 			"t22": {Type: &graphql.List{OfType: graphql.NewObject(graphql.ObjectConfig{
+				Name: "t22",
 				Fields: graphql.Fields{
 					"t20": {Type: &graphql.NonNull{OfType: graphql.String}},
 				},
 			})}},
 		}},
+		// WIP
+		// Aim is to "flatten" disjunctions into a single struct
+		// {cueLiteral: "{ #A: {t23: string}\n#B: { t24?: string}\n t25: string, t26: [ ... #A | #B ] }", expected: graphql.Fields{
+		// 	"t25": {Type: &graphql.NonNull{OfType: graphql.String}},
+		// 	"t26": {Type: &graphql.List{OfType: graphql.NewObject(graphql.ObjectConfig{
+		// 		Fields: graphql.Fields{
+		// 			"t23": {Type: &graphql.NonNull{OfType: graphql.String}},
+		// 			"t24": {Type: graphql.String},
+		// 		},
+		// 	})}},
+		// }},
 	}
 
 	cueContext := cuecontext.New()
