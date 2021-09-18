@@ -31,6 +31,9 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 			continue
 		}
 
+		relationshipLabel := fields.Label()
+		relationship := fields.Value().Attribute("relationship")
+
 		switch fields.Value().IncompleteKind() {
 		case cue.StructKind:
 			subFields, err := CueValueToGraphQlField(existingObjects, fields.Value())
@@ -49,34 +52,77 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 
 			kind, err := CueValueToGraphQlType(listOf)
 			if err == nil {
-				graphQlFields[fields.Label()] = &graphql.Field{
-					Type: &graphql.List{
-						OfType: kind,
-					},
+				if err = relationship.Err(); err == nil {
+					graphQlFields[fields.Label()] = &graphql.Field{
+						Type: graphql.NewList(existingObjects[relationship.Contents()].Object),
+						Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+							data := existingObjects[relationship.Contents()].Engine.GetAllData(fmt.Sprintf("#%s", relationship.Contents()))
+
+							records := make(map[string]interface{})
+							if err = data.Decode(&records); err != nil {
+								return nil, err
+							}
+
+							source, ok := p.Source.(map[string]interface{})
+
+							if !ok {
+								return nil, nil
+							}
+
+							searchIds := source[relationshipLabel].([]interface{})
+							returnRecords := []interface{}{}
+
+							for recordID, record := range records {
+								for _, searchID := range searchIds {
+									if string(recordID) == searchID.(string) {
+										returnRecords = append(returnRecords, record)
+									}
+								}
+							}
+
+							return returnRecords, nil
+						},
+					}
+				} else {
+					graphQlFields[fields.Label()] = &graphql.Field{
+						Type: &graphql.List{
+							OfType: kind,
+						},
+					}
 				}
 				continue
 			}
 
 			// List of non-scalar types
 			subFields, err := CueValueToGraphQlField(existingObjects, listOf.Value())
-			if err != nil {
-				return nil, err
+
+			// No error, so we know this is a simple value or struct
+			if err == nil {
+				graphQlFields[fields.Label()] = &graphql.Field{
+					Type: &graphql.List{OfType: graphql.NewObject(graphql.ObjectConfig{
+						Name:   fields.Label(),
+						Fields: subFields,
+					})},
+				}
+				continue
 			}
 
-			graphQlFields[fields.Label()] = &graphql.Field{
-				Type: &graphql.List{OfType: graphql.NewObject(graphql.ObjectConfig{
-					Fields: subFields,
-				})},
-			}
+			// Error, probably a disjunction or other complex value
+			// Not handled, yet.
+			// switch listOf.IncompleteKind() {
+			// case cue.StructKind:
+			// 	fields, err := listOf.Fields()
+			// 	fmt.Println(err)
+			// 	fmt.Println(fields)
+			// }
+
+			return nil, err
 
 		case cue.BoolKind, cue.FloatKind, cue.IntKind, cue.NumberKind, cue.StringKind:
 			kind, err := CueValueToGraphQlType(fields.Value())
 			if err != nil {
 				return nil, err
 			}
-
-			relationship := fields.Value().Attribute("relationship")
-			relationshipLabel := fields.Label()
 
 			if err = relationship.Err(); err == nil {
 				graphQlFields[fields.Label()] = &graphql.Field{
