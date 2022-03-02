@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	cueError "cuelang.org/go/cue/errors"
 	"github.com/cueblox/blox"
 	"github.com/graphql-go/graphql"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/cueblox/blox/internal/encoding/markdown"
 	"github.com/cueblox/blox/internal/repository"
 	"github.com/goccy/go-yaml"
-	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/go-plugin"
 	"github.com/pterm/pterm"
 )
@@ -91,8 +91,6 @@ func NewService(bloxConfig string, referentialIntegrity bool) (*Service, error) 
 }
 
 func (s *Service) build() error {
-	var errors error
-
 	err := s.parseRemotes()
 	if err != nil {
 		return err
@@ -104,6 +102,8 @@ func (s *Service) build() error {
 		return err
 	}
 
+	var errors cueError.Error
+
 	for _, dataSet := range s.engine.GetDataSets() {
 		pterm.Debug.Printf("\t\tBuilding Dataset: %s\n", dataSet.ID())
 
@@ -113,7 +113,7 @@ func (s *Service) build() error {
 
 		err := os.MkdirAll(dataSetDirectory, 0o755)
 		if err != nil {
-			errors = multierror.Append(err)
+			errors = cueError.Append(errors, cueError.Promote(err, "MkdirAll Failed"))
 			continue
 		}
 
@@ -140,7 +140,7 @@ func (s *Service) build() error {
 				pterm.Debug.Println(slug)
 				bytes, err := ioutil.ReadFile(path)
 				if err != nil {
-					return multierror.Append(err)
+					return cueError.Append(errors, cueError.Promote(err, "ReadFile Failed"))
 				}
 
 				// Loaders to get to YAML
@@ -159,7 +159,7 @@ func (s *Service) build() error {
 
 				err = yaml.Unmarshal(bytes, &istruct)
 				if err != nil {
-					return multierror.Append(err)
+					return cueError.Append(errors, cueError.Promote(err, "YAML Unmarshal Failed"))
 				}
 
 				record := make(map[string]interface{})
@@ -167,7 +167,7 @@ func (s *Service) build() error {
 
 				err = s.engine.Insert(dataSet, record)
 				if err != nil {
-					return multierror.Append(err)
+					return cueError.Append(errors, cueError.Promote(err, "CueDB Insert Failed"))
 				}
 
 				return err
@@ -175,14 +175,19 @@ func (s *Service) build() error {
 		)
 
 		if err != nil {
-			errors = multierror.Append(err)
+			errors = cueError.Append(errors, cueError.Promote(err, "Data Walk Errors"))
 		}
 	}
 
 	if s.ri {
 		err := s.engine.ReferentialIntegrity()
 		if err != nil {
-			errors = multierror.Append(err)
+			errors = cueError.Append(errors, cueError.Promote(err, "Referential Integrity Failed"))
+			for _, v := range cueError.Errors(errors) {
+				pterm.Error.ShowLineNumber = false
+				pterm.Error.Println(v)
+				pterm.Error.ShowLineNumber = true
+			}
 		}
 	}
 
