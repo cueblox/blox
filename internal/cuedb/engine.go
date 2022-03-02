@@ -429,7 +429,6 @@ func (r *Engine) ReferentialIntegrity() error {
 	}
 
 	err := r.Database.Validate()
-
 	if err != nil {
 		return err
 	}
