@@ -148,7 +148,7 @@ func (s *Service) translateNode(node interface{}, graphqlObjects map[string]cued
 		Resolve: resolver,
 	}
 
-	graphqlFields[fmt.Sprintf("all%vs", dataSet.GetExternalName())] = &graphql.Field{
+	graphqlFields[fmt.Sprintf("all%v", dataSet.GetPluralName())] = &graphql.Field{
 		Type: graphql.NewList(objType),
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			dataSetName := p.Info.ReturnType.Name()
