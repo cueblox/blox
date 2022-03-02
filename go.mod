@@ -14,7 +14,6 @@ require (
 	github.com/graphql-go/handler v0.2.3
 	github.com/h2non/filetype v1.1.1
 	github.com/hashicorp/go-hclog v0.16.2
-	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-plugin v1.4.2
 	github.com/heimdalr/dag v1.0.1
 	github.com/lib/pq v1.9.0 // indirect

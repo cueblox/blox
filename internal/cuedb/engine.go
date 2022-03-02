@@ -7,7 +7,6 @@ import (
 
 	"cuelang.org/go/cue"
 	"github.com/cueblox/blox"
-	"github.com/hashicorp/go-multierror"
 	"github.com/heimdalr/dag"
 	"github.com/pterm/pterm"
 )
@@ -388,7 +387,17 @@ func (r *Engine) ReferentialIntegrity() error {
 					optional = "?"
 				}
 
-				value := r.CueContext.CompileString(fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
+				var value cue.Value
+				switch fields.Value().IncompleteKind() {
+				case cue.StringKind:
+					value = r.CueContext.CompileString(fmt.Sprintf("{data: _\n%s: %s: %s%s: or([ for k, _ in data.%s {k}])}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
+				case cue.ListKind:
+					value = r.CueContext.CompileString(fmt.Sprintf("{data: _\n%s: %s: %s%s: [...or([ for k, _ in data.%s {k}])]}", dataSet.GetInlinePath(), dataSet.name, fields.Label(), optional, foreignTable.GetDataDirectory()))
+				}
+
+				// #names: ["Paul", "Marcel", "cueckoo"]
+				// #validname: or(#names)
+				// #name: #validname | [#validname]
 				if value.Err() != nil {
 					return value.Err()
 				}
@@ -397,6 +406,7 @@ func (r *Engine) ReferentialIntegrity() error {
 				continue
 			}
 
+			// TODO: This behaviour should probably be deprecated soon
 			if strings.HasSuffix(fields.Label(), "_id") {
 				foreignTable, err := r.GetDataSet(strings.TrimSuffix(fields.Label(), "_id"))
 				if err != nil {
@@ -419,8 +429,9 @@ func (r *Engine) ReferentialIntegrity() error {
 	}
 
 	err := r.Database.Validate()
+
 	if err != nil {
-		return multierror.Prefix(err, "Referential Integrity Failed")
+		return err
 	}
 
 	return nil

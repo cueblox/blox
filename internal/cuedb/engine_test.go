@@ -298,6 +298,7 @@ func TestRelationshipParsing(t *testing.T) {
 		{cueLiteral: "name: string, profile: string", expected: []string{}},
 		{cueLiteral: "name: string, profile: string @relationship(Person)", expected: []string{"Person"}},
 		{cueLiteral: "name: string, profile: string, person: string @relationship(Person)", expected: []string{"Person"}},
+		{cueLiteral: "name: string, profile: string, people: [...string] @relationship(Person)", expected: []string{"Person"}},
 	}
 
 	cueContext := cuecontext.New()
