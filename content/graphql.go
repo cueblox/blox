@@ -91,7 +91,7 @@ func (s *Service) translateNode(node interface{}, graphqlObjects map[string]cued
 	dataSet, _ := s.engine.GetDataSet(node.(*cuedb.DagNode).Name)
 
 	var objectFields graphql.Fields
-	objectFields, err := cuedb.CueValueToGraphQlField(graphqlObjects, dataSet.GetSchemaCue())
+	objectFields, err := cuedb.CueValueToGraphQlField(graphqlObjects, dataSet, dataSet.GetSchemaCue())
 	if err != nil {
 		cobra.CheckErr(err)
 	}
@@ -148,7 +148,7 @@ func (s *Service) translateNode(node interface{}, graphqlObjects map[string]cued
 		Resolve: resolver,
 	}
 
-	graphqlFields[fmt.Sprintf("all%vs", dataSet.GetExternalName())] = &graphql.Field{
+	graphqlFields[fmt.Sprintf("all%v", dataSet.GetPluralName())] = &graphql.Field{
 		Type: graphql.NewList(objType),
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			dataSetName := p.Info.ReturnType.Name()

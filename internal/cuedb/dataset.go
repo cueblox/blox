@@ -52,6 +52,10 @@ func (d *DataSet) GetDataMapCue() string {
 	)
 }
 
+func (d *DataSet) GetPluralName() string {
+	return strings.Title(d.metadata.Plural)
+}
+
 func (d *DataSet) GetExternalName() string {
 	return strings.Replace(d.name, "#", "", 1)
 }

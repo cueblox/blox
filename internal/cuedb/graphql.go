@@ -14,7 +14,7 @@ type GraphQlObjectGlue struct {
 	Resolver func(p graphql.ResolveParams) (interface{}, error)
 }
 
-func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueValue cue.Value) (graphql.Fields, error) {
+func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, dataSet DataSet, cueValue cue.Value) (graphql.Fields, error) {
 	fields, err := cueValue.Fields(cue.All())
 	if err != nil {
 		return nil, err
@@ -36,13 +36,14 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 
 		switch fields.Value().IncompleteKind() {
 		case cue.StructKind:
-			subFields, err := CueValueToGraphQlField(existingObjects, fields.Value())
+			subFields, err := CueValueToGraphQlField(existingObjects, dataSet, fields.Value())
 			if err != nil {
 				return nil, err
 			}
 
 			graphQlFields[fields.Label()] = &graphql.Field{
 				Type: graphql.NewObject(graphql.ObjectConfig{
+					Name:   fmt.Sprintf("%s%s", dataSet.GetExternalName(), strings.Title(fields.Label())),
 					Fields: subFields,
 				}),
 			}
@@ -94,13 +95,13 @@ func CueValueToGraphQlField(existingObjects map[string]GraphQlObjectGlue, cueVal
 			}
 
 			// List of non-scalar types
-			subFields, err := CueValueToGraphQlField(existingObjects, listOf.Value())
+			subFields, err := CueValueToGraphQlField(existingObjects, dataSet, listOf.Value())
 
 			// No error, so we know this is a simple value or struct
 			if err == nil {
 				graphQlFields[fields.Label()] = &graphql.Field{
 					Type: &graphql.List{OfType: graphql.NewObject(graphql.ObjectConfig{
-						Name:   fields.Label(),
+						Name:   fmt.Sprintf("%s%s", dataSet.GetExternalName(), strings.Title(fields.Label())),
 						Fields: subFields,
 					})},
 				}
