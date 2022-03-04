@@ -13,6 +13,9 @@ export GO111MODULE := on
 setup:
 	go mod tidy
 	git config core.hooksPath .githooks
+	go install mvdan.cc/gofumpt@latest
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /go/bin v1.44.2
+
 .PHONY: setup
 
 test:
