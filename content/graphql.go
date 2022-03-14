@@ -90,23 +90,27 @@ func (s *Service) prepGraphQL() error {
 func (s *Service) translateNode(node interface{}, graphqlObjects map[string]cuedb.GraphQlObjectGlue, graphqlFields map[string]*graphql.Field) error {
 	dataSet, _ := s.engine.GetDataSet(node.(*cuedb.DagNode).Name)
 
-	var objectFields graphql.Fields
-	objectFields, err := cuedb.CueValueToGraphQlField(graphqlObjects, dataSet, dataSet.GetSchemaCue())
-	if err != nil {
-		cobra.CheckErr(err)
-	}
+	//nolint - ignore linter, we need this defined for the thunk to work
+	var objType *graphql.Object
 
-	// Inject ID field into each object
-	objectFields["id"] = &graphql.Field{
-		Type: &graphql.NonNull{
-			OfType: graphql.String,
-		},
-	}
-
-	objType := graphql.NewObject(
+	objType = graphql.NewObject(
 		graphql.ObjectConfig{
-			Name:   dataSet.GetExternalName(),
-			Fields: objectFields,
+			Name: dataSet.GetExternalName(),
+			Fields: (graphql.FieldsThunk)(func() graphql.Fields {
+				objectFields, err := cuedb.CueValueToGraphQlField(graphqlObjects, dataSet, dataSet.GetSchemaCue())
+				if err != nil {
+					cobra.CheckErr(err)
+				}
+
+				// Inject ID field into each object
+				objectFields["id"] = &graphql.Field{
+					Type: &graphql.NonNull{
+						OfType: graphql.String,
+					},
+				}
+
+				return objectFields
+			}),
 		},
 	)
 
@@ -118,7 +122,7 @@ func (s *Service) translateNode(node interface{}, graphqlObjects map[string]cued
 			data := s.engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
 
 			records := make(map[string]interface{})
-			if err = data.Decode(&records); err != nil {
+			if err := data.Decode(&records); err != nil {
 				return nil, err
 			}
 
@@ -156,7 +160,7 @@ func (s *Service) translateNode(node interface{}, graphqlObjects map[string]cued
 			data := s.engine.GetAllData(fmt.Sprintf("#%s", dataSetName))
 
 			records := make(map[string]interface{})
-			if err = data.Decode(&records); err != nil {
+			if err := data.Decode(&records); err != nil {
 				return nil, err
 			}
 

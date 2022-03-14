@@ -148,6 +148,12 @@ func (r *Engine) GetDataSetsDAG() *dag.DAG {
 		dataSet := datasets[k]
 		for _, relationship := range dataSet.relationships {
 			edge, _ := r.GetDataSet(relationship)
+
+			// Don't need edge reference to itself
+			if dataSet.ID() == edge.ID() {
+				continue
+			}
+
 			err := graph.AddEdge(dataSet.ID(), edge.ID())
 			if err != nil {
 				pterm.Warning.Printf("failed to add edge: %v\n", err)
